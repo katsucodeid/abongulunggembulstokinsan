@@ -17,13 +17,31 @@ async function api(path,opts={}){const r=await fetch(API+"/api"+path,{...opts,he
 function showLogin(){ $("login").classList.remove("hidden");$("app").classList.add("hidden");}
 function showApp(){ $("login").classList.add("hidden");$("app").classList.remove("hidden");}
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
-async function logout(){token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
+async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
 async function renderAll(){if(!state)return;const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=(cachedUser?.role||state.user?.role)!=="admin";syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");}
 function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;const open=!nav.classList.contains("open");nav.classList.toggle("open",open);backdrop.classList.toggle("visible",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Tutup navigasi":"Buka navigasi");document.body.classList.toggle("nav-open",open);}
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
-function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)");if(!current)return;document.querySelectorAll("#mainNav button[onclick^='showTab']").forEach(btn=>{const active=btn.getAttribute("onclick").includes("'"+current.id+"'");btn.classList.toggle("nav-active",active);if(active)btn.setAttribute("aria-current","page");else btn.removeAttribute("aria-current");});}
+function toggleNavGroup(id){
+  const panel=$(id),toggle=document.querySelector('.nav-group-toggle[aria-controls="'+id+'"]');
+  if(!panel||!toggle)return;
+  const expanded=toggle.getAttribute("aria-expanded")==="true";
+  toggle.setAttribute("aria-expanded",String(!expanded));
+  panel.classList.toggle("expanded",!expanded);
+}
+function syncActiveNav(){
+  const current=document.querySelector(".tab:not(.hidden)");if(!current)return;
+  document.querySelectorAll("#mainNav button[onclick^='showTab']").forEach(btn=>{
+    const active=btn.getAttribute("onclick").includes("'"+current.id+"'");
+    btn.classList.toggle("nav-active",active);
+    if(active){
+      btn.setAttribute("aria-current","page");
+      const group=btn.closest(".nav-group-items");
+      if(group){group.classList.add("expanded");const toggle=document.querySelector('.nav-group-toggle[aria-controls="'+group.id+'"]');if(toggle)toggle.setAttribute("aria-expanded","true");}
+    }else btn.removeAttribute("aria-current");
+  });
+}
 function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();}
 async function blobToBase64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(",")[1]||"");r.onerror=reject;r.readAsDataURL(blob);});}
 async function downloadBackup(){
@@ -155,13 +173,56 @@ box.appendChild(card);
 });
 }
 function checkForUpdates(){
-  window.insanLatestCommit=null;
-  window.insanUpdateAvailable=false;
   const notice=$("updateNotice");
   if(notice)notice.classList.add("hidden");
 }
+const updateDelay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function applyUpdate(){
-  alert("Pembaruan otomatis internet dinonaktifkan. Aplikasi tetap berjalan lokal dan data tidak akan diubah.");
+  if(window.insanUpdateRunning)return;
+  if(!token){$("updateAppStatus").textContent="Login sebagai admin untuk memperbarui aplikasi.";return;}
+  window.insanUpdateRunning=true;
+  const button=$("updateAppButton"),status=$("updateAppStatus"),overlay=$("updateProgress");
+  if(button)button.disabled=true;
+  if(overlay)overlay.classList.remove("hidden");
+  const title=$("updateProgressTitle"),message=$("updateProgressMessage");
+  if(title)title.textContent="Menyiapkan pembaruan";
+  if(message)message.textContent="Mencadangkan database dan memeriksa repository…";
+  if(status)status.textContent="Pembaruan sedang disiapkan.";
+  try{
+    await api("/update/apply",{method:"POST",body:JSON.stringify({})});
+    const started=Date.now();
+    while(Date.now()-started<8*60*1000){
+      try{
+        const result=await api("/update/status");
+        if(message&&result.message)message.textContent=result.message;
+        if(status&&result.message)status.textContent=result.message;
+        if(result.status==="completed"){
+          if(title)title.textContent="Pembaruan selesai";
+          if(message)message.textContent="Server Termux sudah aktif kembali. Membuka ulang tampilan aplikasi…";
+          if(status)status.textContent="Berhasil diperbarui. Aplikasi akan dimuat ulang.";
+          await updateDelay(1200);
+          try{const registration=await navigator.serviceWorker?.getRegistration();if(registration)await registration.update();}catch{}
+          location.reload();
+          return;
+        }
+        if(result.status==="failed")throw new Error(result.message||"Pembaruan gagal.");
+      }catch(error){
+        if(error.status===401||error.status===403)throw error;
+        if(error.message==="Pembaruan gagal.")throw error;
+        if(message)message.textContent="Server sedang dimulai ulang. Menunggu server lokal kembali aktif…";
+      }
+      await updateDelay(1600);
+    }
+    throw new Error("Waktu tunggu habis. Periksa log backend/server-update.log di Termux.");
+  }catch(error){
+    if(overlay)overlay.classList.add("hidden");
+    if(status)status.textContent="Pembaruan belum selesai: "+error.message;
+    if(title)title.textContent="Pembaruan tidak selesai";
+    alert("Pembaruan gagal: "+error.message+"\nPeriksa Termux sebelum mencoba kembali.");
+  }finally{
+    window.insanUpdateRunning=false;
+    if(button)button.disabled=false;
+  }
 }
 async function syncQueue(){if(!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
 async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
