@@ -1,8 +1,10 @@
 package id.katsucode.abongulunggembulstokinsan;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.ContentValues;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -16,10 +18,15 @@ import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.widget.Toast;
+import android.widget.EditText;
+import android.text.InputType;
+import android.view.inputmethod.InputMethodManager;
+import android.content.Context;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
-    private static final String APP_URL = "https://gembul-stok-online.onrender.com";
+    private static final String PREFS = "gembul_server";
+    private static final String SERVER_KEY = "server_url";
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -104,7 +111,8 @@ public class MainActivity extends Activity {
             }
         });
         setContentView(webView);
-        webView.loadUrl(APP_URL);
+        String savedUrl = getSharedPreferences(PREFS, MODE_PRIVATE).getString(SERVER_KEY, "");
+        if (savedUrl.isEmpty()) showServerUrlDialog(); else webView.loadUrl(savedUrl);
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -124,9 +132,42 @@ public class MainActivity extends Activity {
         }
     }
 
+    private void showServerUrlDialog() {
+        EditText input = new EditText(this);
+        input.setSingleLine(true);
+        input.setInputType(InputType.TYPE_CLASS_TEXT | InputType.TYPE_TEXT_VARIATION_URI);
+        input.setHint("https://alamat-tunnel.trycloudflare.com");
+        String existing = getSharedPreferences(PREFS, MODE_PRIVATE).getString(SERVER_KEY, "");
+        input.setText(existing);
+        new AlertDialog.Builder(this)
+            .setTitle("Alamat Server Abon Gulung Gembul")
+            .setMessage("Masukkan alamat HTTPS dari Cloudflare Tunnel. Jika aplikasi dibuka di HP server itu sendiri, gunakan http://127.0.0.1:8787.")
+            .setView(input)
+            .setCancelable(false)
+            .setPositiveButton("Simpan & Hubungkan", (dialog, which) -> {
+                String url = input.getText().toString().trim().replaceAll("/+$", "");
+                android.net.Uri uri = android.net.Uri.parse(url);
+                boolean localHttp = "http".equalsIgnoreCase(uri.getScheme()) &&
+                    ("127.0.0.1".equals(uri.getHost()) || "localhost".equalsIgnoreCase(uri.getHost()));
+                boolean secureHttps = "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null;
+                if (!localHttp && !secureHttps) {
+                    Toast.makeText(this, "Gunakan alamat HTTPS yang valid, atau HTTP localhost untuk HP server.", Toast.LENGTH_LONG).show();
+                    showServerUrlDialog();
+                    return;
+                }
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit().putString(SERVER_KEY, url).apply();
+                webView.loadUrl(url);
+            })
+            .setNeutralButton("Ubah alamat", (dialog, which) -> {
+                getSharedPreferences(PREFS, MODE_PRIVATE).edit().remove(SERVER_KEY).apply();
+                showServerUrlDialog();
+            })
+            .show();
+    }
+
     @Override public void onBackPressed() {
         if (webView != null && webView.canGoBack()) webView.goBack();
-        else super.onBackPressed();
+        else showServerUrlDialog();
     }
 
     @Override protected void onDestroy() {
