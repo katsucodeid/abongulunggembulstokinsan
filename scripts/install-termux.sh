@@ -7,7 +7,7 @@ if [ ! -d abongulunggembulstokinsan ]; then
   git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
 fi
 cd abongulunggembulstokinsan/backend
-npm install
+npm install --no-audit --no-fund --package-lock=false
 touch .env
 if ! grep -q '^JWT_SECRET=.' .env; then
   echo "JWT_SECRET=$(openssl rand -hex 32)" >> .env
