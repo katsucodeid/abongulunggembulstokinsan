@@ -91,7 +91,7 @@ git pull --ff-only origin "$BRANCH"
 
 write_status "installing" "Kode terbaru diterapkan. Memasang dependensi Node.js dan memeriksa sintaks…"
 cd "$BACKEND"
-npm install --no-audit --no-fund
+npm install --no-audit --no-fund --package-lock=false
 node --check server.js
 node --check daily-reports.js
 node --check management.js
