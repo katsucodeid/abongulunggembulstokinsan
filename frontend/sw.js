@@ -1,4 +1,4 @@
-const CACHE = "gembul-stok-v33-theme-toggle";
+const CACHE = "gembul-stok-v34-color-palettes";
 const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json", "./icon.svg"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
