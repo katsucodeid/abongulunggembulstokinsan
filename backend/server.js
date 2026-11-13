@@ -353,5 +353,30 @@ async function start() {
     }
     process.exit(1);
   });
+
+  const gracefulShutdown = signal => {
+    console.log(signal + " diterima. Menyelesaikan permintaan dan menyimpan database sebelum server berhenti…");
+    dailyReports.stop();
+    const forceExit = setTimeout(() => {
+      console.error("Batas waktu shutdown tercapai; proses dihentikan.");
+      process.exit(1);
+    }, 15000);
+    forceExit.unref();
+    server.close(async error => {
+      try {
+        await writeQueue;
+        await persist();
+        console.log("Database tersimpan. Server siap diperbarui/dihentikan.");
+        clearTimeout(forceExit);
+        process.exit(error ? 1 : 0);
+      } catch (saveError) {
+        console.error("Gagal menyelesaikan penyimpanan saat shutdown:", saveError);
+        clearTimeout(forceExit);
+        process.exit(1);
+      }
+    });
+  };
+  process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.once("SIGINT", () => gracefulShutdown("SIGINT"));
 }
 start().catch(err => { console.error(err); process.exit(1); });
