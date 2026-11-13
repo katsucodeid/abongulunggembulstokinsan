@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
@@ -19,7 +18,6 @@ const REPORT_DIR = process.env.REPORT_DIR || path.join(os.homedir(), "storage", 
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/install-termux.sh."); process.exit(1); }
-app.use(cors());
 app.use(express.json({ limit: "25mb" }));
 
 const itemDefs = {
