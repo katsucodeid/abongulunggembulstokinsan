@@ -18,7 +18,7 @@ const REPO_DIR = path.resolve(__dirname, "..");
 const REPORT_DIR = process.env.REPORT_DIR || path.join(os.homedir(), "storage", "downloads", "Abon Gulung Gembul");
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/termux-install.sh."); process.exit(1); }
+if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/install-termux.sh."); process.exit(1); }
 app.use(cors());
 app.use(express.json({ limit: "25mb" }));
 
@@ -30,10 +30,6 @@ const itemDefs = {
   mika: { label: "Mika roti roll", min: null }
 };
 const initialStock = { box3: 3897, box5outer: 3463, box5inner: 3595, paper: 1722, mika: 210 };
-const legacyDefaultStocks = [
-  { box3: 0, box5outer: 0, box5inner: 3595, paper: 1722, mika: 210 },
-  { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 }
-];
 let db;
 let writeQueue = Promise.resolve();
 
@@ -302,14 +298,7 @@ async function start() {
     }
   }
   db.stock = { ...initialStock, ...(db.stock || {}) };
-  // One-time migration: replace only the untouched legacy opening balances.
-  // Never overwrite a live inventory or any database with recorded transactions.
-  const hasTransactions = Array.isArray(db.transactions) && db.transactions.length > 0;
-  const matchesLegacyDefaults = legacyDefaultStocks.some(legacy => Object.keys(initialStock).every(key => db.stock[key] === legacy[key]));
-  if (!hasTransactions && matchesLegacyDefaults) {
-    db.stock = { ...initialStock };
-    db.stockStartDate = "2026-11-11";
-  }
+  // Preserve every existing stock value; only missing item keys receive defaults.
   db.stockStartDate ||= "2026-11-11";
   db.users ||= []; db.transactions ||= []; db.processed ||= [];
   if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD && !db.users.some(x => x.username === process.env.ADMIN_USERNAME)) {
