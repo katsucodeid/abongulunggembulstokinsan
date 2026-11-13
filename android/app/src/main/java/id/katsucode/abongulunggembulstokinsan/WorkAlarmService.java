@@ -5,7 +5,7 @@ import android.content.*;
 import android.media.*;
 import android.net.Uri;
 import android.os.*;
-import androidx.core.app.NotificationCompat;
+
 import java.io.File;
 
 public class WorkAlarmService extends Service {
@@ -28,11 +28,11 @@ public class WorkAlarmService extends Service {
         if(intent!=null && ACTION_STOP.equals(intent.getAction())){stopPlayback();stopForeground(true);stopSelf();return START_NOT_STICKY;}
         Intent stop=new Intent(this,WorkAlarmService.class).setAction(ACTION_STOP);
         PendingIntent stopPi=PendingIntent.getService(this,2,stop,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
-        Notification n=new NotificationCompat.Builder(this,CHANNEL)
-            .setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("Waktunya pulang!")
-            .setContentText("Alarm kerja sedang berbunyi").setPriority(NotificationCompat.PRIORITY_MAX)
-            .setCategory(NotificationCompat.CATEGORY_ALARM).setOngoing(true)
-            .addAction(android.R.drawable.ic_media_pause,"Matikan alarm",stopPi).build();
+        Notification.Builder builder = Build.VERSION.SDK_INT >= 26 ? new Notification.Builder(this, CHANNEL) : new Notification.Builder(this);
+        builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("Waktunya pulang!")
+            .setContentText("Alarm kerja sedang berbunyi").setOngoing(true)
+            .addAction(android.R.drawable.ic_media_pause,"Matikan alarm",stopPi);
+        Notification n = builder.build();
         startForeground(4103,n);
         try{
             File tone=new File(getFilesDir(),"work-alarm-tone");
@@ -41,7 +41,7 @@ public class WorkAlarmService extends Service {
                 player=new MediaPlayer();
                 player.setAudioAttributes(new AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_ALARM).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build());
                 player.setDataSource(tone.getAbsolutePath());player.setLooping(true);
-                player.setOnPreparedListener(MediaPlayer::start);player.prepareAsync();
+                player.setOnPreparedListener(mp -> mp.start());player.prepareAsync();
             }
         }catch(Exception e){android.util.Log.e("WorkAlarm","Tidak dapat memutar nada",e);}
         return START_STICKY;
