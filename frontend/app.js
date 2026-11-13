@@ -11,8 +11,9 @@ async function queueAdd(op){const d=await openDB();return new Promise((resolve,r
 async function queueRemove(ids){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite"),s=t.objectStore(QUEUE);ids.forEach(id=>s.delete(id));t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
 function newId(){return (crypto.randomUUID?crypto.randomUUID():"tx-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
 function setStatus(text,kind="muted"){$("connection").textContent=text;$("connection").className=kind;}
-function themeInit(){if(localStorage.getItem("insan_theme")==="light")document.documentElement.classList.add("light");}
-function toggleTheme(){document.documentElement.classList.toggle("light");localStorage.setItem("insan_theme",document.documentElement.classList.contains("light")?"light":"dark");}
+function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff5e6":"#24130e");}
+function themeInit(){let saved="dark";try{saved=localStorage.getItem("insan_theme")||"dark";}catch{}applyTheme(saved);}
+function toggleTheme(){applyTheme(document.documentElement.classList.contains("light")?"dark":"light");}
 async function api(path,opts={}){const r=await fetch(API+"/api"+path,{...opts,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json();}catch{}if(!r.ok){const e=new Error(d.error||"Permintaan gagal");e.status=r.status;throw e;}return d;}
 function showLogin(){ $("login").classList.remove("hidden");$("app").classList.add("hidden");}
 function showApp(){ $("login").classList.add("hidden");$("app").classList.remove("hidden");}
@@ -259,7 +260,7 @@ $("stockOpnameMsg").textContent="Berhasil! Hanya bagian *INSAN* yang diperbarui 
 }
 async function copyReport(){try{await navigator.clipboard.writeText($("reportText").value);alert("Laporan disalin.");}catch{$("reportText").select();document.execCommand("copy");alert("Laporan disalin.");}}
 function updateLiveClock(){const now=new Date();const time=$("liveClock"),date=$("liveDate");if(time)time.textContent=new Intl.DateTimeFormat("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);if(date)date.textContent=new Intl.DateTimeFormat("id-ID",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}).format(now);}
-themeInit();updateLiveClock();setInterval(updateLiveClock,1000);
+themeInit();$("themeToggle")?.addEventListener("click",toggleTheme);updateLiveClock();setInterval(updateLiveClock,1000);
 $("prodDate").value=new Date().toISOString().slice(0,10);
 if("serviceWorker" in navigator && location.protocol!=="file:")navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
 window.addEventListener("online",()=>{setStatus("Koneksi tersedia · memperbarui data…");refresh();});
