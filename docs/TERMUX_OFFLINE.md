@@ -13,8 +13,8 @@ Pasang Termux dari F-Droid atau sumber resmi Termux. Buka Termux, lalu jalankan:
 ```bash
 pkg update && pkg upgrade -y
 pkg install git nodejs-lts openssl -y
-git clone https://github.com/katsucodeid/insan-stock-manager.git
-cd insan-stock-manager
+git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
+cd abongulunggembulstokinsan
 bash scripts/install-termux.sh
 ```
 
@@ -22,7 +22,7 @@ Catat username dan password admin yang ditampilkan. Jangan bagikan file `backend
 
 ## Menjalankan server
 ```bash
-cd ~/insan-stock-manager
+cd ~/abongulunggembulstokinsan
 bash scripts/start-termux.sh
 ```
 Buka browser pada HP server: `http://127.0.0.1:8787`. Untuk perangkat lain pada Wi-Fi/hotspot yang sama, gunakan `http://IP-LOKAL-HP:8787`. Cari IP dengan `ip -4 addr show wlan0`.
@@ -39,7 +39,7 @@ Buka browser pada HP server: `http://127.0.0.1:8787`. Untuk perangkat lain pada 
 Agar dapat diakses melalui internet, HP server harus memiliki koneksi internet dan Termux + server tetap berjalan. Jika cloudflared yang kompatibel tersedia di Termux:
 
 ```bash
-cd ~/insan-stock-manager
+cd ~/abongulunggembulstokinsan
 bash scripts/start-tunnel.sh
 ```
 
@@ -55,14 +55,14 @@ Quick Tunnel dan tunnel internet tidak akan dapat bekerja ketika HP server kehil
 Install add-on Termux:Boot dari sumber instalasi Termux yang sama. Buka Termux:Boot satu kali, lalu di Termux jalankan:
 
 ```bash
-cd ~/insan-stock-manager
+cd ~/abongulunggembulstokinsan
 bash scripts/install-boot.sh
 ```
 
 Panduan resmi: https://github.com/termux/termux-boot#readme. Android dapat membatasi proses latar belakang; izinkan Termux berjalan tanpa optimasi baterai. `termux-wake-lock` membantu menjaga CPU aktif tetapi menguras baterai. Mulai otomatis bukan jaminan Android tidak akan menghentikan proses.
 
 ## Backup dan keamanan
-- Backup database: salin `~/insan-stock-manager/backend/data/data.json` secara berkala ke lokasi aman.
+- Backup database: salin `~/abongulunggembulstokinsan/backend/data/data.json` secara berkala ke lokasi aman.
 - Jangan hapus folder `backend/data` saat memperbarui kode.
 - Jangan commit `.env` atau `data.json` ke GitHub.
 - Sistem ini menyimpan data utama di HP server. Jika HP rusak/hilang tanpa backup, data server berisiko hilang.
@@ -71,7 +71,7 @@ Panduan resmi: https://github.com/termux/termux-boot#readme. Android dapat memba
 
 ## Pembaruan kode
 ```bash
-cd ~/insan-stock-manager
+cd ~/abongulunggembulstokinsan
 git pull
 cd backend && npm install
 ```
