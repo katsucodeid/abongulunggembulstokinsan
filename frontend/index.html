@@ -339,12 +339,12 @@ button.danger{background:#b9382d;color:#fff}
 }
 
 </style></head><body>
-<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
-<section id="login" class="panel"><div class="login-brand"><img src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
+<section id="login" class="panel"><div class="login-brand"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
-<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Offline lokal · satu perangkat <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
 <nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
 <div id="alarm" class="tab panel hidden">
 <style>
@@ -378,13 +378,7 @@ button.danger{background:#b9382d;color:#fff}
 <div class="alarm-section-head"><h3>🎵 Semua nada</h3><span class="alarm-note">Pilih nama untuk melihat kontrol</span></div>
 <div class="tone-tools"><input id="alarmToneSearch" type="search" placeholder="Cari nada dering…" aria-label="Cari nada dering"><select id="alarmToneFilter" aria-label="Filter nada"><option value="all">Semua nada</option><option value="downloaded">Sudah diunduh</option><option value="available">Belum diunduh</option></select></div>
 <div id="alarmToneLibrary" class="tone-list"></div>
-<div class="alarm-section-head"><h3>🎭 Nada lucu dari Pixabay</h3><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Buka Pixabay ↗</a></div>
-<p class="alarm-note">Pilih suara di Pixabay lalu tekan Free Download. Setelah file tersimpan, impor melalui pemilih file di bawah untuk menggunakannya sebagai nada alarm.</p>
-<div class="tone-list">
-<article class="tone-row"><div class="tone-name">Funny Alarm <span class="tone-sub">Alarm kartun lucu · Efecto Fundador</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-funny-alarm-75649/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Alarm &amp; Notification <span class="tone-sub">Efek notifikasi singkat</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-notification-20-270145/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Koleksi alarm lucu lainnya</div><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Lihat daftar ↗</a></article>
-</div>
+<div class="alarm-section-head"><h3>🎵 Nada alarm dari perangkat</h3></div><p class="alarm-note">Mode offline: gunakan file audio yang sudah tersimpan di HP. Tidak ada unduhan atau pemuatan suara dari internet.</p>
 <label for="customAlarmToneFile">Impor nada dari perangkat (MP3/WAV/OGG/M4A/AAC)</label><input id="customAlarmToneFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac">
 <div class="alarm-section-head"><h3>⬇ Nada tersimpan di perangkat</h3><span class="alarm-note" id="downloadedToneSummary">0 nada</span></div>
 <p class="alarm-note">Nada tersimpan pada penyimpanan browser perangkat ini. Hindari menghapus data situs agar nada tetap tersedia.</p><div id="downloadedAlarmTones" class="tone-list"></div>
@@ -422,18 +416,14 @@ button.danger{background:#b9382d;color:#fff}
 <article class="history-card"><b>🧾 Riwayat transaksi</b><p class="muted">Telusuri transaksi barang masuk, pengurangan stok, dan produksi.</p></article>
 <article class="history-card"><b>✍️ Stok manual</b><p class="muted">Catat penyesuaian stok secara manual sesuai hak akses akun.</p></article>
 <article class="history-card"><b>👥 Admin &amp; staff</b><p class="muted">Pemisahan akses pengguna berdasarkan peran akun.</p></article>
-<article class="history-card"><b>🔄 Pembaruan aplikasi</b><p class="muted">Periksa versi terbaru dari GitHub dan jalankan update oleh admin.</p></article>
+<article class="history-card"><b>🔄 Pembaruan aplikasi</b><p class="muted">Pembaruan kode dilakukan manual saat perangkat sengaja dihubungkan ke internet; operasional stok tetap offline.</p></article>
 </div>
 <h3>Keunggulan</h3>
-<ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
-<h3>Commit terbaru dari GitHub</h3>
-<p class="hint">Lihat commit pada branch main. Admin dapat menerapkan commit terbaru setelah memastikan antrean transaksi sudah tersinkron.</p>
-<p id="latestCommitStatus" class="muted">Memuat commit terbaru…</p>
-<div id="latestCommitList"></div>
-<button id="applyLatestCommit" onclick="applyUpdate()" hidden>Terapkan commit terbaru</button>
+<ul><li><b>Sepenuhnya offline:</b> aplikasi bekerja tanpa internet pada satu HP Android.</li><li><b>Database lokal:</b> data utama tersimpan di Termux dan salinan TXT diperbarui otomatis ke folder Download.</li><li><b>Laporan harian:</b> setiap pergantian tanggal pukul 00.00 dibuat file laporan TXT.</li><li><b>Cadangan otomatis:</b> database dicadangkan sebelum laporan harian dibuat.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
+<h3>Pembaruan aplikasi</h3><p class="hint">Operasional aplikasi ini sepenuhnya lokal. Tidak ada pemeriksaan pembaruan otomatis ke internet. Jika ingin memperbarui kode, lakukan secara manual dan buat cadangan database terlebih dahulu.</p>
 <h3>Riwayat perubahan versi</h3>
 <p class="hint">Daftar berikut diambil dari riwayat commit repository yang sedang terpasang. Setelah admin memasang pembaruan, buka kembali halaman ini untuk melihat perubahan yang ikut terpasang.</p>
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
 <button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
 </div>
-</section></main><footer class="app-footer"><img class="footer-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
+</section></main><footer class="app-footer"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
