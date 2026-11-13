@@ -1,6 +1,6 @@
-# Abon Gulung Gembul — Stok Kertas (Offline)
+# Abon Gulung Gembul — Stok Kertas (Server Termux, Multi-Device)
 
-Aplikasi stok lokal untuk satu perangkat Android. Backend Node.js berjalan di Termux dan hanya menerima koneksi dari perangkat yang sama melalui 127.0.0.1. Tidak memakai Render, Cloudflare Tunnel, Ngrok, VPS, atau server internet.
+Satu HP Android milik pemilik menjalankan backend Node.js di Termux sebagai server utama. HP karyawan/pengguna lain cukup membuka aplikasi melalui browser atau memasang APK klien; mereka tidak perlu memasang Termux. Semua perangkat harus terhubung ke Wi-Fi atau hotspot yang sama. Tidak memakai VPS, Render, Cloudflare Tunnel, atau Ngrok untuk mode jaringan lokal.
 
 ## Penyimpanan data
 
@@ -28,9 +28,11 @@ Saat diminta, izinkan Termux mengakses file dan media. Jika dialog izin tidak mu
 
     bash ~/abongulunggembulstokinsan/scripts/start-termux.sh
 
-Biarkan sesi Termux berjalan. Buka aplikasi Android Abon Gulung Gembul pada HP yang sama. Aplikasi mengakses backend lokal melalui http://127.0.0.1:8787.
+Biarkan sesi Termux berjalan. Buka aplikasi Android Abon Gulung Gembul pada HP yang sama. Aplikasi pada HP server mengakses backend lokal melalui `http://127.0.0.1:8787`.
 
-Untuk browser HP yang sama, buka alamat tersebut. Perangkat lain tidak dapat mengakses server ini, walaupun berada pada Wi-Fi yang sama.
+Untuk HP utama, buka `http://127.0.0.1:8787`. Untuk perangkat lain yang terhubung ke Wi-Fi/hotspot yang sama, lihat alamat LAN yang dicetak Termux saat server mulai, misalnya `http://192.168.1.20:8787`, lalu buka alamat itu di browser perangkat tersebut. Alamat IP dapat berubah ketika jaringan berganti.
+
+Admin harus membuat akun masing-masing melalui fitur Pengguna. Login setiap perangkat menggunakan akun tersebut. Jangan membagikan akun admin. Semua perubahan tersimpan di database utama HP server. Jika HP utama, Termux, atau jaringan lokal mati, perangkat lain tidak dapat mengambil data terbaru; transaksi offline yang tersimpan di perangkat dapat menunggu koneksi untuk disinkronkan. Hindari mengedit stok yang sama secara bersamaan saat perangkat terputus dari server.
 
 ## Cadangan dan keamanan
 
