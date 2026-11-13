@@ -165,7 +165,10 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
           const details = [];
           if (packaging.box5) details.push(formatNumber(packaging.box5) + " Box isi 5");
           if (packaging.box3) details.push(formatNumber(packaging.box3) + " Box isi 3");
-          if (details.length) lines.push("  (" + details.join(", ") + ")");
+          if (details.length) {
+            const lineIndex = lines.length - 1;
+            lines[lineIndex] += " ( " + details.join(",") + " )";
+          }
         }
       }
       lines.push("-----------------------------", "");
