@@ -1,0 +1,20 @@
+{
+  "id": "./",
+  "name": "Abon Gulung Gembul - Stok Kertas",
+  "short_name": "Gembul Stok",
+  "description": "Sistem persediaan kertas, produksi, dan operasional Abon Gulung Gembul.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff8ef",
+  "theme_color": "#bd4e1c",
+  "orientation": "portrait",
+  "icons": [
+    {
+      "src": "https://files.catbox.moe/jfx0d1.png",
+      "sizes": "any",
+      "type": "image/png",
+      "purpose": "any"
+    }
+  ]
+}
