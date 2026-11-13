@@ -3,10 +3,10 @@ set -e
 pkg update -y
 pkg install -y nodejs-lts git openssl
 cd "$HOME"
-if [ ! -d insan-stock-manager ]; then
-  git clone https://github.com/katsucodeid/insan-stock-manager.git
+if [ ! -d abongulunggembulstokinsan ]; then
+  git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
 fi
-cd insan-stock-manager/backend
+cd abongulunggembulstokinsan/backend
 npm install
 touch .env
 if ! grep -q '^JWT_SECRET=.' .env; then
@@ -31,4 +31,4 @@ else
   echo "Konfigurasi admin yang sudah ada tetap dipakai dari backend/.env."
 fi
 echo
-echo "Instalasi selesai. Jalankan: bash ~/insan-stock-manager/scripts/start-termux.sh"
+echo "Instalasi selesai. Jalankan: bash ~/abongulunggembulstokinsan/scripts/start-termux.sh"
