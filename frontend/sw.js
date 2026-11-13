@@ -1,5 +1,5 @@
-const CACHE = "gembul-stok-v35-developer-profile";
-const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json", "./icon.svg"];
+const CACHE = "gembul-stok-v36-original-logo";
+const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json", "./icon.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
