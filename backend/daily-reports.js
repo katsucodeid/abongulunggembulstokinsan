@@ -71,7 +71,7 @@ async function backupExistingDatabase(dataFile, reportDir) {
 async function mirrorDatabase(database, reportDir) {
   await ensureReportDirectory(reportDir);
   const destination = path.join(reportDir, "database-stok.txt");
-  const temporary = destination + "." + process.pid + ".tmp";
+  const temporary = destination + "." + process.pid + "." + require("crypto").randomUUID() + ".tmp";
   const body = [
     "DATABASE LOKAL ABON GULUNG GEMBUL",
     "Salinan otomatis dari database Termux. Jangan edit file ini secara manual.",
@@ -97,6 +97,9 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
     const transactions = (database.transactions || [])
       .filter(tx => String(tx.date || "") === dateKey)
       .sort((a, b) => String(a.createdAt || "").localeCompare(String(b.createdAt || "")));
+    const auditEntries = (database.auditLog || [])
+      .filter(entry => entry.at && localDateKey(new Date(entry.at)) === dateKey)
+      .sort((a, b) => String(a.at || "").localeCompare(String(b.at || "")));
     const dailyChanges = Object.fromEntries(Object.keys(itemDefs).map(key => [key, 0]));
     const laterChanges = Object.fromEntries(Object.keys(itemDefs).map(key => [key, 0]));
 
@@ -169,10 +172,22 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
       if (changes.length) lines.push("   Perubahan: " + changes.join("; "));
     });
 
+    lines.push("", "PERUBAHAN DATABASE / RIWAYAT AUDIT", "Jumlah perubahan tercatat: " + auditEntries.length);
+    if (!auditEntries.length) lines.push("Tidak ada perubahan pengaturan atau akun pada tanggal ini.");
+    auditEntries.forEach((entry, index) => {
+      const time = new Date(entry.at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
+      const details = entry.details && Object.keys(entry.details).length
+        ? JSON.stringify(entry.details)
+        : "-";
+      lines.push((index + 1) + ". " + time + " — " + entry.action +
+        " | Pengguna: " + (entry.username || "system") +
+        " | Detail: " + details);
+    });
+
     lines.push(
       "",
       "CATATAN",
-      "- Laporan ini dibuat otomatis dari transaksi yang tersimpan pada database lokal Termux.",
+      "- Laporan ini dibuat otomatis dari transaksi dan riwayat perubahan database lokal Termux.",
       "- File database utama tetap berada di folder backend/data pada Termux.",
       "- Salinan database terbaru: database-stok.txt",
       "",
