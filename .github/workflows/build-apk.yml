@@ -1,4 +1,4 @@
-name: Build INSAN Stock Manager APK
+name: Build Abon Gulung Gembul APK
 
 on:
   push:
@@ -35,12 +35,12 @@ jobs:
       - name: Download and generate launcher icon
         run: |
           python -m pip install --upgrade Pillow
-          mkdir -p /tmp/insan-icon
-          curl --fail --location --retry 3 --retry-delay 2 "https://files.catbox.moe/jfx0d1.png" -o /tmp/insan-icon/source.png
+          mkdir -p /tmp/gembul-icon
+          curl --fail --location --retry 3 --retry-delay 2 "https://files.catbox.moe/jfx0d1.png" -o /tmp/gembul-icon/source.png
           python - <<'PY'
           from PIL import Image
           from pathlib import Path
-          source = Image.open("/tmp/insan-icon/source.png").convert("RGBA")
+          source = Image.open("/tmp/gembul-icon/source.png").convert("RGBA")
           sizes = {"mdpi": 48, "hdpi": 72, "xhdpi": 96, "xxhdpi": 144, "xxxhdpi": 192}
           root = Path("android/app/src/main/res")
           for density, size in sizes.items():
