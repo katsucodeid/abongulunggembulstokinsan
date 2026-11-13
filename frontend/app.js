@@ -179,7 +179,7 @@ function checkForUpdates(){
 const updateDelay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
 async function applyUpdate(){
   if(window.insanUpdateRunning)return;
-  if(!token){$("updateAppStatus").textContent="Login sebagai admin untuk memperbarui aplikasi.";return;}
+  if(!token||cachedUser?.role!=="admin"){if($("updateAppStatus"))$("updateAppStatus").textContent="Fitur pembaruan hanya dapat dijalankan oleh admin.";return;}
   window.insanUpdateRunning=true;
   const button=$("updateAppButton"),status=$("updateAppStatus"),overlay=$("updateProgress");
   if(button)button.disabled=true;
@@ -205,10 +205,9 @@ async function applyUpdate(){
           location.reload();
           return;
         }
-        if(result.status==="failed")throw new Error(result.message||"Pembaruan gagal.");
+        if(result.status==="failed"){const failure=new Error(result.message||"Pembaruan gagal.");failure.isUpdateFailure=true;throw failure;}
       }catch(error){
-        if(error.status===401||error.status===403)throw error;
-        if(error.message==="Pembaruan gagal.")throw error;
+        if(error.status===401||error.status===403||error.isUpdateFailure)throw error;
         if(message)message.textContent="Server sedang dimulai ulang. Menunggu server lokal kembali aktif…";
       }
       await updateDelay(1600);
