@@ -1,4 +1,5 @@
 name: Build Abon Gulung Gembul APK
+# Rebuild the Android wrapper after each offline UI and Termux updater change.
 
 on:
   pull_request:
