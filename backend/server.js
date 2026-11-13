@@ -255,7 +255,7 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
 app.get("/api/update/check", auth, async (req, res) => {
   try {
     const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
-    const response = await fetch("https://api.github.com/repos/${GITHUB_REPO}/commits/main", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/main`, { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
     if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
     const latest = await response.json();
     res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
@@ -263,7 +263,7 @@ app.get("/api/update/check", auth, async (req, res) => {
 });
 app.get("/api/update/commits", auth, async (req, res) => {
   try {
-    const response = await fetch("https://api.github.com/repos/${GITHUB_REPO}/commits?sha=main&per_page=10", {
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?sha=main&per_page=10`, {
       headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" }
     });
     if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
