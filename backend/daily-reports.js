@@ -119,71 +119,94 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
       opening[key] = closing[key] - dailyChanges[key];
     }
 
-    const lines = [
-      "LAPORAN HARIAN STOK — ABON GULUNG GEMBUL",
-      "Tanggal: " + dateKey.split("-").reverse().join("-"),
-      "File: " + reportFileName(dateKey),
-      "Dibuat otomatis oleh server lokal Termux pada pergantian hari pukul 00.00",
-      "",
-      "RINGKASAN STOK",
-      "Barang | Stok awal | Perubahan hari ini | Stok akhir"
+    const dateParts = dateKey.split("-").map(Number);
+    const dateLabel = String(dateParts[2]).padStart(2, "0") + " " +
+      MONTHS[dateParts[1] - 1] + " " + dateParts[0];
+    const outletOrder = ["Harapan Indah", "Grand Wisata", "Bektim"];
+    const variants = [
+      ["ori", "Ori"], ["beef", "Beef"], ["spicy", "Spicy"], ["cheese", "Cheese"]
     ];
-
-    for (const [key, definition] of Object.entries(itemDefs)) {
-      const delta = dailyChanges[key];
-      const signed = delta > 0 ? "+" + formatNumber(delta) : formatNumber(delta);
-      lines.push(
-        definition.label + " | " + formatNumber(opening[key]) +
-        " | " + signed + " pcs | " + formatNumber(closing[key]) + " pcs"
-      );
+    const productionByOutlet = new Map();
+    for (const tx of transactions.filter(entry => entry.type === "production")) {
+      const outlet = tx.location || "Outlet tidak diketahui";
+      if (!productionByOutlet.has(outlet)) productionByOutlet.set(outlet, []);
+      productionByOutlet.get(outlet).push(tx);
     }
 
-    lines.push("", "AKTIVITAS HARIAN", "Total aktivitas: " + transactions.length);
-    if (!transactions.length) lines.push("Tidak ada target atau perubahan stok pada tanggal ini.");
-
-    transactions.forEach((tx, index) => {
-      const time = tx.createdAt ? new Date(tx.createdAt).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" }) : "--:--";
-      lines.push("", (index + 1) + ". " + time + " — " + (
-        tx.type === "production" ? "TARGET PRODUKSI" :
-        tx.type === "stock-in" ? "BARANG MASUK" :
-        tx.type === "stock-out" ? "PENGURANGAN STOK" : String(tx.type || "AKTIVITAS").toUpperCase()
-      ));
-      lines.push("   Dibuat oleh: " + (tx.createdBy || "Tidak diketahui"));
-      if (tx.location) lines.push("   Outlet: " + tx.location);
-      if (tx.type === "production") {
-        lines.push("   Target: Ori " + formatNumber(tx.lines?.ori) +
-          ", Beef " + formatNumber(tx.lines?.beef) +
-          ", Spicy " + formatNumber(tx.lines?.spicy) +
-          ", Cheese " + formatNumber(tx.lines?.cheese) +
-          " (Total " + formatNumber(tx.lines?.total) + " loyang)");
-        if (tx.lines?.requestNote) lines.push("   Request: " + tx.lines.requestNote);
-      } else if (tx.type === "stock-in") {
-        lines.push("   Barang: " + (itemDefs[tx.lines?.item]?.label || tx.lines?.item || "-") +
-          ", masuk " + formatNumber(tx.lines?.total) + " pcs");
-      } else if (tx.type === "stock-out") {
-        lines.push("   Barang: " + (itemDefs[tx.lines?.item]?.label || tx.lines?.item || "-") +
-          ", keluar " + formatNumber(tx.lines?.quantity) + " pcs");
-        if (tx.lines?.reason) lines.push("   Alasan: " + tx.lines.reason);
+    const lines = [
+      "Target ( " + dateLabel + " )",
+      ""
+    ];
+    const outlets = [
+      ...outletOrder.filter(name => productionByOutlet.has(name)),
+      ...[...productionByOutlet.keys()].filter(name => !outletOrder.includes(name))
+    ];
+    if (!outlets.length) lines.push("Belum ada target produksi pada tanggal ini.");
+    for (const outlet of outlets) {
+      const outletTransactions = productionByOutlet.get(outlet) || [];
+      const totals = Object.fromEntries(variants.map(([key]) => [key, 0]));
+      for (const tx of outletTransactions) {
+        for (const [key] of variants) totals[key] += Number(tx.lines?.[key] || 0);
       }
-      if (tx.note) lines.push("   Catatan: " + tx.note);
-      const changes = Object.entries(tx.changes || {})
-        .filter(([, value]) => value)
-        .map(([key, value]) => (itemDefs[key]?.label || key) + " " + (value > 0 ? "+" : "") + formatNumber(value) + " pcs");
-      if (changes.length) lines.push("   Perubahan: " + changes.join("; "));
-    });
+      const total = Object.values(totals).reduce((sum, value) => sum + value, 0);
+      lines.push("› " + outlet + " | Total " + formatNumber(total) + " Loyang", "");
+      for (const [key, label] of variants) {
+        if (!totals[key]) continue;
+        lines.push("~ " + label + " - " + formatNumber(totals[key]) + " Loyang");
+        const packaging = outletTransactions.reduce((sum, tx) => {
+          const entry = tx.lines?.packagingByVariant?.[key];
+          if (!entry) return sum;
+          sum.box3 += Number(entry.box3 || 0);
+          sum.box5 += Number(entry.box5 || 0);
+          sum.hasCustom = sum.hasCustom || entry.enabled === true;
+          return sum;
+        }, { box3: 0, box5: 0, hasCustom: false });
+        if (packaging.hasCustom) {
+          const details = [];
+          if (packaging.box5) details.push(formatNumber(packaging.box5) + " Box isi 5");
+          if (packaging.box3) details.push(formatNumber(packaging.box3) + " Box isi 3");
+          if (details.length) lines.push("  (" + details.join(", ") + ")");
+        }
+      }
+      lines.push("-----------------------------", "");
+    }
 
-    lines.push("", "PERUBAHAN DATABASE / RIWAYAT AUDIT", "Jumlah perubahan tercatat: " + auditEntries.length);
-    if (!auditEntries.length) lines.push("Tidak ada perubahan pengaturan atau akun pada tanggal ini.");
-    auditEntries.forEach((entry, index) => {
-      const time = new Date(entry.at).toLocaleTimeString("id-ID", { hour: "2-digit", minute: "2-digit" });
-      const details = entry.details && Object.keys(entry.details).length
-        ? JSON.stringify(entry.details)
-        : "-";
-      lines.push((index + 1) + ". " + time + " — " + entry.action +
-        " | Pengguna: " + (entry.username || "system") +
-        " | Detail: " + details);
-    });
+    const stockLabels = {
+      box3: "Box isi 3",
+      box5outer: "Box isi 5 luar",
+      box5inner: "Box isi 5 dalam",
+      paper: "Kertas Minyak",
+      mika: "Mika roti roll"
+    };
+    lines.push("Stok Sebelumnya:", "");
+    for (const [key, label] of Object.entries(stockLabels)) {
+      lines.push(label + " : " + formatNumber(opening[key]) + "pcs");
+    }
 
+    const used = Object.fromEntries(Object.keys(itemDefs).map(key => [key, 0]));
+    for (const tx of transactions) {
+      if (tx.type !== "production" && tx.type !== "stock-out") continue;
+      for (const [key, delta] of Object.entries(tx.changes || {})) {
+        if (Object.hasOwn(used, key) && Number.isSafeInteger(delta) && delta < 0) {
+          used[key] += Math.abs(delta);
+        }
+      }
+    }
+    lines.push("", "Jumlah Stok Terpakai:");
+    const usedEntries = Object.entries(used).filter(([, quantity]) => quantity > 0);
+    if (!usedEntries.length) lines.push("- Tidak ada pemakaian stok tercatat.");
+    else {
+      for (const [key, quantity] of usedEntries) {
+        lines.push("- " + stockLabels[key] + " : " + formatNumber(quantity) + "pcs");
+      }
+    }
+
+    lines.push("", "Jumlah:", "");
+    for (const [key, label] of Object.entries(stockLabels)) {
+      lines.push(label + " : " + formatNumber(opening[key]) + " - " +
+        formatNumber(used[key]) + " = " + formatNumber(closing[key]) + "pcs");
+    }
+    lines.push("", "Keterangan: Laporan Ini Dibuat Otomatis", "");
     lines.push(
       "",
       "CATATAN",
