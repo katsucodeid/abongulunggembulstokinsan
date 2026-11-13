@@ -1,43 +1,44 @@
 # Abon Gulung Gembul - Stok Insan
 
-Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Mendukung website/PWA dan aplikasi Android WebView dengan backend Node.js/Express, akun Admin/Staff, serta database JSON persisten.
+Aplikasi manajemen stok kemasan dan bahan untuk Abon Gulung Gembul. Mendukung Android, website/PWA, akun Admin/Staff, mode offline, backup, dan sinkronisasi ke satu server pusat.
 
-## Fitur
-- Dashboard dan pengelolaan stok.
-- Barang masuk, target produksi, laporan, riwayat, dan pengaturan.
-- Akun Admin/Staff; akun baru dibuat Admin (invite-only), tanpa pendaftaran publik.
-- Operasi offline melalui cache PWA dan antrean sinkronisasi IndexedDB.
-- Backup dan pemulihan database.
-- Website online dan aplikasi Android yang mengakses server pusat yang sama.
+## Akses online gratis menggunakan HP Android
 
-## Deploy online (Render)
+HP pemilik menjalankan backend Node.js dan database JSON melalui Termux. Cloudflare Quick Tunnel memberi alamat HTTPS publik tanpa Render/VPS atau port forwarding.
 
-Konfigurasi Blueprint tersedia di `render.yaml`. Ikuti panduan lengkap di [docs/DEPLOY_ONLINE.md](docs/DEPLOY_ONLINE.md).
+Panduan lengkap: [docs/TERMUX_PUBLIC_SERVER.md](docs/TERMUX_PUBLIC_SERVER.md).
 
-Ringkasnya:
-1. Merge perubahan online ke `main`.
-2. Di Render pilih **New > Blueprint** dan hubungkan repository ini.
-3. Atur `ADMIN_PASSWORD` yang kuat saat diminta Render.
-4. Deploy service. Data disimpan pada persistent disk di `/var/data`.
-5. Buka URL service dan login sebagai Admin. Admin membuat akun Staff dari menu manajemen pengguna.
-
-**Penting:** layanan memakai persistent disk berbayar dan harus dijalankan sebagai satu instance karena penyimpanan JSON saat ini tidak mendukung beberapa replica. Buat backup rutin.
-
-## Instalasi lokal Termux
-
+Ringkas:
 ```bash
 pkg update && pkg upgrade -y
-pkg install git nodejs-lts openssl -y
+pkg install git nodejs-lts openssl cloudflared -y
 git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
 cd abongulunggembulstokinsan
+bash scripts/install-termux.sh
+bash scripts/start-online-termux.sh
+```
+
+Salin alamat `https://....trycloudflare.com` yang tampil di Termux dan bagikan kepada pengguna. Semua perangkat memasukkan alamat yang sama. URL Quick Tunnel dapat berubah ketika tunnel dimulai ulang.
+
+## Akses pengguna dan keamanan
+
+- Invite-only: Admin membuat akun pengguna dari aplikasi; tidak ada pendaftaran publik.
+- Pengguna Staff tidak memperoleh hak Admin.
+- Semua perangkat menggunakan database yang sama pada HP server.
+- Buat backup rutin dan simpan salinan di luar HP server.
+- Hanya jalankan satu proses backend yang menulis file database.
+
+## Batasan server HP
+
+HP harus menyala, terhubung internet, dan Termux/tunnel harus tetap berjalan. Android dapat menghentikan proses latar belakang; ini bukan pengganti VPS untuk ketersediaan 24/7. Gunakan Wi-Fi, charger, dan izinkan Termux berjalan tanpa optimasi baterai.
+
+## Instalasi lokal
+
+```bash
 bash scripts/install-termux.sh
 bash scripts/start-termux.sh
 ```
 
-Buka `http://127.0.0.1:8787` untuk instalasi lokal.
-
-## Migrasi database lama
-
-Database lokal berada di `backend/data/data.json`. Buat backup dari aplikasi lama, deploy server online, lalu pulihkan backup melalui menu Admin. Panduan ada di [docs/DEPLOY_ONLINE.md](docs/DEPLOY_ONLINE.md).
+Buka `http://127.0.0.1:8787` pada HP server.
 
 **Jangan commit `.env`, `data.json`, token, password, atau file backup ke repository.**
