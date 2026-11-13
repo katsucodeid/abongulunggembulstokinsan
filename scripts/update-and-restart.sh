@@ -79,6 +79,7 @@ if [ -f "$DATA_DIR/data.json" ]; then
   cp -p "$DATA_DIR/data.json" "$REPORT_DIR/cadangan-sebelum-pembaruan-$STAMP.txt"
 fi
 write_status "fetching" "Mencadangkan database dan mengambil kode terbaru dari GitHub…"
+sleep 3
 
 git fetch --prune origin "$BRANCH"
 git pull --ff-only origin "$BRANCH"
