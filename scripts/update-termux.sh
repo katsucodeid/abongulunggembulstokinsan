@@ -1,9 +1,9 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
-ROOT="$HOME/insan-stock-manager"
+ROOT="$HOME/abongulunggembulstokinsan"
 OLD_PID="${1:-}"
 TARGET_COMMIT="${2:-}"
-LOG="$HOME/insan-stock-manager-update.log"
+LOG="$HOME/abongulunggembulstokinsan-update.log"
 exec >>"$LOG" 2>&1
 sleep 2
 cd "$ROOT"
