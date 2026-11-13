@@ -207,15 +207,6 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
         formatNumber(used[key]) + " = " + formatNumber(closing[key]) + "pcs");
     }
     lines.push("", "Keterangan: Laporan Ini Dibuat Otomatis", "");
-    lines.push(
-      "",
-      "CATATAN",
-      "- Laporan ini dibuat otomatis dari transaksi dan riwayat perubahan database lokal Termux.",
-      "- File database utama tetap berada di folder backend/data pada Termux.",
-      "- Salinan database terbaru: database-stok.txt",
-      "",
-      "Akhir laporan."
-    );
     return lines.join("\n") + "\n";
   }
 
