@@ -57,6 +57,7 @@ trap on_error ERR
 
 cd "$ROOT"
 mkdir -p "$DATA_DIR" "$REPORT_DIR"
+exec >> "$LOG_FILE" 2>&1
 if [ -z "$SERVER_PID" ] || ! [[ "$SERVER_PID" =~ ^[0-9]+$ ]]; then
   echo "PID server tidak valid." >&2
   exit 2
