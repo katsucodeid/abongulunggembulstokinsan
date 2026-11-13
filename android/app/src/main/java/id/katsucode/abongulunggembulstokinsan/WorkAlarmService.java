@@ -17,7 +17,7 @@ public class WorkAlarmService extends Service {
     @Override public void onCreate(){super.onCreate();createChannel();}
     private void createChannel(){
         if(Build.VERSION.SDK_INT>=26){
-            NotificationChannel ch=new NotificationChannel(CHANNEL,"Alarm kerja","high");
+            NotificationChannel ch=new NotificationChannel(CHANNEL,"Alarm kerja",NotificationManager.IMPORTANCE_HIGH);
             ch.setDescription("Alarm pengingat waktu pulang kerja");
             ch.setSound(null,null);
             ch.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
