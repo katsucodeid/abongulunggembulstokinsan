@@ -10,6 +10,9 @@ const { backupExistingDatabase, mirrorDatabase, createDailyReports } = require("
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
+// Bind to all interfaces so trusted devices on the same Wi-Fi/hotspot can connect.
+// Authentication remains mandatory for all data-changing and private API routes.
+const HOST = process.env.HOST || "0.0.0.0";
 const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
@@ -342,8 +345,15 @@ async function start() {
   await persist();
   const dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR, backupDir: BACKUP_DIR });
   await dailyReports.start();
-  const server = app.listen(PORT, "127.0.0.1", () => {
-    console.log(`Abon Gulung Gembul aktif secara offline di http://127.0.0.1:${PORT}`);
+  const server = app.listen(PORT, HOST, () => {
+    const interfaces = Object.values(os.networkInterfaces()).flat().filter(x => x && x.family === "IPv4" && !x.internal);
+    console.log(`Abon Gulung Gembul aktif di http://127.0.0.1:${PORT}`);
+    if (HOST === "0.0.0.0" || HOST === "::") {
+      console.log("Akses perangkat lain pada Wi-Fi/hotspot yang sama:");
+      interfaces.forEach(x => console.log(`  http://${x.address}:${PORT}`));
+      if (!interfaces.length) console.log("  Belum ada alamat jaringan. Sambungkan HP utama ke Wi-Fi/hotspot terlebih dahulu.");
+      console.log("Gunakan akun masing-masing yang dibuat admin; jangan bagikan akun admin.");
+    }
     console.log("Database Termux:", DATA_FILE);
     console.log("Laporan harian:", REPORT_DIR);
     console.log("Pencadangan database:", BACKUP_DIR);
