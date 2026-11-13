@@ -1,0 +1,439 @@
+<!doctype html>
+<html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta name="theme-color" content="#a94716"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
+<style>
+:root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
+:root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--text)}header{padding:18px;display:flex;justify-content:space-between;align-items:center;max-width:900px;margin:auto}main{max-width:900px;margin:auto;padding:0 16px 40px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px;margin:12px 0}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(145px,1fr));gap:10px}.muted{color:var(--muted);font-size:13px}.qty{font-size:25px;font-weight:750;margin-top:5px}.row{display:flex;gap:10px;flex-wrap:wrap}.row>*{flex:1;min-width:120px}input,select,button,textarea{font:inherit;border-radius:10px;padding:11px;border:1px solid var(--line);background:var(--bg);color:var(--text);width:100%;margin:5px 0}button{background:var(--accent);color:white;border:0;font-weight:650;cursor:pointer}.secondary{background:transparent;border:1px solid var(--line);color:var(--text)}label{font-size:13px;color:var(--muted)}h2{font-size:17px;margin:0 0 10px}.hint{padding:10px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--muted);font-size:13px;margin:8px 0 12px}.history-card{border:1px solid var(--line);border-radius:12px;padding:12px;margin:10px 0}.history-card .detail{font-size:13px;color:var(--muted);line-height:1.6;margin:7px 0}.danger{background:var(--danger);color:#fff}.hidden{display:none}.ok{color:#39c98a}.low{color:var(--danger)}textarea{min-height:190px}.tabs{display:flex;gap:7px;overflow:auto}.tabs button{min-width:100px}#connection{padding:8px 12px;border-radius:9px;background:var(--panel);margin:10px 0}small{color:var(--muted)}
+/* Penyegaran antarmuka */
+.panel{box-shadow:0 8px 24px rgba(0,0,0,.10)}
+input:focus,select:focus,textarea:focus{outline:2px solid var(--accent);outline-offset:1px}
+button{transition:transform .15s ease,filter .15s ease}
+button:active{transform:scale(.98)}
+.tabs{padding:4px 0 9px;scrollbar-width:thin}
+.tabs button{white-space:nowrap;border-radius:999px;padding:10px 15px}
+.variant-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin:12px 0}
+.variant-card{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:11px}
+.variant-card label{display:block;font-weight:650;color:var(--text);margin-bottom:5px}
+.variant-card input{font-size:20px;font-weight:700;margin:0}
+.production-total{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.production-total strong{font-size:22px;color:var(--accent)}
+#productionPreview{border-style:solid;background:var(--panel)}
+#productionPreview p{margin:8px 0 0;line-height:1.55}
+.outlet-target-card{background:var(--bg);border:1px solid var(--line);border-radius:13px;padding:13px;margin:12px 0}
+.outlet-target-heading{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px}
+.outlet-target-heading h3{font-size:16px;margin:0}
+.outlet-target-heading strong{font-size:14px;color:var(--accent)}
+.outlet-target-line{display:flex;justify-content:space-between;gap:12px;padding:8px 0;border-top:1px solid var(--line);font-size:14px}
+.outlet-target-line strong{font-variant-numeric:tabular-nums}
+@media(max-width:420px){.variant-grid{grid-template-columns:repeat(2,minmax(0,1fr))}.production-total strong{font-size:19px}}
+
+/* INSAN responsive refresh v2 */
+:root{scroll-behavior:smooth}
+body{min-height:100vh;background:radial-gradient(ellipse at 12% 0%,rgba(91,156,255,.12),transparent 34%),var(--bg);line-height:1.5}
+header{position:sticky;top:0;z-index:20;max-width:1120px;padding:14px 20px;background:color-mix(in srgb,var(--bg) 88%,transparent);backdrop-filter:blur(16px);border-bottom:1px solid color-mix(in srgb,var(--line) 65%,transparent)}
+header b{font-size:15px;letter-spacing:.055em}
+main{width:min(100%,1120px);padding:14px 20px max(44px,env(safe-area-inset-bottom))}
+.panel{border-radius:20px;padding:clamp(14px,2.2vw,22px);margin:14px 0;box-shadow:0 12px 34px rgba(0,0,0,.12)}
+#login{max-width:460px;margin:clamp(28px,8vh,90px) auto}
+#app>.row{align-items:center;padding:8px 2px}
+#app>.row>div{min-width:0}
+#connection{max-width:1120px;margin:12px auto 0;border:1px solid var(--line);border-radius:12px;padding:10px 14px}
+label{display:block;margin:8px 0 4px;font-weight:550;letter-spacing:.01em}
+input,select,button,textarea{min-height:46px;border-radius:12px;padding:11px 13px;margin:5px 0}
+input,select,textarea{border:1px solid var(--line);transition:border-color .18s,box-shadow .18s}
+input:focus,select:focus,textarea:focus{outline:0;border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 18%,transparent)}
+button{font-weight:700;letter-spacing:.01em;box-shadow:0 4px 12px rgba(0,0,0,.10)}
+button:hover{filter:brightness(1.07)}
+button:disabled{opacity:.55;cursor:not-allowed}
+.secondary{box-shadow:none;background:color-mix(in srgb,var(--panel) 82%,transparent)}
+.tabs{position:sticky;top:67px;z-index:12;margin:0 -4px 14px;padding:9px 4px 12px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);scroll-snap-type:x proximity}
+.tabs button{flex:0 0 auto;min-width:unset;padding:10px 16px;border:1px solid var(--line);background:var(--panel);color:var(--muted);box-shadow:none;scroll-snap-align:start}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(1),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(6){background:var(--accent);border-color:var(--accent);color:#fff}
+.grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:12px}
+#stockGrid>.panel{margin:0;background:linear-gradient(145deg,var(--panel),color-mix(in srgb,var(--panel) 78%,var(--accent)));border-radius:16px;box-shadow:none}
+.qty{font-size:clamp(23px,3vw,30px);letter-spacing:-.035em;font-variant-numeric:tabular-nums}
+.hint{border-radius:13px;line-height:1.55;padding:12px 14px}
+.history-card,.outlet-target-card{border-radius:15px;padding:14px}
+.variant-grid{gap:12px}
+.variant-card{border-radius:15px;padding:13px;transition:border-color .18s,transform .18s}
+.variant-card:focus-within{border-color:var(--accent);transform:translateY(-1px)}
+.variant-card input{font-size:clamp(20px,3vw,25px);min-height:52px}
+.production-total{padding:4px 0}
+.production-total strong{font-variant-numeric:tabular-nums;letter-spacing:-.03em}
+#productionPreview{border-radius:15px;padding:15px}
+.outlet-target-card{margin:12px 0;background:color-mix(in srgb,var(--panel) 75%,var(--bg))}
+.outlet-target-heading{align-items:flex-start}
+.outlet-target-heading strong{background:color-mix(in srgb,var(--accent) 14%,transparent);padding:5px 9px;border-radius:999px}
+textarea{resize:vertical;line-height:1.55}
+#reportText{font-family:ui-monospace,SFMono-Regular,Consolas,monospace}
+#updateNotice{border-color:color-mix(in srgb,var(--accent) 55%,var(--line))}
+.ok{color:#35c98a}.low{color:var(--danger)}
+@media(min-width:900px){main{padding-top:22px}.tabs{top:72px}.tab.panel{padding:24px}.variant-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:640px){
+ header{padding:11px 14px}main{padding:10px 12px max(34px,env(safe-area-inset-bottom))}
+ #connection{margin:10px 12px 0}
+ .panel{border-radius:16px;margin:10px 0}
+ #app>.row{gap:8px}
+ #app>.row>button{max-width:96px!important}
+ .tabs{top:60px;margin:0 -2px 10px;padding:8px 2px 10px}
+ .tabs button{padding:9px 13px;font-size:13px}
+ .row{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+ .row>*{min-width:0;width:100%}
+ .variant-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .variant-card{padding:10px}
+ .outlet-target-heading{align-items:center}
+ #production button,#incoming button,#manual button,#report button{width:100%}
+}
+@media(max-width:360px){
+ header b{font-size:13px}
+ main{padding-left:9px;padding-right:9px}
+ .variant-grid{gap:7px}
+ .variant-card{padding:8px}
+ .variant-card input{font-size:19px;padding:9px}
+ .production-total{align-items:flex-start;flex-direction:column;gap:2px}
+ .row{grid-template-columns:minmax(0,1fr)}
+}
+@media(prefers-reduced-motion:reduce){:root{scroll-behavior:auto}*,*::before,*::after{transition:none!important;animation:none!important}}
+
+
+/* Identitas visual Abon Gulung Gembul · INSAN × KatsuCode */
+body{background:radial-gradient(ellipse at 50% -12%,rgba(245,154,24,.19),transparent 42%),var(--bg)}
+header{max-width:1120px}
+.brand-lockup{display:flex;align-items:center;gap:12px;min-width:0}
+.brand-logo{width:58px;height:58px;object-fit:contain;flex:0 0 auto;filter:drop-shadow(0 5px 10px rgba(0,0,0,.22))}
+.brand-copy{min-width:0}
+.brand-copy b{display:block;font-size:clamp(13px,2vw,16px);letter-spacing:.045em;color:var(--text)}
+.brand-copy .muted{font-size:12px}
+.theme-toggle{flex:0 0 auto}
+.panel{box-shadow:0 12px 30px rgba(31,13,5,.16)}
+#stockGrid>.panel{background:linear-gradient(145deg,var(--panel),color-mix(in srgb,var(--panel) 76%,var(--accent)));border-color:color-mix(in srgb,var(--accent) 24%,var(--line))}
+button{background:var(--accent);color:#321809}
+.tabs button{color:var(--muted)}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(1),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(6){color:#321809}
+.production-total strong,.outlet-target-heading strong{color:var(--accent)}
+.outlet-target-heading strong{background:color-mix(in srgb,var(--accent) 18%,transparent)}
+.app-footer{max-width:1120px;margin:22px auto 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));text-align:center;border-top:1px solid var(--line);color:var(--muted)}
+.footer-brand{font-size:13px;font-weight:800;letter-spacing:.1em;color:var(--text)}
+.footer-credit{margin-top:7px;font-size:14px;color:var(--text)}
+.footer-credit span:first-child{color:#e45a3f;padding:0 3px}
+.footer-x{color:var(--accent);padding:0 4px;font-weight:800}
+.footer-note{font-size:11px;margin-top:5px}
+@media(max-width:420px){.brand-logo{width:48px;height:48px}.brand-lockup{gap:9px}.app-footer{padding-left:14px;padding-right:14px}}
+
+
+/* Burger navigation and app identity */
+.header-actions{display:flex;align-items:center;gap:9px;flex:0 0 auto}
+.menu-toggle{width:46px;height:44px;display:flex;flex-direction:column;justify-content:center;align-items:center;gap:5px;padding:8px;background:var(--panel);border:1px solid var(--line);border-radius:12px;box-shadow:none}
+.menu-toggle span{display:block;width:21px;height:2.5px;border-radius:3px;background:var(--text);transition:transform .2s,opacity .2s}
+.menu-toggle[aria-expanded="true"] span:first-child{transform:translateY(7.5px) rotate(45deg)}
+.menu-toggle[aria-expanded="true"] span:nth-child(2){opacity:0}
+.menu-toggle[aria-expanded="true"] span:last-child{transform:translateY(-7.5px) rotate(-45deg)}
+.nav-backdrop{position:fixed;inset:0;z-index:29;background:rgba(13,7,4,.62);backdrop-filter:blur(3px);display:block;opacity:0;visibility:hidden;transition:opacity .22s,visibility .22s;border:0;border-radius:0;padding:0;margin:0}
+.nav-backdrop.visible{opacity:1;visibility:visible}
+.tabs{position:fixed!important;z-index:30;top:0!important;left:0;bottom:0;width:min(82vw,310px);height:100dvh;max-height:100dvh;overflow-y:auto;display:flex;flex-direction:column;align-items:stretch;gap:8px;padding:88px 17px 24px!important;margin:0!important;border:0;border-right:1px solid var(--line);border-radius:0 22px 22px 0;background:var(--panel)!important;box-shadow:18px 0 45px rgba(0,0,0,.25);transform:translateX(-105%);transition:transform .24s ease;scroll-snap-type:none}
+.tabs.open{transform:translateX(0)}
+.tabs .nav-heading{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--muted);padding:0 10px 8px}
+.tabs button{width:100%;min-height:48px;flex:0 0 auto;text-align:left;white-space:normal;border-radius:12px;padding:12px 14px;background:transparent;color:var(--text);border:1px solid transparent;font-size:14px;box-shadow:none}
+.tabs button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(6),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:var(--accent);border-color:var(--accent);color:#321809}
+header{gap:12px}
+.brand-lockup{flex:1}
+.footer-logo{width:72px;height:72px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.2))}
+.app-footer{padding-top:28px}
+@media(max-width:420px){.menu-toggle{width:42px;height:42px}.brand-logo{width:46px;height:46px}.brand-copy .muted{font-size:11px}.header-actions{gap:6px}}
+@media(prefers-reduced-motion:reduce){.tabs,.nav-backdrop,.menu-toggle span{transition:none}}
+
+
+/* Layout refinement v9: consistent desktop, tablet and mobile */
+:root{--content-width:1160px}
+html{min-width:320px;overflow-x:hidden}
+body{min-width:320px;min-height:100vh;overflow-x:hidden}
+header{width:100%;max-width:var(--content-width);min-height:76px;padding:12px clamp(12px,3vw,28px);margin:0 auto;display:flex;align-items:center;gap:12px}
+.brand-lockup{flex:1 1 auto;min-width:0}
+.brand-logo{width:clamp(42px,5vw,58px);height:clamp(42px,5vw,58px)}
+.brand-copy b{white-space:normal;line-height:1.2}
+.header-actions{flex:0 0 auto;display:flex;align-items:center;gap:8px}
+.header-actions button{width:auto;min-width:44px;min-height:44px;margin:0}
+main{width:100%;max-width:var(--content-width);margin:0 auto;padding:clamp(12px,2.5vw,28px) clamp(12px,3vw,28px) 34px}
+#connection{width:calc(100% - 24px);max-width:var(--content-width);margin:12px auto;padding:11px 14px}
+#app{width:100%;min-width:0}
+#app>.row{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 14px}
+#app>.row>div{flex:1 1 220px;min-width:0}
+#app>.row>button{flex:0 0 auto;width:auto;min-width:92px}
+.tab.panel{width:100%;min-width:0;margin:12px 0;padding:clamp(15px,2.5vw,26px);border-radius:20px}
+.tab h2{font-size:clamp(17px,2vw,21px);line-height:1.3}
+.tab h3{line-height:1.35}
+.grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr));gap:14px}
+#stockGrid>.panel{min-width:0;padding:17px}
+.qty{overflow-wrap:anywhere}
+.row{display:flex;align-items:flex-end;gap:12px}
+.row>*{flex:1 1 180px;min-width:0}
+.row input,.row select{width:100%;min-width:0}
+input,select,textarea{max-width:100%;min-width:0}
+button{min-height:46px}
+.tab>button{width:100%}
+.tab .row button{width:auto}
+.variant-grid{grid-template-columns:repeat(4,minmax(0,1fr));gap:12px}
+.variant-card{min-width:0}
+.variant-card input{width:100%;min-width:0}
+#productionPreview{overflow-wrap:anywhere}
+.outlet-target-card,.history-card{min-width:0;overflow-wrap:anywhere}
+#reportText{width:100%;min-height:220px;white-space:pre-wrap;overflow-wrap:anywhere}
+.nav-backdrop{z-index:99}
+.tabs{z-index:100;width:min(86vw,340px);padding:22px 18px max(24px,env(safe-area-inset-bottom))!important;gap:7px}
+.nav-drawer-head{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:2px 2px 18px;border-bottom:1px solid var(--line);margin-bottom:8px}
+.nav-drawer-head>div{display:flex;flex-direction:column;gap:3px;min-width:0}
+.nav-drawer-head b{font-size:17px;color:var(--text)}
+.nav-drawer-head small{font-size:11px}
+.tabs .nav-close{width:40px;min-width:40px;height:40px;min-height:40px;padding:0;margin:0;border-radius:11px;background:var(--bg);border:1px solid var(--line);color:var(--text);font-size:25px;line-height:1;box-shadow:none}
+.tabs .nav-heading{margin-top:5px}
+.tabs button.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#321809!important;font-weight:800}
+body.nav-open{overflow:hidden}
+.app-footer{width:100%;max-width:var(--content-width);margin:20px auto 0;padding:26px 16px max(28px,env(safe-area-inset-bottom));text-align:center;border-top:1px solid var(--line)}
+.footer-logo{display:block;width:76px;height:76px;object-fit:contain;margin:0 auto 9px}
+@media(min-width:900px){
+ main{padding-top:24px}
+ #stockGrid{grid-template-columns:repeat(3,minmax(0,1fr))}
+ .tab.panel{padding:26px}
+ #production .row>*{flex-basis:220px}
+}
+@media(max-width:700px){
+ header{min-height:66px;padding:9px 13px}
+ main{padding:12px 13px 28px}
+ #connection{width:calc(100% - 26px)}
+ .tab.panel{border-radius:16px;padding:15px;margin:10px 0}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ #stockGrid>.panel{padding:12px}
+ .row{gap:8px}
+ .row>*{flex:1 1 calc(50% - 8px)}
+ .variant-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}
+ .variant-card{padding:11px}
+ .tabs{width:min(88vw,330px)}
+ .app-footer{margin-top:14px}
+}
+@media(max-width:390px){
+ header{gap:7px;padding-inline:10px}
+ .brand-lockup{gap:7px}
+ .brand-logo{width:40px;height:40px}
+ .brand-copy b{font-size:12px;letter-spacing:.015em}
+ .brand-copy .muted{font-size:10px}
+ .header-actions{gap:5px}
+ .header-actions button{min-width:40px;min-height:40px;padding:8px}
+ main{padding-inline:9px}
+ .tab.panel{padding:12px}
+ .grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:7px}
+ .qty{font-size:21px}
+ .row{display:flex;flex-direction:column;align-items:stretch}
+ .row>*{width:100%;flex:1 1 auto}
+ .variant-grid{gap:7px}
+ .variant-card{padding:8px}
+ .variant-card input{font-size:19px;padding:9px}
+ .production-total{align-items:flex-start;flex-direction:column;gap:4px}
+}
+@media(prefers-reduced-motion:reduce){html{scroll-behavior:auto}.tabs,.nav-backdrop,.menu-toggle span{transition:none!important}}
+
+
+/* Header order: burger at the top-left */
+header{justify-content:flex-start!important;gap:12px!important}
+header>.menu-toggle{order:0;flex:0 0 44px;margin:0!important}
+header>.brand-lockup{order:1;flex:1 1 auto;min-width:0}
+header>.header-actions{order:2;flex:0 0 auto;margin-left:auto}
+header .brand-logo{object-fit:contain;display:block}
+@media(max-width:390px){header{gap:8px!important}header>.menu-toggle{flex-basis:40px}header>.header-actions button{padding:8px}}
+
+
+/* Final polish: compact content header, live clock and precise drawer controls */
+main{padding-top:4px!important}
+#connection{margin:5px auto 8px!important;padding:7px 12px!important;min-height:0}
+#app>.row{padding:2px 2px!important;margin:0 0 5px!important}
+#syncErrors{margin:0 0 5px!important;min-height:0}
+.tab.panel{margin-top:6px!important}
+header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!important}
+.clock-chip{display:flex;flex-direction:column;justify-content:center;align-items:flex-end;gap:1px;min-width:84px;padding:5px 9px;border:1px solid var(--line);border-radius:11px;background:var(--panel);font-variant-numeric:tabular-nums;line-height:1.15}
+.clock-chip strong{font-size:16px;letter-spacing:.04em;color:var(--accent)}
+.clock-chip small{font-size:10px;white-space:nowrap}
+.tabs .nav-close{display:grid!important;place-items:center!important;align-content:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:400!important;padding:0!important;transform:none!important;flex:0 0 40px!important}
+#app:has(.tab:not(.hidden)) #mainNav button:not(.nav-active){background:transparent!important;border-color:transparent!important;color:var(--text)!important}
+#app #mainNav button.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#321809!important;font-weight:800!important}
+@media(max-width:390px){.clock-chip{min-width:70px;padding:4px 6px}.clock-chip strong{font-size:14px}.clock-chip small{font-size:9px}header{min-height:58px!important}}
+
+
+/* Rebuild visual identity v2 · Abon Gulung Gembul - Stok Kertas */
+:root{
+ --bg:#fff8ef;--panel:#ffffff;--text:#382014;--muted:#866b58;--line:#f0ddca;
+ --accent:#bd4e1c;--danger:#b9382d;color-scheme:light;
+ --brand-orange:#bd4e1c;--brand-gold:#f2ad42;--brand-cream:#fff8ef;--brand-ink:#382014;
+}
+:root.light{--bg:#fff8ef;--panel:#ffffff;--text:#382014;--muted:#866b58;--line:#f0ddca;--accent:#bd4e1c;--danger:#b9382d;color-scheme:light}
+body{background:linear-gradient(180deg,#fff0d9 0,#fff8ef 270px,#fff8ef 100%);color:var(--text)}
+header{max-width:1200px;min-height:86px;padding:14px clamp(14px,3vw,34px);border:0;background:rgba(255,248,239,.92);box-shadow:0 8px 30px rgba(104,54,20,.07)}
+.brand-lockup{gap:13px}
+.brand-logo{width:62px;height:62px;border-radius:18px;background:#fff;padding:4px;box-shadow:0 7px 20px rgba(110,55,19,.13)}
+.brand-copy b{font-size:clamp(14px,2vw,19px);letter-spacing:.015em;color:#8f3514}
+.brand-copy .muted{font-size:10px;font-weight:800;letter-spacing:.12em;color:#9a7359}
+.header-actions{gap:7px}
+.clock-chip{padding:8px 11px;border:1px solid #efd9c1;border-radius:13px;background:#fff}
+.clock-chip strong{color:#8f3514}
+.menu-toggle{background:#fff;border-color:#efd9c1}
+.menu-toggle span{background:#8f3514}
+main{max-width:1200px;padding-top:22px}
+#connection{border:1px solid #efd9c1;background:#fff;border-radius:14px;color:#80624d}
+#login{max-width:480px;margin:clamp(28px,8vh,90px) auto;background:#fff;border:1px solid #f0ddca;border-radius:26px;padding:clamp(22px,5vw,34px);box-shadow:0 22px 65px rgba(104,54,20,.11)}
+.login-brand{display:flex;align-items:center;gap:15px;margin-bottom:20px}
+.login-brand img{width:72px;height:72px;object-fit:contain;border-radius:20px;background:#fff4e6;padding:5px}
+.login-brand h2{font-size:24px;margin:3px 0;color:#8f3514}
+.login-brand p{font-size:13px;color:var(--muted);margin:0}
+.eyebrow{font-size:10px;font-weight:850;letter-spacing:.15em;color:#bd4e1c}
+.tab.panel{background:#fff;border:1px solid #f0ddca;border-radius:23px;box-shadow:0 12px 36px rgba(104,54,20,.065);padding:clamp(17px,3vw,30px)}
+.tab h2{font-size:clamp(20px,2.5vw,26px);color:#713018;letter-spacing:-.025em}
+.tab h3{color:#713018}
+.hint{background:#fff8ef;border:1px solid #f1dfca;color:#876b55}
+input,select,textarea{background:#fff;color:#382014;border-color:#ead7c3}
+input::placeholder,textarea::placeholder{color:#b39a86}
+button{background:linear-gradient(135deg,#c95820,#a83e16);color:#fff;border-radius:13px;box-shadow:0 6px 15px rgba(189,78,28,.17)}
+button.secondary{background:#fff;color:#8f3514;border:1px solid #edcfb2;box-shadow:none}
+button.danger{background:#b9382d;color:#fff}
+.tabs{background:#fff!important;border-right:1px solid #efd9c1;box-shadow:18px 0 45px rgba(82,39,14,.14)}
+.tabs button{color:#64432f}
+.tabs button:hover{background:#fff0df}
+#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),
+#app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),
+#app:has(#production:not(.hidden)) .tabs button:nth-child(4),
+#app:has(#report:not(.hidden)) .tabs button:nth-child(5),
+#app:has(#history:not(.hidden)) .tabs button:nth-child(6),
+#app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:#bd4e1c;color:#fff;border-color:#bd4e1c}
+#stockGrid>.panel{background:linear-gradient(145deg,#fff4e5,#ffe2bc);border:1px solid #f0d0a8;border-radius:19px}
+#stockGrid .qty{color:#8f3514}
+.history-card,.outlet-target-card,.variant-card{background:#fff;border-color:#efddca}
+.outlet-target-heading strong{color:#a94419;background:#fff0df}
+.production-total strong{color:#a94419}
+.app-footer{max-width:1200px;border-color:#efd9c1;color:#8c705b}
+.footer-brand{color:#8f3514;letter-spacing:.14em}
+.footer-logo{width:82px;height:82px;background:#fff;border-radius:22px;padding:5px}
+.nav-backdrop.visible{background:rgba(54,27,13,.42)}
+#alarm .alarm-box,#alarm .alarm-stat,#alarm .tone-row{background:#fff;border-color:#efddca}
+#alarm .tone-current{background:#fff2e5;border-color:#bd4e1c}
+@media(max-width:640px){
+ header{min-height:72px;padding:10px 12px}
+ .brand-logo{width:49px;height:49px;border-radius:14px}
+ .brand-copy b{font-size:13px}
+ .brand-copy .muted{font-size:9px;letter-spacing:.08em}
+ .clock-chip{display:none}
+ .login-brand img{width:60px;height:60px}
+}
+
+</style></head><body>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
+<main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
+<section id="login" class="panel"><div class="login-brand"><img src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
+<section id="app" class="hidden">
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
+<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
+<div id="alarm" class="tab panel hidden">
+<style>
+#alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
+#alarm .alarm-box{min-width:0;border:1px solid var(--line);border-radius:15px;padding:14px;background:color-mix(in srgb,var(--bg) 55%,var(--panel))}
+#alarm .alarm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
+#alarm .alarm-stat{min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+#alarm .alarm-stat strong{display:block;font-size:clamp(16px,3vw,21px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+#alarm .alarm-stat span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
+#alarm .tone-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,.45fr);gap:8px;align-items:center;margin:12px 0}
+#alarm .tone-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:8px}
+#alarm .tone-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+#alarm .tone-name{min-width:0;flex:1;overflow-wrap:anywhere;font-size:13px;font-weight:650}
+#alarm .tone-sub{display:block;color:var(--muted);font-size:10px;font-weight:450;line-height:1.45}
+#alarm .tone-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+#alarm .tone-actions button{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;margin:0;border-radius:50%;font-size:14px;line-height:1;box-shadow:none}
+#alarm .tone-actions button[aria-pressed=true]{background:var(--accent);color:white}
+#alarm .tone-current{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--bg))}
+#alarm .alarm-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+#alarm .alarm-section-head h3{font-size:14px;margin:0}
+#alarm .alarm-note{font-size:12px;color:var(--muted);line-height:1.55}
+#alarm button,#alarm input,#alarm select{max-width:100%}
+@media(max-width:560px){#alarm .alarm-hero{grid-template-columns:1fr}#alarm .tone-tools{grid-template-columns:1fr}#alarm .tone-list{grid-template-columns:1fr}#alarm .alarm-box{padding:12px}}
+@media(max-width:350px){#alarm .alarm-stats{grid-template-columns:1fr}#alarm .tone-actions button{width:32px;min-width:32px;height:32px;min-height:32px}}
+</style>
+<h2>⏰ Alarm Kerja</h2><p class="hint">Atur jam mulai kerja. Waktu alarm pulang dihitung otomatis setelah 10 jam.</p>
+<div class="alarm-hero">
+<section class="alarm-box"><label for="workStartTime">Jam mulai kerja</label><input id="workStartTime" type="time" value="07:00"><div class="muted">Perkiraan waktu pulang</div><div class="qty" id="workEndTime">17:00 WIB</div><div class="alarm-note">Durasi kerja terjadwal: 10 jam</div><div class="row"><button id="workAlarmToggle" onclick="toggleWorkAlarm()">Aktifkan alarm</button><button class="secondary" id="workAlarmStop" onclick="stopWorkAlarm()" disabled>Matikan</button></div><p class="alarm-note" id="workAlarmStatus" aria-live="polite">Alarm belum diaktifkan.</p></section>
+<section class="alarm-box"><strong>Ringkasan pustaka</strong><div class="alarm-stats"><div class="alarm-stat"><strong id="toneTotalCount">9</strong><span>Total nada</span></div><div class="alarm-stat"><strong id="toneDownloadedCount">0</strong><span>Tersimpan</span></div><div class="alarm-stat"><strong id="toneAvailableCount">9</strong><span>Belum diunduh</span></div></div><div class="alarm-note" id="alarmCurrentTone">Nada alarm aktif: Lonceng Lembut</div><p class="alarm-note" id="alarmToneStatus" aria-live="polite">Nada tersedia untuk disimpan ke perangkat.</p></section>
+</div>
+<div class="alarm-section-head"><h3>🎵 Semua nada</h3><span class="alarm-note">Pilih nama untuk melihat kontrol</span></div>
+<div class="tone-tools"><input id="alarmToneSearch" type="search" placeholder="Cari nada dering…" aria-label="Cari nada dering"><select id="alarmToneFilter" aria-label="Filter nada"><option value="all">Semua nada</option><option value="downloaded">Sudah diunduh</option><option value="available">Belum diunduh</option></select></div>
+<div id="alarmToneLibrary" class="tone-list"></div>
+<div class="alarm-section-head"><h3>🎭 Nada lucu dari Pixabay</h3><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Buka Pixabay ↗</a></div>
+<p class="alarm-note">Pilih suara di Pixabay lalu tekan Free Download. Setelah file tersimpan, impor melalui pemilih file di bawah untuk menggunakannya sebagai nada alarm.</p>
+<div class="tone-list">
+<article class="tone-row"><div class="tone-name">Funny Alarm <span class="tone-sub">Alarm kartun lucu · Efecto Fundador</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-funny-alarm-75649/" target="_blank" rel="noopener">Unduh ↗</a></article>
+<article class="tone-row"><div class="tone-name">Alarm &amp; Notification <span class="tone-sub">Efek notifikasi singkat</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-notification-20-270145/" target="_blank" rel="noopener">Unduh ↗</a></article>
+<article class="tone-row"><div class="tone-name">Koleksi alarm lucu lainnya</div><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Lihat daftar ↗</a></article>
+</div>
+<label for="customAlarmToneFile">Impor nada dari perangkat (MP3/WAV/OGG/M4A/AAC)</label><input id="customAlarmToneFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac">
+<div class="alarm-section-head"><h3>⬇ Nada tersimpan di perangkat</h3><span class="alarm-note" id="downloadedToneSummary">0 nada</span></div>
+<p class="alarm-note">Nada tersimpan pada penyimpanan browser perangkat ini. Hindari menghapus data situs agar nada tetap tersedia.</p><div id="downloadedAlarmTones" class="tone-list"></div>
+<div class="alarm-section-head"><h3>🧪 Uji alarm</h3></div><p class="alarm-note">Tes bunyi dalam 1, 2, atau 3 menit tanpa mengubah jadwal kerja.</p>
+<div class="row"><button class="secondary" onclick="scheduleAlarmTest(1)">Tes 1 menit</button><button class="secondary" onclick="scheduleAlarmTest(2)">Tes 2 menit</button><button class="secondary" onclick="scheduleAlarmTest(3)">Tes 3 menit</button></div>
+<div class="row"><button class="danger" onclick="cancelAlarmTest()">Batalkan tes</button><button class="secondary" onclick="stopAlarmSound()">Hentikan bunyi</button></div><p class="alarm-note" id="alarmDebugStatus" aria-live="polite">Mode percobaan tidak aktif.</p>
+<p class="hint">Catatan: alarm browser tidak dijamin berbunyi jika browser ditutup atau Android menghentikan proses. Alarm Android yang andal memerlukan integrasi native.</p>
+</div><div id="dashboard" class="tab panel"><span class="eyebrow">PUSAT KENDALI</span><h2>Ringkasan persediaan</h2><p class="hint">Pantau stok yang tersedia. Status Aman berarti stok masih di atas batas minimum. Jika di bawah minimum, segera rencanakan pengadaan.</p><h2>Stok tersimpan</h2><div id="stockGrid" class="grid"></div><button class="secondary" onclick="refresh()">↻ Perbarui / sinkronkan</button></div>
+<div id="incoming" class="tab panel hidden"><h2>Catat barang masuk</h2><p class="hint">Total barang dihitung otomatis: (jumlah pack × isi per pack) + tambahan pcs. Contoh: 2 pack × 100 pcs + 5 pcs = 205 pcs.</p><label>Barang</label><select id="inItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><div class="row"><div><label>Jumlah pack</label><input id="packs" type="number" min="0" value="0"></div><div><label>Isi per pack (pcs)</label><input id="perPack" type="number" min="0" value="0"></div><div><label>Tambahan pcs</label><input id="extra" type="number" min="0" value="0"></div></div><label>Catatan</label><input id="inNote" placeholder="Contoh: Paket datang pagi"><button onclick="stockIn()">Simpan barang datang</button><p id="inMsg" class="muted"></p></div>
+<div id="production" class="tab panel hidden"><h2>Catat target produksi</h2><p class="hint">Pilih outlet, lalu isi jumlah setiap varian. Total seluruh loyang dihitung otomatis dan ditampilkan sebelum target disimpan.</p><div class="row"><div><label>Tanggal</label><input id="prodDate" type="date"></div><div><label>Outlet / Toko</label><select id="location"><option value="">Pilih outlet</option><option value="Grand Wisata">Grand Wisata</option><option value="Bektim">Bektim</option><option value="Harapan Indah">Harapan Indah</option></select></div></div><h3 style="font-size:14px;margin:14px 0 6px">Ambil target yang sudah tersimpan (opsional)</h3><div class="row"><div><label>Target sumber</label><select id="targetSource"><option value="">Pilih target tanggal ini</option></select></div><div><button class="secondary" type="button" onclick="loadTargetForRequest()">Ambil & edit target</button></div></div><p id="editTargetMsg" class="muted">Pilih target untuk mengubah request tanpa membuat transaksi ganda.</p><h3 style="font-size:14px;margin:14px 0 6px">Jumlah loyang per varian</h3><div class="variant-grid"><div class="variant-card"><label for="ori">Ori</label><input id="ori" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="beef">Beef</label><input id="beef" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="spicy">Spicy</label><input id="spicy" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="cheese">Cheese</label><input id="cheese" type="number" min="0" step="1" value="0" inputmode="numeric"></div></div><h3 style="font-size:14px;margin:14px 0 6px">Pengaturan kemasan per varian</h3><p class="hint">Centang hanya varian yang kemasannya ingin diatur khusus. Varian yang tidak dicentang tetap memakai hitungan normal.</p><div class="variant-grid"><div class="variant-card"><label><input id="packCustomOri" type="checkbox" style="width:auto"> Kemasan khusus Ori</label><div id="packFieldsOri" class="hidden"><label>Box isi 5</label><input id="packBox5Ori" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Ori" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomBeef" type="checkbox" style="width:auto"> Kemasan khusus Beef</label><div id="packFieldsBeef" class="hidden"><label>Box isi 5</label><input id="packBox5Beef" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Beef" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomSpicy" type="checkbox" style="width:auto"> Kemasan khusus Spicy</label><div id="packFieldsSpicy" class="hidden"><label>Box isi 5</label><input id="packBox5Spicy" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Spicy" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomCheese" type="checkbox" style="width:auto"> Kemasan khusus Cheese</label><div id="packFieldsCheese" class="hidden"><label>Box isi 5</label><input id="packBox5Cheese" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Cheese" type="number" min="0" step="1" value="0"></div></div></div><small>Setiap varian memiliki jumlah kemasan sendiri. Kertas minyak dan kedua jenis Box isi 5 otomatis mengikuti jumlah Box isi 5.</small><div id="requestNoteWrap"><label>Catatan request kemasan (opsional)</label><textarea id="requestNote" rows="2" placeholder="Contoh: Beef memakai kemasan campuran, Ori normal"></textarea></div><label>Catatan tambahan (opsional)</label><input id="prodNote" placeholder="Contoh: nomor pesanan pelanggan"><div id="productionPreview" class="hint">Isi jumlah loyang untuk melihat perkiraan pengurangan stok.</div><button id="prodSubmit" onclick="production()">Tambah target outlet</button><p id="prodMsg" class="muted"></p><h2 style="margin-top:18px">Rekap target harian</h2><p class="hint">Setiap outlet menampilkan jumlah per varian sekaligus total seluruh loyang dari semua input pada tanggal tersebut.</p><div id="targetDailyReport" class="history-card">Belum ada target untuk tanggal ini.</div></div>
+<div id="report" class="tab panel hidden"><h2>Tempel Stock Opname Harian</h2><p class="hint">Tempel seluruh pesan stock opname dari grup kerja. Aplikasi akan mengganti hanya bagian *INSAN* dengan stok terbaru dari database, sementara bagian rekan kerja dan catatan lain tetap dipertahankan.</p><label for="stockOpnameInput">Pesan stock opname lengkap</label><textarea id="stockOpnameInput" placeholder="Tempel pesan stock opname lengkap di sini..."></textarea><button onclick="generateFullStockReport()">Perbarui bagian INSAN otomatis</button><p id="stockOpnameMsg" class="muted"></p><label for="reportText">Hasil stock opname</label><textarea id="reportText" readonly placeholder="Hasil laporan akan muncul di sini..."></textarea><button onclick="copyReport()">Salin hasil lengkap</button><button class="secondary" onclick="loadReport()">Buat laporan INSAN saja</button></div>
+<div id="manual" class="tab panel hidden"><h2>Pengurangan stok manual</h2><p class="hint">Gunakan jika ada barang rusak, hilang, dipakai di luar produksi, atau koreksi stok. Masukkan alasan agar mudah dilacak.</p><label>Barang</label><select id="outItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><label>Jumlah yang dikurangi (pcs)</label><input id="outQuantity" type="number" min="1" step="1" placeholder="Contoh: 12"><label>Alasan pengurangan</label><textarea id="outReason" rows="2" placeholder="Contoh: 5 pcs rusak dan 7 pcs digunakan untuk sampel"></textarea><button class="danger" onclick="manualStockOut()">Kurangi stok</button><p id="outMsg" class="muted"></p></div><div id="history" class="tab panel hidden"><h2>Riwayat transaksi</h2><p class="hint">Admin dapat menghapus transaksi yang salah. Stok akan dikembalikan sesuai perubahan transaksi. Penghapusan membutuhkan koneksi server.</p><label>Filter riwayat</label><select id="historyFilter" onchange="renderHistory()"><option value="all">Semua transaksi</option><option value="production">Target produksi</option><option value="stock-in">Barang masuk</option><option value="stock-out">Pengurangan stok</option></select><div id="historyList"></div></div>
+<div id="backup" class="tab panel hidden">
+<h2>🛡️ Pencadangan &amp; Pemulihan</h2>
+<p class="hint">Kelola file cadangan database INSAN di halaman tersendiri. File mencakup stok, akun pengguna, transaksi, pengaturan, dan riwayat. Simpan file di tempat aman.</p>
+<section class="history-card" id="backupPanel" hidden>
+<h3>🛡️ Cadangkan &amp; Pulihkan Data</h3>
+<p class="hint">Buat file khusus <b>.insanbackup</b> yang berisi stok, akun pengguna, transaksi, pengaturan, dan riwayat. Simpan file ini di tempat aman. Pemulihan akan mengganti database aktif sesuai isi file.</p>
+<button id="createBackupButton" onclick="downloadBackup()">⬇️ Buat file cadangan</button>
+<label for="backupFileInput">Pilih file cadangan INSAN (.insanbackup)</label>
+<input id="backupFileInput" type="file" accept=".insanbackup,application/json" style="display:block;width:100%;min-height:48px;padding:10px;opacity:1;pointer-events:auto">
+<button class="danger" id="restoreBackupButton" onclick="restoreBackupFile()">Pulihkan data dari file</button>
+<p id="backupStatus" class="muted" aria-live="polite">Fitur ini hanya tersedia untuk admin saat terhubung ke server.</p>
+</section>
+</div>
+<div id="about" class="tab panel hidden">
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Pusat informasi fitur, keunggulan, versi, dan catatan pembaruan aplikasi.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
+
+<h3>Fitur aplikasi</h3>
+<div class="grid">
+<article class="history-card"><b>📦 Manajemen stok</b><p class="muted">Pantau jumlah persediaan setiap jenis barang dalam satu dashboard.</p></article>
+<article class="history-card"><b>🚚 Barang masuk</b><p class="muted">Catat penerimaan barang berdasarkan pack, isi per pack, dan tambahan satuan.</p></article>
+<article class="history-card"><b>🎯 Target produksi</b><p class="muted">Catat target dan kebutuhan bahan/kemasan produksi berdasarkan varian.</p></article>
+<article class="history-card"><b>📊 Laporan</b><p class="muted">Lihat ringkasan stok dan laporan aktivitas persediaan.</p></article>
+<article class="history-card"><b>🧾 Riwayat transaksi</b><p class="muted">Telusuri transaksi barang masuk, pengurangan stok, dan produksi.</p></article>
+<article class="history-card"><b>✍️ Stok manual</b><p class="muted">Catat penyesuaian stok secara manual sesuai hak akses akun.</p></article>
+<article class="history-card"><b>👥 Admin &amp; staff</b><p class="muted">Pemisahan akses pengguna berdasarkan peran akun.</p></article>
+<article class="history-card"><b>🔄 Pembaruan aplikasi</b><p class="muted">Periksa versi terbaru dari GitHub dan jalankan update oleh admin.</p></article>
+</div>
+<h3>Keunggulan</h3>
+<ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
+<h3>Commit terbaru dari GitHub</h3>
+<p class="hint">Lihat commit pada branch main. Admin dapat menerapkan commit terbaru setelah memastikan antrean transaksi sudah tersinkron.</p>
+<p id="latestCommitStatus" class="muted">Memuat commit terbaru…</p>
+<div id="latestCommitList"></div>
+<button id="applyLatestCommit" onclick="applyUpdate()" hidden>Terapkan commit terbaru</button>
+<h3>Riwayat perubahan versi</h3>
+<p class="hint">Daftar berikut diambil dari riwayat commit repository yang sedang terpasang. Setelah admin memasang pembaruan, buka kembali halaman ini untuk melihat perubahan yang ikut terpasang.</p>
+<p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
+<button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
+</div>
+</section></main><footer class="app-footer"><img class="footer-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
