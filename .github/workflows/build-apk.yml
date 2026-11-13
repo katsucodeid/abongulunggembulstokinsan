@@ -43,6 +43,7 @@ jobs:
           node --check backend/daily-reports.js
           node --check backend/management.js
           node --check frontend/app.js
+          bash -n scripts/start-termux.sh scripts/install-termux.sh scripts/update-and-restart.sh
 
 
       - name: Set up Android SDK
