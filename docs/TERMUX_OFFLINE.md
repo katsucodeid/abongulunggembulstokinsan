@@ -48,3 +48,18 @@ Pastikan tanggal, jam, dan zona waktu Android benar. Laporan tengah malam hanya 
 Sebelum pembaruan, sistem menyalin database lama ke file cadangan TXT di Download. Database lama tidak direset. Jangan hapus data sampai stok, target, akun, dan transaksi sudah diverifikasi.
 
 Simpan salinan cadangan di media lain secara berkala. Penyimpanan pada satu HP bukan pengganti cadangan eksternal apabila perangkat hilang atau rusak.
+
+## Navigasi dan pembaruan aplikasi
+
+Navigasi dikelompokkan ke dalam bagian **Operasional** (Stok, Stok Datang, Target, Riwayat, Laporan, Stok Manual) dan **Pengaturan & Sistem** (Alarm Kerja, Pencadangan, Tentang & Pembaruan). Tekan judul kelompok untuk membuka atau menutup submenu. Tombol Keluar berada di bagian bawah navigasi.
+
+Pada halaman Tentang & Pembaruan, admin dapat menekan **Update Aplikasi** ketika HP tersambung ke internet. Sistem akan:
+1. Membuat cadangan database TXT ke folder Download.
+2. Memastikan repository tidak memiliki perubahan lokal yang belum diamankan.
+3. Mengambil pembaruan dari branch yang sedang digunakan dan memasang dependensi Node.js.
+4. Menghentikan proses server Node.js lama secara terkontrol, lalu menjalankan server baru.
+5. Memeriksa endpoint kesehatan server dan memuat ulang tampilan aplikasi secara otomatis.
+
+Jangan menutup Termux atau aplikasi selama proses berlangsung. Jika ada perubahan lokal pada file repository, pembaruan dibatalkan untuk mencegah file tertimpa. Detail proses tersedia di `backend/server-update.log`.
+
+**Koneksi internet hanya diperlukan untuk mengambil pembaruan.** Operasional stok tetap lokal/offline. Android membatasi aplikasi untuk menutup dan meluncurkan ulang dirinya sendiri dari latar belakang; karena itu aplikasi mempertahankan layar yang terbuka dan memuat ulang WebView/halaman setelah server baru siap, bukan menutup paksa aplikasi Android.
