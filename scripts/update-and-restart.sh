@@ -60,18 +60,22 @@ mkdir -p "$DATA_DIR" "$REPORT_DIR"
 exec >> "$LOG_FILE" 2>&1
 if [ -z "$SERVER_PID" ] || ! [[ "$SERVER_PID" =~ ^[0-9]+$ ]]; then
   echo "PID server tidak valid." >&2
+  write_status "failed" "PID server tidak valid; server lama tidak dihentikan."
   exit 2
 fi
 if [ ! -d "$ROOT/.git" ]; then
   echo "Folder repository Git tidak ditemukan." >&2
+  write_status "failed" "Folder repository Git tidak ditemukan."
   exit 2
 fi
 if [ -z "$BRANCH" ]; then
   echo "Tidak dapat menentukan branch repository." >&2
+  write_status "failed" "Branch repository tidak dapat ditentukan."
   exit 2
 fi
 if [ -n "$(git status --porcelain)" ]; then
   echo "Ada perubahan lokal di repository. Pembaruan dibatalkan agar file lokal tidak tertimpa." >&2
+  write_status "failed" "Pembaruan dibatalkan karena ada perubahan lokal Git. Simpan atau amankan perubahan tersebut terlebih dahulu."
   exit 3
 fi
 
@@ -105,6 +109,7 @@ for attempt in $(seq 1 30); do
 done
 if port_open; then
   echo "Server lama belum melepas port $PORT." >&2
+  write_status "failed" "Server lama belum melepas port $PORT. Periksa proses server di Termux."
   exit 4
 fi
 
@@ -129,6 +134,7 @@ NODE
 done
 if [ "$READY" -ne 1 ]; then
   echo "Server baru belum merespons health check." >&2
+  write_status "failed" "Server baru belum merespons health check. Periksa backend/server-update.log."
   exit 5
 fi
 
