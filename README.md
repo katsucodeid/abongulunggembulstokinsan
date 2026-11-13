@@ -1,46 +1,41 @@
-# Abon Gulung Gembul - Stok Insan
+# Abon Gulung Gembul — Stok Kertas (Offline)
 
-Aplikasi manajemen stok kemasan dan bahan untuk Abon Gulung Gembul. Mendukung Android, website/PWA, akun Admin/Staff, mode offline, backup, dan sinkronisasi ke satu server pusat.
+Aplikasi stok lokal untuk satu perangkat Android. Backend Node.js berjalan di Termux dan hanya menerima koneksi dari perangkat yang sama melalui 127.0.0.1. Tidak memakai Render, Cloudflare Tunnel, Ngrok, VPS, atau server internet.
 
-## Akses online gratis menggunakan HP Android
+## Penyimpanan data
 
-HP pemilik menjalankan backend Node.js dan database JSON melalui Termux. Cloudflare Quick Tunnel memberi alamat HTTPS publik tanpa Render/VPS atau port forwarding.
+- Database utama: ~/abongulunggembulstokinsan/backend/data/data.json di ruang penyimpanan privat Termux.
+- Salinan database teks: Download/Abon Gulung Gembul/database-stok.txt, diperbarui setiap kali database berubah.
+- Laporan harian: Download/Abon Gulung Gembul/11november2026.txt, 12november2026.txt, dan seterusnya.
+- Cadangan otomatis: file .txt dibuat sebelum pembaruan pertama dan sebelum setiap laporan harian baru.
+- Laporan harian dibuat pada pukul 00.00 waktu lokal Android. Jika server tidak aktif saat tengah malam, laporan yang terlewat dibuat ketika server dinyalakan kembali.
 
-Panduan lengkap: [docs/TERMUX_PUBLIC_SERVER.md](docs/TERMUX_PUBLIC_SERVER.md).
+Database utama tetap menggunakan JSON agar aman untuk transaksi dan pemulihan. File TXT di Download adalah salinan yang dapat dibaca dan arsip laporan; jangan mengedit database-stok.txt secara manual.
 
-Ringkas:
-```bash
-pkg update && pkg upgrade -y
-pkg install git nodejs-lts openssl cloudflared -y
-git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
-cd abongulunggembulstokinsan
-git fetch origin feature/online-hosting
-git checkout feature/online-hosting
-bash scripts/install-termux.sh
-bash scripts/start-online-termux.sh
-```
+## Instalasi di Termux
 
-Salin alamat `https://....trycloudflare.com` yang tampil di Termux dan bagikan kepada pengguna. Semua perangkat memasukkan alamat yang sama. URL Quick Tunnel dapat berubah ketika tunnel dimulai ulang.
+    pkg update && pkg upgrade -y
+    pkg install git nodejs-lts openssl -y
+    cd ~/abongulunggembulstokinsan
+    git fetch origin feature/online-hosting
+    git checkout feature/online-hosting
+    git pull origin feature/online-hosting
+    bash scripts/install-termux.sh
 
-## Akses pengguna dan keamanan
+Saat diminta, izinkan Termux mengakses file dan media. Jika dialog izin tidak muncul, jalankan termux-setup-storage.
 
-- Invite-only: Admin membuat akun pengguna dari aplikasi; tidak ada pendaftaran publik.
-- Pengguna Staff tidak memperoleh hak Admin.
-- Semua perangkat menggunakan database yang sama pada HP server.
-- Buat backup rutin dan simpan salinan di luar HP server.
-- Hanya jalankan satu proses backend yang menulis file database.
+## Menjalankan aplikasi
 
-## Batasan server HP
+    bash ~/abongulunggembulstokinsan/scripts/start-termux.sh
 
-HP harus menyala, terhubung internet, dan Termux/tunnel harus tetap berjalan. Android dapat menghentikan proses latar belakang; ini bukan pengganti VPS untuk ketersediaan 24/7. Gunakan Wi-Fi, charger, dan izinkan Termux berjalan tanpa optimasi baterai.
+Biarkan sesi Termux berjalan. Buka aplikasi Android Abon Gulung Gembul pada HP yang sama. Aplikasi mengakses backend lokal melalui http://127.0.0.1:8787.
 
-## Instalasi lokal
+Untuk browser HP yang sama, buka alamat tersebut. Perangkat lain tidak dapat mengakses server ini, walaupun berada pada Wi-Fi yang sama.
 
-```bash
-bash scripts/install-termux.sh
-bash scripts/start-termux.sh
-```
+## Cadangan dan keamanan
 
-Buka `http://127.0.0.1:8787` pada HP server.
-
-**Jangan commit `.env`, `data.json`, token, password, atau file backup ke repository.**
+- Jangan menghapus backend/data/data.json, .env, atau folder Download laporan.
+- Jangan menjalankan dua server Node.js sekaligus.
+- Simpan salinan cadangan di tempat lain secara berkala. Jika HP rusak atau hilang, file di Download pada HP itu ikut berisiko.
+- File TXT database berisi data akun (hash password), transaksi, dan stok. Jaga privasi HP dan jangan membagikannya.
+- Operasional aplikasi tidak memerlukan internet. Internet hanya dibutuhkan bila pengguna sengaja mengunduh kode/pembaruan dari GitHub.
