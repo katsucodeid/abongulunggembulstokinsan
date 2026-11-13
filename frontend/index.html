@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#a94716"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#101a2a"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
 <style>
 :root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
 :root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
@@ -337,6 +337,51 @@ button.danger{background:#b9382d;color:#fff}
 .update-pulse:nth-child(2){animation-delay:.15s}.update-pulse:nth-child(3){animation-delay:.3s}
 @keyframes updateSpin{to{transform:rotate(360deg)}}@keyframes updatePulse{50%{opacity:.25;transform:scale(.7)}}
 @media(prefers-reduced-motion:reduce){.update-spinner,.update-pulse{animation:none}}
+
+
+/* Palet tema INSAN: mode gelap biru malam + emas/toska */
+:root:not(.light){
+ color-scheme:dark;
+ --bg:#101a2a;--panel:#1b293b;--text:#e8f0fa;--muted:#a7b8cc;--line:#35465c;
+ --accent:#e6ad45;--danger:#f07170;
+ --brand-orange:#f0a34a;--brand-gold:#e6bd68;--brand-cream:#101a2a;--brand-ink:#e8f0fa;
+}
+:root:not(.light) body{background:radial-gradient(ellipse at 50% -12%,rgba(52,190,177,.14),transparent 44%),linear-gradient(180deg,#15243a 0,#101a2a 320px,#101a2a 100%);color:var(--text)}
+:root:not(.light) header{background:rgba(16,26,42,.94)!important;border-bottom:1px solid #35465c!important;box-shadow:0 8px 30px rgba(0,0,0,.22)!important}
+:root:not(.light) .brand-copy b,:root:not(.light) .clock-chip strong,:root:not(.light) .login-brand h2,:root:not(.light) .tab h2,:root:not(.light) .tab h3{color:#f0bd67!important}
+:root:not(.light) .brand-copy .muted,:root:not(.light) .eyebrow{color:#9bc9c5!important}
+:root:not(.light) .brand-logo,:root:not(.light) .footer-logo{background:#25364b!important}
+:root:not(.light) .clock-chip,:root:not(.light) .menu-toggle,:root:not(.light) #connection{background:#1b293b!important;border-color:#35465c!important;color:#e8f0fa!important}
+:root:not(.light) .menu-toggle span{background:#e6bd68!important}
+:root:not(.light) #login,:root:not(.light) .tab.panel{background:#1b293b!important;border-color:#35465c!important;box-shadow:0 16px 42px rgba(0,0,0,.22)!important}
+:root:not(.light) .hint{background:#223449!important;border-color:#435970!important;color:#b8c9dc!important}
+:root:not(.light) input,:root:not(.light) select,:root:not(.light) textarea{background:#111f31!important;color:#e8f0fa!important;border-color:#40536b!important}
+:root:not(.light) input::placeholder,:root:not(.light) textarea::placeholder{color:#8196ae!important}
+:root:not(.light) button:not(.secondary):not(.danger){background:linear-gradient(135deg,#e6ad45,#c88b2e)!important;color:#172235!important;box-shadow:0 6px 16px rgba(0,0,0,.2)!important}
+:root:not(.light) button.secondary{background:#26384d!important;color:#dce8f5!important;border:1px solid #50647b!important}
+:root:not(.light) button.danger,:root:not(.light) .nav-footer .nav-logout{background:#a83e49!important;color:#fff!important}
+:root:not(.light) .tabs{background:#152338!important;border-color:#35465c!important;box-shadow:18px 0 45px rgba(0,0,0,.3)!important}
+:root:not(.light) .tabs button{color:#b6c7da!important}
+:root:not(.light) .tabs button:hover,:root:not(.light) .tabs .nav-group-items .nav-link:hover{background:#2a3c52!important}
+:root:not(.light) .tabs button.nav-active,:root:not(.light) #app #mainNav .nav-group-items .nav-link.nav-active{background:#e6ad45!important;border-color:#e6ad45!important;color:#172235!important}
+:root:not(.light) .nav-group{background:#1b293b!important;border-color:#35465c!important}
+:root:not(.light) .tabs .nav-group-toggle,:root:not(.light) #app:has(.tab:not(.hidden)) #mainNav .nav-group-toggle{background:#223449!important;color:#b6c7da!important}
+:root:not(.light) .tabs .nav-group-items .nav-link{color:#e8f0fa!important}
+:root:not(.light) #stockGrid>.panel{background:linear-gradient(145deg,#24384d,#1b3547)!important;border-color:#40576b!important}
+:root:not(.light) #stockGrid .qty,:root:not(.light) .production-total strong,:root:not(.light) .outlet-target-heading strong{color:#f0bd67!important}
+:root:not(.light) .history-card,:root:not(.light) .outlet-target-card,:root:not(.light) .variant-card,:root:not(.light) #alarm .alarm-box,:root:not(.light) #alarm .alarm-stat,:root:not(.light) #alarm .tone-row{background:#1c2c40!important;border-color:#3b5068!important}
+:root:not(.light) .outlet-target-heading strong{background:#344258!important}
+:root:not(.light) #alarm .tone-current{background:#2c4053!important;border-color:#d9a64c!important}
+:root:not(.light) #productionPreview{background:#223449!important;border-color:#52657a!important}
+:root:not(.light) .app-footer{border-color:#35465c!important;color:#a7b8cc!important}
+:root:not(.light) .footer-brand{color:#f0bd67!important}
+:root:not(.light) .nav-backdrop.visible{background:rgba(3,9,18,.72)!important}
+:root:not(.light) #updateProgress{background:rgba(3,9,18,.82)!important}
+:root:not(.light) .update-progress-card{background:#1b293b!important;border-color:#40536b!important;color:#e8f0fa!important}
+:root:not(.light) .update-spinner{border-color:#40536b;border-top-color:#e6ad45}
+:root:not(.light) #updateNotice{border-color:#b78b42!important}
+:root:not(.light) .ok{color:#61d6b5!important}
+:root:not(.light) .low{color:#f07170!important}
 
 </style></head><body>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false">🌙 Tema Gelap</button></div></header>
