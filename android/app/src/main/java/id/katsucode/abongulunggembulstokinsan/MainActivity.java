@@ -20,8 +20,6 @@ import android.webkit.WebResourceRequest;
 import android.widget.Toast;
 import android.widget.EditText;
 import android.text.InputType;
-import android.view.inputmethod.InputMethodManager;
-import android.content.Context;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
@@ -105,7 +103,7 @@ public class MainActivity extends Activity {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Toast.makeText(MainActivity.this,
-                        "Server belum berjalan. Buka Termux dan jalankan start-termux.sh.",
+                        "Server belum berjalan. Pastikan HP server menjalankan start-online-termux.sh.",
                         Toast.LENGTH_LONG).show();
                 }
             }
@@ -141,17 +139,15 @@ public class MainActivity extends Activity {
         input.setText(existing);
         new AlertDialog.Builder(this)
             .setTitle("Alamat Server Abon Gulung Gembul")
-            .setMessage("Masukkan alamat HTTPS dari Cloudflare Tunnel. Jika aplikasi dibuka di HP server itu sendiri, gunakan http://127.0.0.1:8787.")
+            .setMessage("Masukkan alamat HTTPS Cloudflare Tunnel yang sedang aktif pada HP server.")
             .setView(input)
             .setCancelable(false)
             .setPositiveButton("Simpan & Hubungkan", (dialog, which) -> {
                 String url = input.getText().toString().trim().replaceAll("/+$", "");
                 android.net.Uri uri = android.net.Uri.parse(url);
-                boolean localHttp = "http".equalsIgnoreCase(uri.getScheme()) &&
-                    ("127.0.0.1".equals(uri.getHost()) || "localhost".equalsIgnoreCase(uri.getHost()));
                 boolean secureHttps = "https".equalsIgnoreCase(uri.getScheme()) && uri.getHost() != null;
-                if (!localHttp && !secureHttps) {
-                    Toast.makeText(this, "Gunakan alamat HTTPS yang valid, atau HTTP localhost untuk HP server.", Toast.LENGTH_LONG).show();
+                if (!secureHttps) {
+                    Toast.makeText(this, "Gunakan alamat HTTPS Cloudflare Tunnel yang valid.", Toast.LENGTH_LONG).show();
                     showServerUrlDialog();
                     return;
                 }
