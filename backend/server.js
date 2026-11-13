@@ -14,7 +14,9 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
 const REPO_DIR = path.resolve(__dirname, "..");
-const REPORT_DIR = process.env.REPORT_DIR || path.join(os.homedir(), "storage", "downloads", "Abon Gulung Gembul");
+const REPORT_ROOT = process.env.REPORT_DIR || path.join(os.homedir(), "storage", "downloads", "Abon Gulung Gembul");
+const REPORT_DIR = path.join(REPORT_ROOT, "Laporan");
+const BACKUP_DIR = path.join(REPORT_ROOT, "Pencadangan");
 const UPDATE_STATUS_FILE = path.join(DATA_DIR, "update-status.json");
 const SERVER_BOOT_ID = require("crypto").randomUUID();
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
@@ -43,7 +45,7 @@ async function persist() {
   try {
     await fs.promises.writeFile(tmp, JSON.stringify(db, null, 2), { mode: 0o600, flag: "wx" });
     await fs.promises.rename(tmp, DATA_FILE);
-    await mirrorDatabase(db, REPORT_DIR).catch(error => {
+    await mirrorDatabase(db, BACKUP_DIR).catch(error => {
       console.error("Database utama tersimpan, tetapi salinan Download/database-stok.txt gagal diperbarui:", error.message);
     });
   } finally {
@@ -312,7 +314,7 @@ app.get("*", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "index.html")));
 async function start() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
   try {
-    const backupPath = await backupExistingDatabase(DATA_FILE, REPORT_DIR);
+    const backupPath = await backupExistingDatabase(DATA_FILE, BACKUP_DIR);
     if (backupPath) console.log("Cadangan sebelum pembaruan tersimpan:", backupPath);
   } catch (error) {
     console.error("Cadangan awal ke Download gagal:", error.message);
@@ -338,12 +340,13 @@ async function start() {
     console.log("Akun admin awal dibuat:", process.env.ADMIN_USERNAME);
   }
   await persist();
-  const dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR });
+  const dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR, backupDir: BACKUP_DIR });
   await dailyReports.start();
   const server = app.listen(PORT, "127.0.0.1", () => {
     console.log(`Abon Gulung Gembul aktif secara offline di http://127.0.0.1:${PORT}`);
     console.log("Database Termux:", DATA_FILE);
-    console.log("Laporan dan salinan TXT:", REPORT_DIR);
+    console.log("Laporan harian:", REPORT_DIR);
+    console.log("Pencadangan database:", BACKUP_DIR);
   });
   server.on("error", err => {
     if (err.code === "EADDRINUSE") {
