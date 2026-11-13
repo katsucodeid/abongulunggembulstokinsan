@@ -14,6 +14,8 @@ pkg update && pkg upgrade -y
 pkg install git nodejs-lts openssl cloudflared -y
 git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
 cd abongulunggembulstokinsan
+git fetch origin feature/online-hosting
+git checkout feature/online-hosting
 bash scripts/install-termux.sh
 bash scripts/start-online-termux.sh
 ```
