@@ -1,6 +1,8 @@
 package id.katsucode.abongulunggembulstokinsan;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
@@ -17,6 +19,8 @@ import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.widget.Toast;
 import java.io.OutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
 
 public class MainActivity extends Activity {
     private static final int FILE_CHOOSER_REQUEST = 4102;
@@ -54,6 +58,35 @@ public class MainActivity extends Activity {
                 return "ERROR:" + (e.getMessage() == null ? "Penyimpanan gagal." : e.getMessage());
             }
         }
+        @JavascriptInterface
+        public String scheduleWorkAlarm(long fireAtMillis, String dataUrl) {
+            try {
+                if (dataUrl == null || !dataUrl.contains(",")) return "ERROR:Nada alarm tidak valid.";
+                byte[] audio = Base64.decode(dataUrl.substring(dataUrl.indexOf(",") + 1), Base64.DEFAULT);
+                if (audio.length == 0 || audio.length > 8 * 1024 * 1024) return "ERROR:Ukuran audio maksimal 8 MB.";
+                try (FileOutputStream out = new FileOutputStream(new File(getFilesDir(), "work-alarm-tone"))) { out.write(audio); }
+                AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                Intent intent = new Intent(MainActivity.this, WorkAlarmReceiver.class);
+                PendingIntent pending = PendingIntent.getBroadcast(MainActivity.this, 4104, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                manager.cancel(pending);
+                if (Build.VERSION.SDK_INT >= 23) {
+                    try { manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, fireAtMillis, pending); }
+                    catch (SecurityException denied) { manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, fireAtMillis, pending); }
+                } else manager.setExact(AlarmManager.RTC_WAKEUP, fireAtMillis, pending);
+                return "OK";
+            } catch (Exception e) { return "ERROR:" + (e.getMessage() == null ? "Gagal menjadwalkan alarm." : e.getMessage()); }
+        }
+        @JavascriptInterface
+        public void cancelWorkAlarm() {
+            try {
+                AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
+                Intent intent = new Intent(MainActivity.this, WorkAlarmReceiver.class);
+                PendingIntent pending = PendingIntent.getBroadcast(MainActivity.this, 4104, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
+                manager.cancel(pending);
+                startService(new Intent(MainActivity.this, WorkAlarmService.class).setAction(WorkAlarmService.ACTION_STOP));
+            } catch (Exception ignored) { }
+        }
+
     }
 
     @Override protected void onCreate(Bundle savedInstanceState) {
