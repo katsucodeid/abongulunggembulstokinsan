@@ -24,13 +24,18 @@ Jika repository belum ada:
 
 ```bash
 git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
+cd ~/abongulunggembulstokinsan
+git fetch origin feature/online-hosting
+git checkout feature/online-hosting
 ```
 
 Jika folder sudah ada, masuk ke folder itu dan perbarui kode setelah memastikan perubahan lokal aman:
 
 ```bash
 cd ~/abongulunggembulstokinsan
-git pull
+git fetch origin feature/online-hosting
+git checkout feature/online-hosting
+git pull origin feature/online-hosting
 bash scripts/install-termux.sh
 ```
 
