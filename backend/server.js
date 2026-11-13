@@ -4,7 +4,7 @@ const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const { execFileSync } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
 const os = require("os");
 const { backupExistingDatabase, mirrorDatabase, createDailyReports } = require("./daily-reports");
 
@@ -15,6 +15,8 @@ const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
 const REPO_DIR = path.resolve(__dirname, "..");
 const REPORT_DIR = process.env.REPORT_DIR || path.join(os.homedir(), "storage", "downloads", "Abon Gulung Gembul");
+const UPDATE_STATUS_FILE = path.join(DATA_DIR, "update-status.json");
+const SERVER_BOOT_ID = require("crypto").randomUUID();
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/install-termux.sh."); process.exit(1); }
@@ -147,7 +149,7 @@ async function applyOperation(op, username) {
   return { id: op.id, accepted: true };
 }
 
-app.get("/api/health", (req, res) => res.json({ ok: true, service: "Abon Gulung Gembul Local API", storage: "Termux + Download TXT mirror", mode: "offline-local", online: false }));
+app.get("/api/health", (req, res) => res.json({ ok: true, service: "Abon Gulung Gembul Local API", storage: "Termux + Download TXT mirror", mode: "offline-local", online: false, bootId: SERVER_BOOT_ID }));
 app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
   const user = db.users.find(x => x.username === username);
@@ -241,8 +243,37 @@ app.get("/api/update/history", auth, (req, res) => {
     res.status(503).json({ error: "Riwayat perubahan belum dapat dibaca." });
   }
 });
-app.post("/api/update/apply", auth, adminOnly, (req, res) => {
-  res.status(410).json({ error: "Pembaruan otomatis online dinonaktifkan. Perbarui kode secara manual saat perangkat terhubung internet, setelah membuat cadangan." });
+app.get("/api/update/status", auth, adminOnly, async (req, res) => {
+  try {
+    const status = JSON.parse(await fs.promises.readFile(UPDATE_STATUS_FILE, "utf8"));
+    res.json(status);
+  } catch (error) {
+    if (error.code === "ENOENT") return res.json({ status: "idle", message: "Belum ada proses pembaruan." });
+    res.status(500).json({ error: "Status pembaruan tidak dapat dibaca." });
+  }
+});
+app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
+  try {
+    let current = null;
+    try { current = JSON.parse(await fs.promises.readFile(UPDATE_STATUS_FILE, "utf8")); } catch {}
+    if (current && ["preparing", "fetching", "installing", "restarting"].includes(current.status)) {
+      return res.status(409).json({ error: "Pembaruan sedang berlangsung." });
+    }
+    await fs.promises.mkdir(DATA_DIR, { recursive: true });
+    const status = { status: "preparing", message: "Menyiapkan cadangan dan pembaruan…", startedAt: new Date().toISOString() };
+    await fs.promises.writeFile(UPDATE_STATUS_FILE, JSON.stringify(status, null, 2), { mode: 0o600 });
+    const runnerSource = path.join(REPO_DIR, "scripts", "update-and-restart.sh");
+    const runnerCopy = path.join(os.homedir(), ".abongulunggembul-update-runner.sh");
+    await fs.promises.copyFile(runnerSource, runnerCopy);
+    await fs.promises.chmod(runnerCopy, 0o700);
+    const child = spawn("bash", [runnerCopy, String(process.pid)], {
+      cwd: REPO_DIR, env: process.env, detached: true, stdio: "ignore"
+    });
+    child.unref();
+    res.status(202).json({ ok: true, status: "preparing", message: "Pembaruan dimulai. Server akan dimulai ulang otomatis." });
+  } catch (error) {
+    res.status(500).json({ error: "Tidak dapat memulai pembaruan: " + error.message });
+  }
 });
 
 app.get("/api/report", auth, (req, res) => {
