@@ -256,7 +256,10 @@ app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
   try {
     let current = null;
     try { current = JSON.parse(await fs.promises.readFile(UPDATE_STATUS_FILE, "utf8")); } catch {}
-    if (current && ["preparing", "fetching", "installing", "restarting"].includes(current.status)) {
+    const activeUpdate = current && ["preparing", "fetching", "installing", "restarting"].includes(current.status);
+    const lastUpdateAt = Date.parse(current?.updatedAt || current?.startedAt || 0);
+    const staleUpdate = activeUpdate && (!lastUpdateAt || Date.now() - lastUpdateAt > 10 * 60 * 1000);
+    if (activeUpdate && !staleUpdate) {
       return res.status(409).json({ error: "Pembaruan sedang berlangsung." });
     }
     await fs.promises.mkdir(DATA_DIR, { recursive: true });
