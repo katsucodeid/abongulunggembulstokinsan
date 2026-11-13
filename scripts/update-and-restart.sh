@@ -46,7 +46,7 @@ start_server() {
 on_error() {
   code=$?
   trap - ERR
-  if [ "$SERVER_STOPPED" -eq 1 ] && ! port_open; then
+  if ! port_open; then
     echo "Pembaruan gagal; mencoba menyalakan kembali server..." >> "$LOG_FILE"
     start_server || true
   fi
