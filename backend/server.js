@@ -1,6 +1,6 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
+const helmet = require("helmet");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
@@ -13,11 +13,44 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
 const REPO_DIR = path.resolve(__dirname, "..");
+const GITHUB_REPO = process.env.GITHUB_REPO || "katsucodeid/abongulunggembulstokinsan";
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
 if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/termux-install.sh."); process.exit(1); }
-app.use(cors());
+app.disable("x-powered-by");
+// API and frontend are same-origin. Do not enable wildcard CORS: it exposes
+// authenticated endpoints to arbitrary websites.
+app.use(helmet({ contentSecurityPolicy: false, crossOriginEmbedderPolicy: false }));
 app.use(express.json({ limit: "25mb" }));
+
+// In-memory login throttle. Use a private VPN for access beyond trusted LAN.
+const loginAttempts = new Map();
+const LOGIN_WINDOW_MS = 15 * 60 * 1000;
+const LOGIN_MAX_ATTEMPTS = 10;
+function loginThrottle(req, res, next) {
+  const username = String(req.body?.username || "").trim().toLowerCase().slice(0, 100);
+  const key = (req.ip || req.socket.remoteAddress || "unknown") + ":" + username;
+  const now = Date.now();
+  let entry = loginAttempts.get(key);
+  if (!entry || now - entry.startedAt >= LOGIN_WINDOW_MS) {
+    entry = { startedAt: now, count: 0 };
+    loginAttempts.set(key, entry);
+  }
+  if (entry.count >= LOGIN_MAX_ATTEMPTS) {
+    const retryAfter = Math.ceil((LOGIN_WINDOW_MS - (now - entry.startedAt)) / 1000);
+    res.setHeader("Retry-After", String(Math.max(1, retryAfter)));
+    return res.status(429).json({ error: "Terlalu banyak percobaan login. Coba lagi setelah 15 menit." });
+  }
+  req.loginThrottleKey = key;
+  next();
+}
+function recordLoginFailure(req) {
+  const entry = loginAttempts.get(req.loginThrottleKey);
+  if (entry) entry.count++;
+}
+function clearLoginFailures(req) {
+  if (req.loginThrottleKey) loginAttempts.delete(req.loginThrottleKey);
+}
 
 const itemDefs = {
   box3: { label: "Box isi 3", min: null },
@@ -148,10 +181,11 @@ async function applyOperation(op, username) {
 }
 
 app.get("/api/health", (req, res) => res.json({ ok: true, service: "INSAN Stock Manager Local API", storage: "local-json", online: true }));
-app.post("/api/auth/login", async (req, res) => {
+app.post("/api/auth/login", loginThrottle, async (req, res) => {
   const { username, password } = req.body || {};
   const user = db.users.find(x => x.username === username);
-  if (!user || !(await bcrypt.compare(password || "", user.passwordHash))) return res.status(401).json({ error: "Username atau password salah." });
+  if (!user || !(await bcrypt.compare(password || "", user.passwordHash))) { recordLoginFailure(req); return res.status(401).json({ error: "Username atau password salah." }); }
+  clearLoginFailures(req);
   recordAudit({ username: user.username, role: user.role }, "auth.login");
   await persist();
   const token = jwt.sign({ id: user.id, username: user.username, role: user.role }, JWT_SECRET, { expiresIn: "30d" });
@@ -221,7 +255,7 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
 app.get("/api/update/check", auth, async (req, res) => {
   try {
     const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
-    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits/main", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits/main`, { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
     if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
     const latest = await response.json();
     res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
@@ -229,7 +263,7 @@ app.get("/api/update/check", auth, async (req, res) => {
 });
 app.get("/api/update/commits", auth, async (req, res) => {
   try {
-    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits?sha=main&per_page=10", {
+    const response = await fetch(`https://api.github.com/repos/${GITHUB_REPO}/commits?sha=main&per_page=10`, {
       headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" }
     });
     if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
