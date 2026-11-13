@@ -201,7 +201,17 @@ async function applyUpdate(){
           if(message)message.textContent="Server Termux sudah aktif kembali. Membuka ulang tampilan aplikasi…";
           if(status)status.textContent="Berhasil diperbarui. Aplikasi akan dimuat ulang.";
           await updateDelay(1200);
-          try{const registration=await navigator.serviceWorker?.getRegistration();if(registration)await registration.update();}catch{}
+          try{
+            const registration=await navigator.serviceWorker?.getRegistration();
+            if(registration){
+              await registration.update();
+              const worker=registration.installing||registration.waiting;
+              if(worker)await Promise.race([
+                new Promise(resolve=>worker.addEventListener("statechange",()=>{if(worker.state==="activated"||worker.state==="redundant")resolve();})),
+                updateDelay(10000)
+              ]);
+            }
+          }catch{}
           location.reload();
           return;
         }
