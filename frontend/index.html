@@ -435,7 +435,7 @@ button.danger{background:#b9382d;color:#fff}
 <p class="hint">Operasional stok, target, riwayat, alarm, dan laporan berlangsung pada satu HP. Data tidak dikirim ke server internet. Internet hanya dibutuhkan ketika pengguna sengaja mengunduh pembaruan kode dari GitHub. Pastikan Termux tetap berjalan agar server dan laporan tengah malam aktif.</p>
 <h3>Pembaruan aplikasi</h3>
 <p class="hint">Hubungkan HP ke internet sebelum memperbarui. Tombol Update Aplikasi akan mencadangkan database, mengambil kode terbaru dari branch yang terpasang, memasang dependensi Node.js, menghentikan server lama, lalu menjalankan server baru. Setelah server siap, tampilan aplikasi dimuat ulang otomatis. Data akun, stok, transaksi, dan file .env dipertahankan.</p>
-<div class="history-card">
+<div class="history-card" id="updateCard">
 <b>🔄 Update Aplikasi</b>
 <p class="muted">Gunakan saat ada pembaruan repository. Jangan tutup Termux atau aplikasi selama proses berlangsung.</p>
 <button id="updateAppButton" onclick="applyUpdate()">Update Aplikasi</button>
