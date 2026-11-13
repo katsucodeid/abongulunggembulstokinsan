@@ -313,7 +313,7 @@ async function start() {
   });
   server.on("error", err => {
     if (err.code === "EADDRINUSE") {
-      console.error(`Port ${PORT} sudah digunakan. Hentikan server INSAN yang lama (CTRL+C pada sesi Termux sebelumnya), lalu jalankan kembali scripts/start-termux.sh.`);
+      console.error(`Port ${PORT} sudah digunakan. Hentikan server Abon Gulung Gembul yang lama (CTRL+C pada sesi Termux sebelumnya), lalu jalankan kembali scripts/start-termux.sh.`);
     } else {
       console.error("Server gagal dijalankan:", err);
     }
