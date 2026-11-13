@@ -1,7 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
 pkg update -y
-pkg install -y nodejs-lts git openssl
+pkg install -y nodejs-lts git openssl cloudflared
 cd "$HOME"
 if [ ! -d abongulunggembulstokinsan ]; then
   git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
