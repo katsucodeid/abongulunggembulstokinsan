@@ -338,14 +338,40 @@ button.danger{background:#b9382d;color:#fff}
  .login-brand img{width:60px;height:60px}
 }
 
+
+/* Collapsible navigation groups and fixed logout footer */
+.nav-group{margin:4px 0 9px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--panel)}
+.tabs .nav-group-toggle{display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%;min-height:43px!important;margin:0!important;padding:11px 13px!important;border:0!important;border-radius:0!important;background:var(--bg)!important;color:var(--muted)!important;font-size:11px!important;font-weight:850!important;letter-spacing:.07em!important;box-shadow:none!important}
+.nav-group-toggle .nav-chevron{font-size:17px;transition:transform .2s}
+.nav-group-toggle[aria-expanded="true"] .nav-chevron{transform:rotate(180deg)}
+.nav-group-items{display:none;padding:5px;gap:3px}
+.nav-group-items.expanded{display:grid}
+.tabs .nav-group-items .nav-link{width:100%;margin:0!important;text-align:left!important;justify-content:flex-start!important;min-height:42px;padding:10px 12px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--text)!important;box-shadow:none!important;font-size:13px!important}
+.tabs .nav-group-items .nav-link:hover{background:var(--bg)!important}
+.tabs .nav-group-items .nav-link.nav-active{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.nav-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
+.tabs .nav-footer .nav-logout{width:100%;margin:0!important;min-height:46px}
+.tabs{display:flex;flex-direction:column;overflow-y:auto}
+#updateProgress{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(31,17,10,.72);backdrop-filter:blur(8px)}
+#updateProgress.hidden{display:none}
+.update-progress-card{width:min(100%,390px);padding:28px 22px;border:1px solid var(--line);border-radius:24px;background:var(--panel);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.update-spinner{width:58px;height:58px;margin:0 auto 18px;border:5px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:updateSpin .8s linear infinite}
+.update-pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block;margin:0 4px;animation:updatePulse 1s ease-in-out infinite}
+.update-pulse:nth-child(2){animation-delay:.15s}.update-pulse:nth-child(3){animation-delay:.3s}
+@keyframes updateSpin{to{transform:rotate(360deg)}}@keyframes updatePulse{50%{opacity:.25;transform:scale(.7)}}
+@media(prefers-reduced-motion:reduce){.update-spinner,.update-pulse{animation:none}}
+
 </style></head><body>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
 <section id="login" class="panel"><div class="login-brand"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
-<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Offline lokal · satu perangkat <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
-<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Offline lokal · satu perangkat <span id="pendingCount"></span></div></div></div><p id="syncErrors" class="low"></p>
+<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div>
+<div class="nav-group"><button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="navOperations" onclick="toggleNavGroup('navOperations')"><span>▸ &nbsp; OPERASIONAL</span><span class="nav-chevron">⌄</span></button><div class="nav-group-items expanded" id="navOperations"><button class="nav-link" onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button class="nav-link" onclick="showTab('incoming')">📦 &nbsp; Stok Datang</button><button class="nav-link" onclick="showTab('production')">🎯 &nbsp; Target</button><button class="nav-link" onclick="showTab('history')">🧾 &nbsp; Riwayat</button><button class="nav-link" onclick="showTab('report')">📊 &nbsp; Laporan</button><button class="nav-link" onclick="showTab('manual')">▤ &nbsp; Stok Manual</button></div></div>
+<div class="nav-group"><button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navSystem" onclick="toggleNavGroup('navSystem')"><span>▸ &nbsp; PENGATURAN &amp; SISTEM</span><span class="nav-chevron">⌄</span></button><div class="nav-group-items" id="navSystem"><button class="nav-link" onclick="showTab('alarm')">⏰ &nbsp; Alarm Kerja</button><button class="nav-link" onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></div></div>
+<div class="nav-footer"><button class="danger nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></div></nav>
 <div id="alarm" class="tab panel hidden">
 <style>
 #alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
@@ -405,25 +431,41 @@ button.danger{background:#b9382d;color:#fff}
 </section>
 </div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Pusat informasi fitur, keunggulan, versi, dan catatan pembaruan aplikasi.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
-
-<h3>Fitur aplikasi</h3>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang Abon Gulung Gembul</h2><p class="muted" style="margin-top:0">Panduan fitur, penyimpanan, keamanan, dan pembaruan sistem stok.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
+<h3>Fitur operasional</h3>
 <div class="grid">
-<article class="history-card"><b>📦 Manajemen stok</b><p class="muted">Pantau jumlah persediaan setiap jenis barang dalam satu dashboard.</p></article>
-<article class="history-card"><b>🚚 Barang masuk</b><p class="muted">Catat penerimaan barang berdasarkan pack, isi per pack, dan tambahan satuan.</p></article>
-<article class="history-card"><b>🎯 Target produksi</b><p class="muted">Catat target dan kebutuhan bahan/kemasan produksi berdasarkan varian.</p></article>
-<article class="history-card"><b>📊 Laporan</b><p class="muted">Lihat ringkasan stok dan laporan aktivitas persediaan.</p></article>
-<article class="history-card"><b>🧾 Riwayat transaksi</b><p class="muted">Telusuri transaksi barang masuk, pengurangan stok, dan produksi.</p></article>
-<article class="history-card"><b>✍️ Stok manual</b><p class="muted">Catat penyesuaian stok secara manual sesuai hak akses akun.</p></article>
-<article class="history-card"><b>👥 Admin &amp; staff</b><p class="muted">Pemisahan akses pengguna berdasarkan peran akun.</p></article>
-<article class="history-card"><b>🔄 Pembaruan aplikasi</b><p class="muted">Pembaruan kode dilakukan manual saat perangkat sengaja dihubungkan ke internet; operasional stok tetap offline.</p></article>
+<article class="history-card"><b>📦 Stok</b><p class="muted">Dashboard stok Box isi 3, Box isi 5 luar, Box isi 5 dalam, Kertas Minyak, dan Mika roti roll. Menampilkan jumlah tersedia serta batas minimum bila diatur.</p></article>
+<article class="history-card"><b>🚚 Stok Datang</b><p class="muted">Catat barang masuk memakai jumlah pack, isi per pack, dan tambahan pcs. Total penerimaan dihitung otomatis dan masuk ke persediaan.</p></article>
+<article class="history-card"><b>🎯 Target Produksi</b><p class="muted">Catat target Ori, Beef, Spicy, dan Cheese berdasarkan tanggal serta outlet Grand Wisata, Bektim, atau Harapan Indah. Atur kebutuhan Box isi 3 dan Box isi 5 per varian.</p></article>
+<article class="history-card"><b>🧾 Riwayat</b><p class="muted">Telusuri barang masuk, pengurangan manual, dan target produksi. Admin dapat menghapus transaksi; stok terkait dikembalikan sesuai transaksi.</p></article>
+<article class="history-card"><b>📊 Laporan</b><p class="muted">Lihat ringkasan stok terkini, salin format laporan stok, dan perbarui bagian INSAN pada teks stock opname tanpa mengubah bagian lainnya.</p></article>
+<article class="history-card"><b>✍️ Stok Manual</b><p class="muted">Catat pengurangan stok dengan jumlah dan alasan wajib. Perubahan divalidasi agar stok tidak menjadi negatif.</p></article>
+<article class="history-card"><b>⏰ Alarm Kerja</b><p class="muted">Atur jam mulai kerja, hitung perkiraan jam pulang setelah 10 jam, pilih nada alarm dari pustaka atau file audio perangkat, serta uji alarm.</p></article>
+<article class="history-card"><b>🛡️ Pencadangan &amp; Pemulihan</b><p class="muted">Admin dapat membuat file cadangan database, menyimpannya, lalu memulihkan data dari cadangan yang valid. Pemulihan memeriksa struktur dan checksum.</p></article>
+<article class="history-card"><b>👥 Akun Admin &amp; Staff</b><p class="muted">Akun dibuat oleh admin. Hak akses admin dan staff dibedakan; pendaftaran publik tidak tersedia.</p></article>
+<article class="history-card"><b>📱 Mode Offline Satu HP</b><p class="muted">Server Node.js berjalan di Termux pada 127.0.0.1. Aplikasi Android dan browser di HP yang sama terhubung secara lokal tanpa Cloudflare, Render, atau server publik.</p></article>
 </div>
-<h3>Keunggulan</h3>
-<ul><li><b>Sepenuhnya offline:</b> aplikasi bekerja tanpa internet pada satu HP Android.</li><li><b>Database lokal:</b> data utama tersimpan di Termux dan salinan TXT diperbarui otomatis ke folder Download.</li><li><b>Laporan harian:</b> setiap pergantian tanggal pukul 00.00 dibuat file laporan TXT.</li><li><b>Cadangan otomatis:</b> database dicadangkan sebelum laporan harian dibuat.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
-<h3>Pembaruan aplikasi</h3><p class="hint">Operasional aplikasi ini sepenuhnya lokal. Tidak ada pemeriksaan pembaruan otomatis ke internet. Jika ingin memperbarui kode, lakukan secara manual dan buat cadangan database terlebih dahulu.</p>
+<h3>Penyimpanan data &amp; laporan TXT</h3>
+<ul>
+<li><b>Database utama:</b> backend/data/data.json di penyimpanan privat Termux.</li>
+<li><b>Salinan teks:</b> Download/Abon Gulung Gembul/database-stok.txt diperbarui ketika database berhasil disimpan.</li>
+<li><b>Laporan harian:</b> dibuat pukul 00.00 waktu lokal dengan nama tanggal seperti 11november2026.txt.</li>
+<li><b>Isi laporan:</b> stok awal/akhir, transaksi, target, perubahan database dan riwayat audit.</li>
+<li><b>Cadangan:</b> database disalin sebelum pembaruan dan sebelum laporan harian dibuat. Jika server mati tengah malam, laporan terlewat dibuat ketika server kembali hidup.</li>
+<li><b>Perlindungan:</b> jangan mengedit database-stok.txt secara manual; lakukan perubahan melalui aplikasi. Simpan salinan cadangan di tempat lain secara berkala.</li>
+</ul>
+<h3>Privasi &amp; cara kerja offline</h3>
+<p class="hint">Operasional stok, target, riwayat, alarm, dan laporan berlangsung pada satu HP. Data tidak dikirim ke server internet. Internet hanya dibutuhkan ketika pengguna sengaja mengunduh pembaruan kode dari GitHub. Pastikan Termux tetap berjalan agar server dan laporan tengah malam aktif.</p>
+<h3>Pembaruan aplikasi</h3>
+<p class="hint">Hubungkan HP ke internet sebelum memperbarui. Tombol Update Aplikasi akan mencadangkan database, mengambil kode terbaru dari branch yang terpasang, memasang dependensi Node.js, menghentikan server lama, lalu menjalankan server baru. Setelah server siap, tampilan aplikasi dimuat ulang otomatis. Data akun, stok, transaksi, dan file .env dipertahankan.</p>
+<div class="history-card">
+<b>🔄 Update Aplikasi</b>
+<p class="muted">Gunakan saat ada pembaruan repository. Jangan tutup Termux atau aplikasi selama proses berlangsung.</p>
+<button id="updateAppButton" onclick="applyUpdate()">Update Aplikasi</button>
+<p id="updateAppStatus" class="muted" aria-live="polite">Siap memeriksa dan memasang pembaruan.</p>
+</div>
 <h3>Riwayat perubahan versi</h3>
-<p class="hint">Daftar berikut diambil dari riwayat commit repository yang sedang terpasang. Setelah admin memasang pembaruan, buka kembali halaman ini untuk melihat perubahan yang ikut terpasang.</p>
+<p class="hint">Menampilkan riwayat commit kode yang sedang terpasang di perangkat ini.</p>
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
 <button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
-</div>
-</section></main><footer class="app-footer"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
+</div></section></main><section id="updateProgress" class="hidden" role="status" aria-live="polite"><div class="update-progress-card"><div class="update-spinner"></div><h2 id="updateProgressTitle">Memperbarui aplikasi</h2><p id="updateProgressMessage" class="muted">Mencadangkan data dan menyiapkan pembaruan…</p><div><span class="update-pulse"></span><span class="update-pulse"></span><span class="update-pulse"></span></div></div></section><footer class="app-footer"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
