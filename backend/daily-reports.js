@@ -45,7 +45,7 @@ async function ensureReportDirectory(reportDir) {
   await fs.promises.mkdir(reportDir, { recursive: true });
 }
 
-async function backupExistingDatabase(dataFile, reportDir) {
+async function backupExistingDatabase(dataFile, backupDir) {
   let raw;
   try {
     raw = await fs.promises.readFile(dataFile, "utf8");
@@ -53,9 +53,9 @@ async function backupExistingDatabase(dataFile, reportDir) {
     if (error.code === "ENOENT") return null;
     throw error;
   }
-  await ensureReportDirectory(reportDir);
+  await ensureReportDirectory(backupDir);
   const filename = `cadangan-sebelum-pembaruan-${stamp()}.txt`;
-  const destination = path.join(reportDir, filename);
+  const destination = path.join(backupDir, filename);
   const body = [
     "CADANGAN DATABASE ABON GULUNG GEMBUL",
     "Dibuat sebelum pembaruan sistem laporan offline.",
@@ -68,9 +68,9 @@ async function backupExistingDatabase(dataFile, reportDir) {
   return destination;
 }
 
-async function mirrorDatabase(database, reportDir) {
-  await ensureReportDirectory(reportDir);
-  const destination = path.join(reportDir, "database-stok.txt");
+async function mirrorDatabase(database, backupDir) {
+  await ensureReportDirectory(backupDir);
+  const destination = path.join(backupDir, "database-stok.txt");
   const temporary = destination + "." + process.pid + "." + require("crypto").randomUUID() + ".tmp";
   const body = [
     "DATABASE LOKAL ABON GULUNG GEMBUL",
@@ -88,7 +88,7 @@ async function mirrorDatabase(database, reportDir) {
   }
 }
 
-function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
+function createDailyReports({ getDb, persist, locked, itemDefs, reportDir, backupDir }) {
   let timer = null;
   let stopped = false;
 
@@ -227,8 +227,9 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
     }
 
     await ensureReportDirectory(reportDir);
+    await ensureReportDirectory(backupDir || reportDir);
     const backupName = "cadangan-sebelum-laporan-" + filename;
-    const backupPath = path.join(reportDir, backupName);
+    const backupPath = path.join(backupDir || reportDir, backupName);
     try {
       await fs.promises.writeFile(
         backupPath,
@@ -264,9 +265,7 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir }) {
       .map(tx => String(tx.date || ""))
       .filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value))
       .sort()[0];
-    let cursor = database.lastDailyReportDate
-      ? addDays(database.lastDailyReportDate, 1)
-      : (database.stockStartDate || firstTransaction || today);
+    let cursor = database.stockStartDate || firstTransaction || today;
     const yesterday = addDays(today, -1);
 
     while (cursor <= yesterday) {
