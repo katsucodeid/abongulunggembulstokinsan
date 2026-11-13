@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#a94716"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#101a2a"><meta name="description" content="Abon Gulung Gembul - Stok Kertas: sistem persediaan, produksi, dan operasional."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
 <style>
 :root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
 :root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
@@ -49,12 +49,6 @@ button:disabled{opacity:.55;cursor:not-allowed}
 .secondary{box-shadow:none;background:color-mix(in srgb,var(--panel) 82%,transparent)}
 .tabs{position:sticky;top:67px;z-index:12;margin:0 -4px 14px;padding:9px 4px 12px;background:color-mix(in srgb,var(--bg) 92%,transparent);backdrop-filter:blur(14px);border-bottom:1px solid var(--line);scroll-snap-type:x proximity}
 .tabs button{flex:0 0 auto;min-width:unset;padding:10px 16px;border:1px solid var(--line);background:var(--panel);color:var(--muted);box-shadow:none;scroll-snap-align:start}
-#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(1),
-#app:has(#incoming:not(.hidden)) .tabs button:nth-child(2),
-#app:has(#production:not(.hidden)) .tabs button:nth-child(3),
-#app:has(#report:not(.hidden)) .tabs button:nth-child(4),
-#app:has(#history:not(.hidden)) .tabs button:nth-child(5),
-#app:has(#manual:not(.hidden)) .tabs button:nth-child(6){background:var(--accent);border-color:var(--accent);color:#fff}
 .grid{grid-template-columns:repeat(auto-fit,minmax(min(100%,205px),1fr));gap:12px}
 #stockGrid>.panel{margin:0;background:linear-gradient(145deg,var(--panel),color-mix(in srgb,var(--panel) 78%,var(--accent)));border-radius:16px;box-shadow:none}
 .qty{font-size:clamp(23px,3vw,30px);letter-spacing:-.035em;font-variant-numeric:tabular-nums}
@@ -115,12 +109,6 @@ header{max-width:1120px}
 #stockGrid>.panel{background:linear-gradient(145deg,var(--panel),color-mix(in srgb,var(--panel) 76%,var(--accent)));border-color:color-mix(in srgb,var(--accent) 24%,var(--line))}
 button{background:var(--accent);color:#321809}
 .tabs button{color:var(--muted)}
-#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(1),
-#app:has(#incoming:not(.hidden)) .tabs button:nth-child(2),
-#app:has(#production:not(.hidden)) .tabs button:nth-child(3),
-#app:has(#report:not(.hidden)) .tabs button:nth-child(4),
-#app:has(#history:not(.hidden)) .tabs button:nth-child(5),
-#app:has(#manual:not(.hidden)) .tabs button:nth-child(6){color:#321809}
 .production-total strong,.outlet-target-heading strong{color:var(--accent)}
 .outlet-target-heading strong{background:color-mix(in srgb,var(--accent) 18%,transparent)}
 .app-footer{max-width:1120px;margin:22px auto 0;padding:24px 20px calc(24px + env(safe-area-inset-bottom));text-align:center;border-top:1px solid var(--line);color:var(--muted)}
@@ -146,12 +134,6 @@ button{background:var(--accent);color:#321809}
 .tabs .nav-heading{font-size:11px;font-weight:800;letter-spacing:.14em;color:var(--muted);padding:0 10px 8px}
 .tabs button{width:100%;min-height:48px;flex:0 0 auto;text-align:left;white-space:normal;border-radius:12px;padding:12px 14px;background:transparent;color:var(--text);border:1px solid transparent;font-size:14px;box-shadow:none}
 .tabs button:hover{background:color-mix(in srgb,var(--accent) 12%,transparent)}
-#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),
-#app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),
-#app:has(#production:not(.hidden)) .tabs button:nth-child(4),
-#app:has(#report:not(.hidden)) .tabs button:nth-child(5),
-#app:has(#history:not(.hidden)) .tabs button:nth-child(6),
-#app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:var(--accent);border-color:var(--accent);color:#321809}
 header{gap:12px}
 .brand-lockup{flex:1}
 .footer-logo{width:72px;height:72px;object-fit:contain;margin-bottom:8px;filter:drop-shadow(0 5px 10px rgba(0,0,0,.2))}
@@ -269,8 +251,6 @@ header{min-height:62px!important;padding-top:7px!important;padding-bottom:7px!im
 .clock-chip strong{font-size:16px;letter-spacing:.04em;color:var(--accent)}
 .clock-chip small{font-size:10px;white-space:nowrap}
 .tabs .nav-close{display:grid!important;place-items:center!important;align-content:center!important;justify-content:center!important;text-align:center!important;line-height:1!important;font-family:Arial,sans-serif!important;font-size:25px!important;font-weight:400!important;padding:0!important;transform:none!important;flex:0 0 40px!important}
-#app:has(.tab:not(.hidden)) #mainNav button:not(.nav-active){background:transparent!important;border-color:transparent!important;color:var(--text)!important}
-#app #mainNav button.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#321809!important;font-weight:800!important}
 @media(max-width:390px){.clock-chip{min-width:70px;padding:4px 6px}.clock-chip strong{font-size:14px}.clock-chip small{font-size:9px}header{min-height:58px!important}}
 
 
@@ -312,12 +292,6 @@ button.danger{background:#b9382d;color:#fff}
 .tabs{background:#fff!important;border-right:1px solid #efd9c1;box-shadow:18px 0 45px rgba(82,39,14,.14)}
 .tabs button{color:#64432f}
 .tabs button:hover{background:#fff0df}
-#app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),
-#app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),
-#app:has(#production:not(.hidden)) .tabs button:nth-child(4),
-#app:has(#report:not(.hidden)) .tabs button:nth-child(5),
-#app:has(#history:not(.hidden)) .tabs button:nth-child(6),
-#app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:#bd4e1c;color:#fff;border-color:#bd4e1c}
 #stockGrid>.panel{background:linear-gradient(145deg,#fff4e5,#ffe2bc);border:1px solid #f0d0a8;border-radius:19px}
 #stockGrid .qty{color:#8f3514}
 .history-card,.outlet-target-card,.variant-card{background:#fff;border-color:#efddca}
@@ -338,14 +312,94 @@ button.danger{background:#b9382d;color:#fff}
  .login-brand img{width:60px;height:60px}
 }
 
+
+/* Collapsible navigation groups and fixed logout footer */
+#app:has(.tab:not(.hidden)) #mainNav .nav-group-toggle{background:var(--bg)!important;border-color:var(--line)!important;color:var(--muted)!important}
+#app #mainNav .nav-group-items .nav-link.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#fff!important;font-weight:800!important}
+#app #mainNav .nav-footer .nav-logout{background:var(--danger)!important;border-color:var(--danger)!important;color:#fff!important}
+.nav-group{margin:4px 0 9px;border:1px solid var(--line);border-radius:13px;overflow:hidden;background:var(--panel)}
+.tabs .nav-group-toggle{display:flex!important;align-items:center!important;justify-content:space-between!important;width:100%;min-height:43px!important;margin:0!important;padding:11px 13px!important;border:0!important;border-radius:0!important;background:var(--bg)!important;color:var(--muted)!important;font-size:11px!important;font-weight:850!important;letter-spacing:.07em!important;box-shadow:none!important}
+.nav-group-toggle .nav-chevron{font-size:17px;transition:transform .2s}
+.nav-group-toggle[aria-expanded="true"] .nav-chevron{transform:rotate(180deg)}
+.nav-group-items{display:none;padding:5px;gap:3px}
+.nav-group-items.expanded{display:grid}
+.tabs .nav-group-items .nav-link{width:100%;margin:0!important;text-align:left!important;justify-content:flex-start!important;min-height:42px;padding:10px 12px!important;border:1px solid transparent!important;border-radius:10px!important;background:transparent!important;color:var(--text)!important;box-shadow:none!important;font-size:13px!important}
+.tabs .nav-group-items .nav-link:hover{background:var(--bg)!important}
+.tabs .nav-group-items .nav-link.nav-active{background:var(--accent)!important;color:#fff!important;border-color:var(--accent)!important}
+.nav-footer{margin-top:auto;padding-top:14px;border-top:1px solid var(--line)}
+.tabs .nav-footer .nav-logout{width:100%;margin:0!important;min-height:46px}
+.tabs{display:flex;flex-direction:column;overflow-y:auto}
+#updateProgress{position:fixed;inset:0;z-index:10000;display:grid;place-items:center;padding:22px;background:rgba(31,17,10,.72);backdrop-filter:blur(8px)}
+#updateProgress.hidden{display:none}
+.update-progress-card{width:min(100%,390px);padding:28px 22px;border:1px solid var(--line);border-radius:24px;background:var(--panel);text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.25)}
+.update-spinner{width:58px;height:58px;margin:0 auto 18px;border:5px solid var(--line);border-top-color:var(--accent);border-radius:50%;animation:updateSpin .8s linear infinite}
+.update-pulse{width:10px;height:10px;border-radius:50%;background:var(--accent);display:inline-block;margin:0 4px;animation:updatePulse 1s ease-in-out infinite}
+.update-pulse:nth-child(2){animation-delay:.15s}.update-pulse:nth-child(3){animation-delay:.3s}
+@keyframes updateSpin{to{transform:rotate(360deg)}}@keyframes updatePulse{50%{opacity:.25;transform:scale(.7)}}
+@media(prefers-reduced-motion:reduce){.update-spinner,.update-pulse{animation:none}}
+
+
+/* Palet tema INSAN: mode gelap biru malam + emas/toska */
+:root:not(.light){
+ color-scheme:dark;
+ --bg:#101a2a;--panel:#1b293b;--text:#e8f0fa;--muted:#a7b8cc;--line:#35465c;
+ --accent:#e6ad45;--danger:#f07170;
+ --brand-orange:#f0a34a;--brand-gold:#e6bd68;--brand-cream:#101a2a;--brand-ink:#e8f0fa;
+}
+:root:not(.light) body{background:radial-gradient(ellipse at 50% -12%,rgba(52,190,177,.14),transparent 44%),linear-gradient(180deg,#15243a 0,#101a2a 320px,#101a2a 100%);color:var(--text)}
+:root:not(.light) header{background:rgba(16,26,42,.94)!important;border-bottom:1px solid #35465c!important;box-shadow:0 8px 30px rgba(0,0,0,.22)!important}
+:root:not(.light) .brand-copy b,:root:not(.light) .clock-chip strong,:root:not(.light) .login-brand h2,:root:not(.light) .tab h2,:root:not(.light) .tab h3{color:#f0bd67!important}
+:root:not(.light) .brand-copy .muted,:root:not(.light) .eyebrow{color:#9bc9c5!important}
+:root:not(.light) .brand-logo,:root:not(.light) .footer-logo{background:#25364b!important}
+:root:not(.light) .clock-chip,:root:not(.light) .menu-toggle,:root:not(.light) #connection{background:#1b293b!important;border-color:#35465c!important;color:#e8f0fa!important}
+:root:not(.light) .menu-toggle span{background:#e6bd68!important}
+:root:not(.light) #login,:root:not(.light) .tab.panel{background:#1b293b!important;border-color:#35465c!important;box-shadow:0 16px 42px rgba(0,0,0,.22)!important}
+:root:not(.light) .hint{background:#223449!important;border-color:#435970!important;color:#b8c9dc!important}
+:root:not(.light) input,:root:not(.light) select,:root:not(.light) textarea{background:#111f31!important;color:#e8f0fa!important;border-color:#40536b!important}
+:root:not(.light) input::placeholder,:root:not(.light) textarea::placeholder{color:#8196ae!important}
+:root:not(.light) button:not(.secondary):not(.danger){background:linear-gradient(135deg,#e6ad45,#c88b2e)!important;color:#172235!important;box-shadow:0 6px 16px rgba(0,0,0,.2)!important}
+:root:not(.light) button.secondary{background:#26384d!important;color:#dce8f5!important;border:1px solid #50647b!important}
+:root:not(.light) button.danger,:root:not(.light) .nav-footer .nav-logout{background:#a83e49!important;color:#fff!important}
+:root:not(.light) .tabs{background:#152338!important;border-color:#35465c!important;box-shadow:18px 0 45px rgba(0,0,0,.3)!important}
+:root:not(.light) .tabs button{color:#b6c7da!important}
+:root:not(.light) .tabs button:hover,:root:not(.light) .tabs .nav-group-items .nav-link:hover{background:#2a3c52!important}
+:root:not(.light) .tabs button.nav-active,:root:not(.light) #app #mainNav .nav-group-items .nav-link.nav-active{background:#e6ad45!important;border-color:#e6ad45!important;color:#172235!important}
+:root:not(.light) .nav-group{background:#1b293b!important;border-color:#35465c!important}
+:root:not(.light) .tabs .nav-group-toggle,:root:not(.light) #app:has(.tab:not(.hidden)) #mainNav .nav-group-toggle{background:#223449!important;color:#b6c7da!important}
+:root:not(.light) .tabs .nav-group-items .nav-link{color:#e8f0fa!important}
+:root:not(.light) #stockGrid>.panel{background:linear-gradient(145deg,#24384d,#1b3547)!important;border-color:#40576b!important}
+:root:not(.light) #stockGrid .qty,:root:not(.light) .production-total strong,:root:not(.light) .outlet-target-heading strong{color:#f0bd67!important}
+:root:not(.light) .history-card,:root:not(.light) .outlet-target-card,:root:not(.light) .variant-card,:root:not(.light) #alarm .alarm-box,:root:not(.light) #alarm .alarm-stat,:root:not(.light) #alarm .tone-row{background:#1c2c40!important;border-color:#3b5068!important}
+:root:not(.light) .outlet-target-heading strong{background:#344258!important}
+:root:not(.light) #alarm .tone-current{background:#2c4053!important;border-color:#d9a64c!important}
+:root:not(.light) #productionPreview{background:#223449!important;border-color:#52657a!important}
+:root:not(.light) .app-footer{border-color:#35465c!important;color:#a7b8cc!important}
+:root:not(.light) .footer-brand{color:#f0bd67!important}
+:root:not(.light) .nav-backdrop.visible{background:rgba(3,9,18,.72)!important}
+:root:not(.light) #updateProgress{background:rgba(3,9,18,.82)!important}
+:root:not(.light) .update-progress-card{background:#1b293b!important;border-color:#40536b!important;color:#e8f0fa!important}
+:root:not(.light) .update-spinner{border-color:#40536b;border-top-color:#e6ad45}
+:root:not(.light) #updateNotice{border-color:#b78b42!important}
+:root:not(.light) .ok{color:#61d6b5!important}
+:root:not(.light) .low{color:#f07170!important}
+
+
+/* Profil developer */
+.developer-card{display:flex;align-items:center;gap:18px;padding:20px;margin:16px 0 24px;border:1px solid var(--line);border-radius:20px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.08)}
+.developer-avatar{width:132px;height:132px;flex:0 0 132px;object-fit:cover;object-position:center 34%;border-radius:50%;border:4px solid var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 16%,transparent)}
+.developer-copy{min-width:0}.developer-kicker{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--accent)}.developer-copy h3{margin:5px 0 7px;font-size:21px}.developer-copy p{margin:0;color:var(--muted);line-height:1.6}.developer-brand{display:inline-block;margin-top:10px;font-weight:800;letter-spacing:.4px}.developer-brand span{color:var(--accent);padding:0 4px}
+@media(max-width:520px){.developer-card{flex-direction:column;text-align:center;padding:18px 16px}.developer-avatar{width:116px;height:116px;flex-basis:116px}.developer-copy h3{font-size:19px}}
 </style></head><body>
-<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button class="secondary theme-toggle" style="width:auto" onclick="toggleTheme()">◐ Tema</button></div></header>
+<header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false">🌙 Tema Gelap</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
-<section id="login" class="panel"><div class="login-brand"><img src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
+<section id="login" class="panel"><div class="login-brand"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
-<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div><button class="secondary" style="max-width:110px" onclick="logout()">Keluar</button></div><p id="syncErrors" class="low"></p>
-<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div><div class="nav-heading">MENU UTAMA</div><button onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button onclick="showTab('alarm')">⏰ &nbsp; Alarm</button><button onclick="showTab('incoming')">Paket datang</button><button onclick="showTab('production')">Target</button><button onclick="showTab('report')">Laporan</button><button onclick="showTab('history')">Riwayat</button><button onclick="showTab('manual')">▤ &nbsp; Stok manual</button><button onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></nav>
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Offline lokal · satu perangkat <span id="pendingCount"></span></div></div></div><p id="syncErrors" class="low"></p>
+<nav class="tabs" id="mainNav" aria-label="Navigasi utama"><div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div>
+<div class="nav-group"><button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="navOperations" onclick="toggleNavGroup('navOperations')"><span>▸ &nbsp; OPERASIONAL</span><span class="nav-chevron">⌄</span></button><div class="nav-group-items expanded" id="navOperations"><button class="nav-link" onclick="showTab('dashboard')">▦ &nbsp; Stok</button><button class="nav-link" onclick="showTab('incoming')">📦 &nbsp; Stok Datang</button><button class="nav-link" onclick="showTab('production')">🎯 &nbsp; Target</button><button class="nav-link" onclick="showTab('history')">🧾 &nbsp; Riwayat</button><button class="nav-link" onclick="showTab('report')">📊 &nbsp; Laporan</button><button class="nav-link" onclick="showTab('manual')">▤ &nbsp; Stok Manual</button></div></div>
+<div class="nav-group"><button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navSystem" onclick="toggleNavGroup('navSystem')"><span>▸ &nbsp; PENGATURAN &amp; SISTEM</span><span class="nav-chevron">⌄</span></button><div class="nav-group-items" id="navSystem"><button class="nav-link" onclick="showTab('alarm')">⏰ &nbsp; Alarm Kerja</button><button class="nav-link" onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button><button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; Pembaruan</button></div></div>
+<div class="nav-footer"><button class="danger nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></div></nav>
 <div id="alarm" class="tab panel hidden">
 <style>
 #alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
@@ -378,13 +432,7 @@ button.danger{background:#b9382d;color:#fff}
 <div class="alarm-section-head"><h3>🎵 Semua nada</h3><span class="alarm-note">Pilih nama untuk melihat kontrol</span></div>
 <div class="tone-tools"><input id="alarmToneSearch" type="search" placeholder="Cari nada dering…" aria-label="Cari nada dering"><select id="alarmToneFilter" aria-label="Filter nada"><option value="all">Semua nada</option><option value="downloaded">Sudah diunduh</option><option value="available">Belum diunduh</option></select></div>
 <div id="alarmToneLibrary" class="tone-list"></div>
-<div class="alarm-section-head"><h3>🎭 Nada lucu dari Pixabay</h3><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Buka Pixabay ↗</a></div>
-<p class="alarm-note">Pilih suara di Pixabay lalu tekan Free Download. Setelah file tersimpan, impor melalui pemilih file di bawah untuk menggunakannya sebagai nada alarm.</p>
-<div class="tone-list">
-<article class="tone-row"><div class="tone-name">Funny Alarm <span class="tone-sub">Alarm kartun lucu · Efecto Fundador</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-funny-alarm-75649/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Alarm &amp; Notification <span class="tone-sub">Efek notifikasi singkat</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-notification-20-270145/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Koleksi alarm lucu lainnya</div><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Lihat daftar ↗</a></article>
-</div>
+<div class="alarm-section-head"><h3>🎵 Nada alarm dari perangkat</h3></div><p class="alarm-note">Mode offline: gunakan file audio yang sudah tersimpan di HP. Tidak ada unduhan atau pemuatan suara dari internet.</p>
 <label for="customAlarmToneFile">Impor nada dari perangkat (MP3/WAV/OGG/M4A/AAC)</label><input id="customAlarmToneFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac">
 <div class="alarm-section-head"><h3>⬇ Nada tersimpan di perangkat</h3><span class="alarm-note" id="downloadedToneSummary">0 nada</span></div>
 <p class="alarm-note">Nada tersimpan pada penyimpanan browser perangkat ini. Hindari menghapus data situs agar nada tetap tersedia.</p><div id="downloadedAlarmTones" class="tone-list"></div>
@@ -411,29 +459,45 @@ button.danger{background:#b9382d;color:#fff}
 </section>
 </div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Pusat informasi fitur, keunggulan, versi, dan catatan pembaruan aplikasi.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
-
-<h3>Fitur aplikasi</h3>
-<div class="grid">
-<article class="history-card"><b>📦 Manajemen stok</b><p class="muted">Pantau jumlah persediaan setiap jenis barang dalam satu dashboard.</p></article>
-<article class="history-card"><b>🚚 Barang masuk</b><p class="muted">Catat penerimaan barang berdasarkan pack, isi per pack, dan tambahan satuan.</p></article>
-<article class="history-card"><b>🎯 Target produksi</b><p class="muted">Catat target dan kebutuhan bahan/kemasan produksi berdasarkan varian.</p></article>
-<article class="history-card"><b>📊 Laporan</b><p class="muted">Lihat ringkasan stok dan laporan aktivitas persediaan.</p></article>
-<article class="history-card"><b>🧾 Riwayat transaksi</b><p class="muted">Telusuri transaksi barang masuk, pengurangan stok, dan produksi.</p></article>
-<article class="history-card"><b>✍️ Stok manual</b><p class="muted">Catat penyesuaian stok secara manual sesuai hak akses akun.</p></article>
-<article class="history-card"><b>👥 Admin &amp; staff</b><p class="muted">Pemisahan akses pengguna berdasarkan peran akun.</p></article>
-<article class="history-card"><b>🔄 Pembaruan aplikasi</b><p class="muted">Periksa versi terbaru dari GitHub dan jalankan update oleh admin.</p></article>
+<div class="developer-card">
+  <img class="developer-avatar" src="data:image/webp;base64,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" alt="Foto developer KatsuCode" loading="lazy">
+  <div class="developer-copy"><span class="developer-kicker">DEVELOPER &amp; CREATOR</span><h3>Halo, saya Insan.</h3><p>Saya pengembang di balik KatsuCode dan aplikasi Stok Abon Gulung Gembul ini. Saya membangun solusi digital yang praktis, sederhana, dan bermanfaat untuk mendukung aktivitas sehari-hari.</p><span class="developer-brand">KatsuCode <span>×</span> Insan</span></div>
 </div>
-<h3>Keunggulan</h3>
-<ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li></ul>
-<h3>Commit terbaru dari GitHub</h3>
-<p class="hint">Lihat commit pada branch main. Admin dapat menerapkan commit terbaru setelah memastikan antrean transaksi sudah tersinkron.</p>
-<p id="latestCommitStatus" class="muted">Memuat commit terbaru…</p>
-<div id="latestCommitList"></div>
-<button id="applyLatestCommit" onclick="applyUpdate()" hidden>Terapkan commit terbaru</button>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Tentang Abon Gulung Gembul</h2><p class="muted" style="margin-top:0">Panduan fitur, penyimpanan, keamanan, dan pembaruan sistem stok.</p></div><span id="aboutVersion" class="badge">Versi 2.0.0</span></div>
+<h3>Fitur operasional</h3>
+<div class="grid">
+<article class="history-card"><b>📦 Stok</b><p class="muted">Dashboard stok Box isi 3, Box isi 5 luar, Box isi 5 dalam, Kertas Minyak, dan Mika roti roll. Menampilkan jumlah tersedia serta batas minimum bila diatur.</p></article>
+<article class="history-card"><b>🚚 Stok Datang</b><p class="muted">Catat barang masuk memakai jumlah pack, isi per pack, dan tambahan pcs. Total penerimaan dihitung otomatis dan masuk ke persediaan.</p></article>
+<article class="history-card"><b>🎯 Target Produksi</b><p class="muted">Catat target Ori, Beef, Spicy, dan Cheese berdasarkan tanggal serta outlet Grand Wisata, Bektim, atau Harapan Indah. Atur kebutuhan Box isi 3 dan Box isi 5 per varian.</p></article>
+<article class="history-card"><b>🧾 Riwayat</b><p class="muted">Telusuri barang masuk, pengurangan manual, dan target produksi. Admin dapat menghapus transaksi; stok terkait dikembalikan sesuai transaksi.</p></article>
+<article class="history-card"><b>📊 Laporan</b><p class="muted">Lihat ringkasan stok terkini, salin format laporan stok, dan perbarui bagian INSAN pada teks stock opname tanpa mengubah bagian lainnya.</p></article>
+<article class="history-card"><b>✍️ Stok Manual</b><p class="muted">Catat pengurangan stok dengan jumlah dan alasan wajib. Perubahan divalidasi agar stok tidak menjadi negatif.</p></article>
+<article class="history-card"><b>⏰ Alarm Kerja</b><p class="muted">Atur jam mulai kerja, hitung perkiraan jam pulang setelah 10 jam, pilih nada alarm dari pustaka atau file audio perangkat, serta uji alarm.</p></article>
+<article class="history-card"><b>🛡️ Pencadangan &amp; Pemulihan</b><p class="muted">Admin dapat membuat file cadangan database, menyimpannya, lalu memulihkan data dari cadangan yang valid. Pemulihan memeriksa struktur dan checksum.</p></article>
+<article class="history-card"><b>👥 Akun Admin &amp; Staff</b><p class="muted">Akun dibuat oleh admin. Hak akses admin dan staff dibedakan; pendaftaran publik tidak tersedia.</p></article>
+<article class="history-card"><b>📱 Mode Offline Satu HP</b><p class="muted">Server Node.js berjalan di Termux pada 127.0.0.1. Aplikasi Android dan browser di HP yang sama terhubung secara lokal tanpa Cloudflare, Render, atau server publik.</p></article>
+</div>
+<h3>Penyimpanan data &amp; laporan TXT</h3>
+<ul>
+<li><b>Database utama:</b> backend/data/data.json di penyimpanan privat Termux.</li>
+<li><b>Salinan teks:</b> Download/Abon Gulung Gembul/database-stok.txt diperbarui ketika database berhasil disimpan.</li>
+<li><b>Laporan harian:</b> dibuat pukul 00.00 waktu lokal dengan nama tanggal seperti 11november2026.txt.</li>
+<li><b>Isi laporan:</b> stok awal/akhir, transaksi, target, perubahan database dan riwayat audit.</li>
+<li><b>Cadangan:</b> database disalin sebelum pembaruan dan sebelum laporan harian dibuat. Jika server mati tengah malam, laporan terlewat dibuat ketika server kembali hidup.</li>
+<li><b>Perlindungan:</b> jangan mengedit database-stok.txt secara manual; lakukan perubahan melalui aplikasi. Simpan salinan cadangan di tempat lain secara berkala.</li>
+</ul>
+<h3>Privasi &amp; cara kerja offline</h3>
+<p class="hint">Operasional stok, target, riwayat, alarm, dan laporan berlangsung pada satu HP. Data tidak dikirim ke server internet. Internet hanya dibutuhkan ketika pengguna sengaja mengunduh pembaruan kode dari GitHub. Pastikan Termux tetap berjalan agar server dan laporan tengah malam aktif.</p>
+<h3>Pembaruan aplikasi</h3>
+<p class="hint">Hubungkan HP ke internet sebelum memperbarui. Tombol Update Aplikasi akan mencadangkan database, mengambil kode terbaru dari branch yang terpasang, memasang dependensi Node.js, menghentikan server lama, lalu menjalankan server baru. Setelah server siap, tampilan aplikasi dimuat ulang otomatis. Data akun, stok, transaksi, dan file .env dipertahankan.</p>
+<div class="history-card" id="updateCard">
+<b>🔄 Update Aplikasi</b>
+<p class="muted">Gunakan saat ada pembaruan repository. Jangan tutup Termux atau aplikasi selama proses berlangsung.</p>
+<button id="updateAppButton" onclick="applyUpdate()">Update Aplikasi</button>
+<p id="updateAppStatus" class="muted" aria-live="polite">Siap memeriksa dan memasang pembaruan.</p>
+</div>
 <h3>Riwayat perubahan versi</h3>
-<p class="hint">Daftar berikut diambil dari riwayat commit repository yang sedang terpasang. Setelah admin memasang pembaruan, buka kembali halaman ini untuk melihat perubahan yang ikut terpasang.</p>
+<p class="hint">Menampilkan riwayat commit kode yang sedang terpasang di perangkat ini.</p>
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
 <button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
-</div>
-</section></main><footer class="app-footer"><img class="footer-logo" src="https://files.catbox.moe/jfx0d1.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
+</div></section></main><section id="updateProgress" class="hidden" role="status" aria-live="polite"><div class="update-progress-card"><div class="update-spinner"></div><h2 id="updateProgressTitle">Memperbarui aplikasi</h2><p id="updateProgressMessage" class="muted">Mencadangkan data dan menyiapkan pembaruan…</p><div><span class="update-pulse"></span><span class="update-pulse"></span><span class="update-pulse"></span></div></div></section><footer class="app-footer"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">Dibuat dengan <span aria-label="cinta">♥</span> oleh <strong>KatsuCode</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>

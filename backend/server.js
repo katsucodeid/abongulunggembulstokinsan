@@ -1,11 +1,12 @@
 require("dotenv").config();
 const express = require("express");
-const cors = require("cors");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const fs = require("fs");
 const path = require("path");
-const { spawn, execFileSync } = require("child_process");
+const { execFileSync, spawn } = require("child_process");
+const os = require("os");
+const { backupExistingDatabase, mirrorDatabase, createDailyReports } = require("./daily-reports");
 
 const app = express();
 const PORT = Number(process.env.PORT || 8787);
@@ -13,10 +14,14 @@ const DATA_DIR = process.env.DATA_DIR || path.join(__dirname, "data");
 const DATA_FILE = path.join(DATA_DIR, "data.json");
 const FRONTEND_DIR = path.resolve(__dirname, "../frontend");
 const REPO_DIR = path.resolve(__dirname, "..");
+const REPORT_ROOT = process.env.REPORT_DIR || path.join(os.homedir(), "storage", "downloads", "Abon Gulung Gembul");
+const REPORT_DIR = path.join(REPORT_ROOT, "Laporan");
+const BACKUP_DIR = path.join(REPORT_ROOT, "Pencadangan");
+const UPDATE_STATUS_FILE = path.join(DATA_DIR, "update-status.json");
+const SERVER_BOOT_ID = require("crypto").randomUUID();
 const OUTLETS = ["Grand Wisata", "Bektim", "Harapan Indah"];
 const JWT_SECRET = process.env.JWT_SECRET;
-if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/termux-install.sh."); process.exit(1); }
-app.use(cors());
+if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/install-termux.sh."); process.exit(1); }
 app.use(express.json({ limit: "25mb" }));
 
 const itemDefs = {
@@ -27,10 +32,6 @@ const itemDefs = {
   mika: { label: "Mika roti roll", min: null }
 };
 const initialStock = { box3: 3897, box5outer: 3463, box5inner: 3595, paper: 1722, mika: 210 };
-const legacyDefaultStocks = [
-  { box3: 0, box5outer: 0, box5inner: 3595, paper: 1722, mika: 210 },
-  { box3: 3861, box5outer: 3427, box5inner: 3559, paper: 1686, mika: 210 }
-];
 let db;
 let writeQueue = Promise.resolve();
 
@@ -44,6 +45,9 @@ async function persist() {
   try {
     await fs.promises.writeFile(tmp, JSON.stringify(db, null, 2), { mode: 0o600, flag: "wx" });
     await fs.promises.rename(tmp, DATA_FILE);
+    await mirrorDatabase(db, BACKUP_DIR).catch(error => {
+      console.error("Database utama tersimpan, tetapi salinan Download/database-stok.txt gagal diperbarui:", error.message);
+    });
   } finally {
     await fs.promises.rm(tmp, { force: true }).catch(() => {});
   }
@@ -62,7 +66,7 @@ function auth(req, res, next) {
     if (!token) throw new Error("missing");
     req.user = jwt.verify(token, JWT_SECRET);
     next();
-  } catch { res.status(401).json({ error: "Sesi tidak valid. Login kembali saat internet/server tersedia." }); }
+  } catch { res.status(401).json({ error: "Sesi tidak valid. Silakan login kembali ke server lokal." }); }
 }
 function adminOnly(req, res, next) {
   if (req.user.role !== "admin") return res.status(403).json({ error: "Khusus admin." });
@@ -147,7 +151,7 @@ async function applyOperation(op, username) {
   return { id: op.id, accepted: true };
 }
 
-app.get("/api/health", (req, res) => res.json({ ok: true, service: "INSAN Stock Manager Local API", storage: "local-json", online: true }));
+app.get("/api/health", (req, res) => res.json({ ok: true, service: "Abon Gulung Gembul Local API", storage: "Termux + Download TXT mirror", mode: "offline-local", online: false, bootId: SERVER_BOOT_ID }));
 app.post("/api/auth/login", async (req, res) => {
   const { username, password } = req.body || {};
   const user = db.users.find(x => x.username === username);
@@ -218,38 +222,14 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
     res.json(result);
   } catch (e) { res.status(400).json({ error: e.message }); }
 });
-app.get("/api/update/check", auth, async (req, res) => {
-  try {
-    const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
-    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits/main", { headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" } });
-    if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
-    const latest = await response.json();
-    res.json({ current, latest: latest.sha, available: current !== latest.sha, message: latest.commit?.message?.split("\n")[0] || "Pembaruan tersedia", checkedAt: new Date().toISOString() });
-  } catch (e) { res.status(503).json({ error: e.message || "Gagal memeriksa pembaruan." }); }
+app.get("/api/update/check", auth, (req, res) => {
+  res.status(410).json({ error: "Pemeriksaan pembaruan online dinonaktifkan pada mode offline." });
 });
-app.get("/api/update/commits", auth, async (req, res) => {
-  try {
-    const response = await fetch("https://api.github.com/repos/katsucodeid/insan-stock-manager/commits?sha=main&per_page=10", {
-      headers: { "Accept": "application/vnd.github+json", "User-Agent": "INSAN-Stock-Manager" }
-    });
-    if (!response.ok) throw new Error("GitHub tidak dapat diperiksa saat ini.");
-    const rows = await response.json();
-    const current = execFileSync("git", ["rev-parse", "HEAD"], { cwd: REPO_DIR, encoding: "utf8" }).trim();
-    res.json({
-      current,
-      commits: rows.map(item => ({
-        sha: item.sha,
-        shortSha: item.sha.slice(0, 7),
-        message: item.commit?.message?.split("\n")[0] || "Pembaruan",
-        date: item.commit?.committer?.date || item.commit?.author?.date || null,
-        author: item.commit?.author?.name || "Kontributor",
-        current: item.sha === current
-      }))
-    });
-  } catch (e) {
-    res.status(503).json({ error: e.message || "Gagal mengambil commit terbaru." });
-  }
+
+app.get("/api/update/commits", auth, (req, res) => {
+  res.status(410).json({ error: "Daftar commit online dinonaktifkan pada mode offline." });
 });
+
 app.get("/api/update/history", auth, (req, res) => {
   try {
     const raw = execFileSync("git", ["log", "-8", "--pretty=format:%h%x1f%s%x1f%cs"], {
@@ -265,17 +245,42 @@ app.get("/api/update/history", auth, (req, res) => {
     res.status(503).json({ error: "Riwayat perubahan belum dapat dibaca." });
   }
 });
+app.get("/api/update/status", auth, adminOnly, async (req, res) => {
+  try {
+    const status = JSON.parse(await fs.promises.readFile(UPDATE_STATUS_FILE, "utf8"));
+    res.json(status);
+  } catch (error) {
+    if (error.code === "ENOENT") return res.json({ status: "idle", message: "Belum ada proses pembaruan." });
+    res.status(500).json({ error: "Status pembaruan tidak dapat dibaca." });
+  }
+});
 app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
   try {
-    const script = path.join(REPO_DIR, "scripts", "update-termux.sh");
-    if (!fs.existsSync(script)) throw new Error("Skrip pembaruan tidak ditemukan. Perbarui repository secara manual.");
-    const commitSha = String(req.body?.commitSha || "").trim();
-    if (!/^[a-f0-9]{40}$/i.test(commitSha)) return res.status(400).json({ error: "Commit SHA tidak valid." });
-    const child = spawn("bash", [script, String(process.pid), commitSha], { cwd: REPO_DIR, detached: true, stdio: "ignore" });
+    let current = null;
+    try { current = JSON.parse(await fs.promises.readFile(UPDATE_STATUS_FILE, "utf8")); } catch {}
+    const activeUpdate = current && ["preparing", "fetching", "installing", "restarting"].includes(current.status);
+    const lastUpdateAt = Date.parse(current?.updatedAt || current?.startedAt || 0);
+    const staleUpdate = activeUpdate && (!lastUpdateAt || Date.now() - lastUpdateAt > 10 * 60 * 1000);
+    if (activeUpdate && !staleUpdate) {
+      return res.status(409).json({ error: "Pembaruan sedang berlangsung." });
+    }
+    await fs.promises.mkdir(DATA_DIR, { recursive: true });
+    const status = { status: "preparing", message: "Menyiapkan cadangan dan pembaruan…", startedAt: new Date().toISOString() };
+    await fs.promises.writeFile(UPDATE_STATUS_FILE, JSON.stringify(status, null, 2), { mode: 0o600 });
+    const runnerSource = path.join(REPO_DIR, "scripts", "update-and-restart.sh");
+    const runnerCopy = path.join(os.homedir(), ".abongulunggembul-update-runner.sh");
+    await fs.promises.copyFile(runnerSource, runnerCopy);
+    await fs.promises.chmod(runnerCopy, 0o700);
+    const child = spawn("bash", [runnerCopy, String(process.pid)], {
+      cwd: REPO_DIR, env: process.env, detached: true, stdio: "ignore"
+    });
     child.unref();
-    res.json({ ok: true, message: "Pembaruan dimulai. Server akan berhenti sebentar dan hidup kembali otomatis." });
-  } catch (e) { res.status(500).json({ error: e.message }); }
+    res.status(202).json({ ok: true, status: "preparing", message: "Pembaruan dimulai. Server akan dimulai ulang otomatis." });
+  } catch (error) {
+    res.status(500).json({ error: "Tidak dapat memulai pembaruan: " + error.message });
+  }
 });
+
 app.get("/api/report", auth, (req, res) => {
   const s = db.stock, fmt = n => Number(n || 0).toLocaleString("id-ID");
   const report = `*INSAN*:
@@ -309,6 +314,13 @@ app.get("*", (req, res) => res.sendFile(path.join(FRONTEND_DIR, "index.html")));
 async function start() {
   await fs.promises.mkdir(DATA_DIR, { recursive: true });
   try {
+    const backupPath = await backupExistingDatabase(DATA_FILE, BACKUP_DIR);
+    if (backupPath) console.log("Cadangan sebelum pembaruan tersimpan:", backupPath);
+  } catch (error) {
+    console.error("Cadangan awal ke Download gagal:", error.message);
+    console.error("Pastikan izin penyimpanan Termux diberikan dengan termux-setup-storage.");
+  }
+  try {
     db = JSON.parse(await fs.promises.readFile(DATA_FILE, "utf8"));
   } catch (err) {
     if (err.code === "ENOENT") {
@@ -320,14 +332,7 @@ async function start() {
     }
   }
   db.stock = { ...initialStock, ...(db.stock || {}) };
-  // One-time migration: replace only the untouched legacy opening balances.
-  // Never overwrite a live inventory or any database with recorded transactions.
-  const hasTransactions = Array.isArray(db.transactions) && db.transactions.length > 0;
-  const matchesLegacyDefaults = legacyDefaultStocks.some(legacy => Object.keys(initialStock).every(key => db.stock[key] === legacy[key]));
-  if (!hasTransactions && matchesLegacyDefaults) {
-    db.stock = { ...initialStock };
-    db.stockStartDate = "2026-11-11";
-  }
+  // Preserve every existing stock value; only missing item keys receive defaults.
   db.stockStartDate ||= "2026-11-11";
   db.users ||= []; db.transactions ||= []; db.processed ||= [];
   if (process.env.ADMIN_USERNAME && process.env.ADMIN_PASSWORD && !db.users.some(x => x.username === process.env.ADMIN_USERNAME)) {
@@ -335,14 +340,46 @@ async function start() {
     console.log("Akun admin awal dibuat:", process.env.ADMIN_USERNAME);
   }
   await persist();
-  const server = app.listen(PORT, "0.0.0.0", () => console.log(`INSAN Stock Manager aktif di http://0.0.0.0:${PORT}`));
+  const dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR, backupDir: BACKUP_DIR });
+  await dailyReports.start();
+  const server = app.listen(PORT, "127.0.0.1", () => {
+    console.log(`Abon Gulung Gembul aktif secara offline di http://127.0.0.1:${PORT}`);
+    console.log("Database Termux:", DATA_FILE);
+    console.log("Laporan harian:", REPORT_DIR);
+    console.log("Pencadangan database:", BACKUP_DIR);
+  });
   server.on("error", err => {
     if (err.code === "EADDRINUSE") {
-      console.error(`Port ${PORT} sudah digunakan. Hentikan server INSAN yang lama (CTRL+C pada sesi Termux sebelumnya), lalu jalankan kembali scripts/start-termux.sh.`);
+      console.error(`Port ${PORT} sudah digunakan. Hentikan server Abon Gulung Gembul yang lama (CTRL+C pada sesi Termux sebelumnya), lalu jalankan kembali scripts/start-termux.sh.`);
     } else {
       console.error("Server gagal dijalankan:", err);
     }
     process.exit(1);
   });
+
+  const gracefulShutdown = signal => {
+    console.log(signal + " diterima. Menyelesaikan permintaan dan menyimpan database sebelum server berhenti…");
+    dailyReports.stop();
+    const forceExit = setTimeout(() => {
+      console.error("Batas waktu shutdown tercapai; proses dihentikan.");
+      process.exit(1);
+    }, 15000);
+    forceExit.unref();
+    server.close(async error => {
+      try {
+        await writeQueue;
+        await persist();
+        console.log("Database tersimpan. Server siap diperbarui/dihentikan.");
+        clearTimeout(forceExit);
+        process.exit(error ? 1 : 0);
+      } catch (saveError) {
+        console.error("Gagal menyelesaikan penyimpanan saat shutdown:", saveError);
+        clearTimeout(forceExit);
+        process.exit(1);
+      }
+    });
+  };
+  process.once("SIGTERM", () => gracefulShutdown("SIGTERM"));
+  process.once("SIGINT", () => gracefulShutdown("SIGINT"));
 }
 start().catch(err => { console.error(err); process.exit(1); });

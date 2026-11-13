@@ -19,7 +19,6 @@ import android.widget.Toast;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
-    private static final String APP_URL = "http://127.0.0.1:8787";
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
@@ -98,13 +97,13 @@ public class MainActivity extends Activity {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Toast.makeText(MainActivity.this,
-                        "Server belum berjalan. Buka Termux dan jalankan start-termux.sh.",
+                        "Server lokal belum berjalan. Buka Termux pada HP ini lalu jalankan: bash scripts/start-termux.sh.",
                         Toast.LENGTH_LONG).show();
                 }
             }
         });
         setContentView(webView);
-        webView.loadUrl(APP_URL);
+        webView.loadUrl("http://127.0.0.1:8787");
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {

@@ -11,9 +11,9 @@
   "orientation": "portrait",
   "icons": [
     {
-      "src": "https://files.catbox.moe/jfx0d1.png",
+      "src": "./icon.svg",
       "sizes": "any",
-      "type": "image/png",
+      "type": "image/svg+xml",
       "purpose": "any"
     }
   ]

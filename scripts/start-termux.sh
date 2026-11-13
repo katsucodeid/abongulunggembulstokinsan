@@ -7,6 +7,18 @@ PORT="$(sed -n 's/^PORT=//p' .env | tail -n 1)"
 PORT="${PORT:-8787}"
 termux-wake-lock 2>/dev/null || true
 
+if [ ! -d "$HOME/storage/downloads" ] && command -v termux-setup-storage >/dev/null 2>&1; then
+  echo "Meminta izin penyimpanan internal Android..."
+  termux-setup-storage
+fi
+if [ -d "$HOME/storage/downloads" ]; then
+  mkdir -p "$HOME/storage/downloads/Abon Gulung Gembul"
+  export REPORT_DIR="$HOME/storage/downloads/Abon Gulung Gembul"
+  echo "Laporan TXT: $REPORT_DIR"
+else
+  echo "PERINGATAN: izin Download belum aktif. Jalankan termux-setup-storage dan izinkan akses file."
+fi
+
 # Avoid launching a second Node server on an already occupied port.
 if node - "$PORT" <<'NODE'
 const net = require("net");
@@ -23,4 +35,6 @@ then
   exit 0
 fi
 
+echo "Mode: OFFLINE LOKAL — server hanya menerima koneksi dari HP ini."
+echo "Buka aplikasi Android Abon Gulung Gembul pada perangkat yang sama."
 npm start
