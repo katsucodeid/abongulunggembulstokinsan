@@ -19,7 +19,7 @@ import android.widget.Toast;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
-    private static final String APP_URL = "http://127.0.0.1:8787";
+    private static final String APP_URL = "https://gembul-stok-online.onrender.com";
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
