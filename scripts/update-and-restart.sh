@@ -5,7 +5,9 @@ ROOT="$HOME/abongulunggembulstokinsan"
 SERVER_PID="${1:-}"
 BACKEND="$ROOT/backend"
 DATA_DIR="${DATA_DIR:-$BACKEND/data}"
-REPORT_DIR="${REPORT_DIR:-$HOME/storage/downloads/Abon Gulung Gembul}"
+REPORT_ROOT="${REPORT_DIR:-$HOME/storage/downloads/Abon Gulung Gembul}"
+REPORT_DIR="$REPORT_ROOT/Laporan"
+BACKUP_DIR="$REPORT_ROOT/Pencadangan"
 STATUS_FILE="$DATA_DIR/update-status.json"
 LOG_FILE="$BACKEND/server-update.log"
 PORT="$(sed -n 's/^PORT=//p' "$BACKEND/.env" | tail -n 1)"
@@ -37,7 +39,7 @@ NODE
 
 start_server() {
   cd "$BACKEND"
-  export REPORT_DIR DATA_DIR
+  export REPORT_DIR="$REPORT_ROOT" DATA_DIR
   nohup node server.js >> "$LOG_FILE" 2>&1 </dev/null &
   echo "$!" > "$DATA_DIR/server.pid"
   SERVER_STOPPED=0
@@ -56,7 +58,7 @@ on_error() {
 trap on_error ERR
 
 cd "$ROOT"
-mkdir -p "$DATA_DIR" "$REPORT_DIR"
+mkdir -p "$DATA_DIR" "$REPORT_DIR" "$BACKUP_DIR"
 exec >> "$LOG_FILE" 2>&1
 if [ -z "$SERVER_PID" ] || ! [[ "$SERVER_PID" =~ ^[0-9]+$ ]]; then
   echo "PID server tidak valid." >&2
@@ -81,7 +83,7 @@ fi
 
 if [ -f "$DATA_DIR/data.json" ]; then
   STAMP="$(date +%Y%m%d-%H%M%S)"
-  cp -p "$DATA_DIR/data.json" "$REPORT_DIR/cadangan-sebelum-pembaruan-$STAMP.txt"
+  cp -p "$DATA_DIR/data.json" "$BACKUP_DIR/cadangan-sebelum-pembaruan-$STAMP.txt"
 fi
 write_status "fetching" "Mencadangkan database dan mengambil kode terbaru dari GitHub…"
 sleep 3
