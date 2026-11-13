@@ -1,78 +1,50 @@
-# Menjalankan INSAN Stock Manager di Termux
+# Mode Offline Satu Perangkat — Termux Android
 
-## Prinsip operasi
-- Backend Node.js berjalan langsung di HP Android (Termux).
-- Database utama berupa file lokal `backend/data/data.json`; tidak membutuhkan MongoDB atau internet.
-- Frontend dilayani backend yang sama pada port 8787.
-- PWA memakai Service Worker untuk menyimpan aset aplikasi, dan IndexedDB untuk cache stok serta antrean transaksi offline.
-- Ketika koneksi ke server tersedia lagi, transaksi antrean dikirim ke endpoint sinkronisasi dengan ID unik agar tidak terduplikasi.
+## Tujuan
 
-## Instalasi
-Pasang Termux dari F-Droid atau sumber resmi Termux. Buka Termux, lalu jalankan:
+Abon Gulung Gembul berjalan sepenuhnya secara lokal pada satu HP Android. Termux menjalankan backend, Android app/browser pada HP yang sama menjadi antarmuka, dan database tidak dibuka ke jaringan lokal maupun internet.
 
-```bash
-pkg update && pkg upgrade -y
-pkg install git nodejs-lts openssl -y
-git clone https://github.com/katsucodeid/abongulunggembulstokinsan.git
-cd abongulunggembulstokinsan
-bash scripts/install-termux.sh
-```
+## Lokasi data
 
-Catat username dan password admin yang ditampilkan. Jangan bagikan file `backend/.env`.
+- Database utama (format JSON): ~/abongulunggembulstokinsan/backend/data/data.json
+- Konfigurasi rahasia: ~/abongulunggembulstokinsan/backend/.env
+- Salinan database yang bisa dibaca: ~/storage/downloads/Abon Gulung Gembul/database-stok.txt
+- Laporan harian: ~/storage/downloads/Abon Gulung Gembul/DDnamabulanYYYY.txt
+- Cadangan sebelum pembaruan: cadangan-sebelum-pembaruan-*.txt
+- Cadangan sebelum laporan: cadangan-sebelum-laporan-DDnamabulanYYYY.txt
 
-## Menjalankan server
-```bash
-cd ~/abongulunggembulstokinsan
-bash scripts/start-termux.sh
-```
-Buka browser pada HP server: `http://127.0.0.1:8787`. Untuk perangkat lain pada Wi-Fi/hotspot yang sama, gunakan `http://IP-LOKAL-HP:8787`. Cari IP dengan `ip -4 addr show wlan0`.
+Database utama berada di ruang privat Termux. Salinan TXT di Download diperbarui setiap kali database utama berhasil disimpan. Jangan edit salinan TXT; perubahan aplikasi harus dilakukan melalui aplikasi agar stok, transaksi, dan riwayat audit tetap konsisten.
 
-## Offline dan sinkronisasi
-1. Buka aplikasi saat online melalui HTTPS dan pasang ke layar utama agar Service Worker menyimpan asetnya. Setelah pemuatan pertama, aplikasi dapat dibuka offline pada perangkat tersebut.
-2. Jika internet putus tetapi perangkat masih bisa menjangkau HP server melalui Wi-Fi/hotspot lokal, semua perangkat dapat terus menggunakan database pusat di HP server.
-3. Jika perangkat benar-benar tidak memiliki jalur jaringan ke server, aplikasi yang sudah pernah dibuka tetap dapat dipakai pada perangkat itu. Perubahan disimpan di IndexedDB lokal.
-4. Saat perangkat tersambung lagi ke server, tekan **Perbarui / sinkronkan** atau tunggu koneksi kembali. Transaksi offline dikirim satu per satu/batch dengan ID unik. Jika stok server sudah berubah sehingga transaksi tidak bisa diterapkan, transaksi tetap berada di antrean dan ditandai untuk pemeriksaan.
+## Persiapan
 
-**Batasan penting:** beberapa perangkat yang terpisah total dari jaringan tidak dapat melihat perubahan satu sama lain secara langsung. Setiap perangkat menampung perubahan sendiri sampai dapat tersambung kembali ke server. Sinkronisasi bukan penggabungan real-time saat tidak ada koneksi.
+1. Jalankan termux-setup-storage.
+2. Izinkan akses file dan media saat Android menampilkan permintaan izin.
+3. Pastikan folder ~/storage/downloads tersedia.
+4. Jalankan installer:
 
-## Akses dari luar jaringan
-Agar dapat diakses melalui internet, HP server harus memiliki koneksi internet dan Termux + server tetap berjalan. Jika cloudflared yang kompatibel tersedia di Termux:
+    bash ~/abongulunggembulstokinsan/scripts/install-termux.sh
 
-```bash
-cd ~/abongulunggembulstokinsan
-bash scripts/start-tunnel.sh
-```
+## Mulai server offline
 
-Cloudflare Quick Tunnel menghasilkan URL acak `trycloudflare.com`; URL tersebut aktif hanya selama proses tunnel berjalan dan berubah ketika dibuat ulang. Quick Tunnel ditujukan untuk pengujian, bukan layanan produksi dengan jaminan uptime. Siapa pun yang mengetahui URL dapat mencapai halaman login; jangan bagikan URL sembarangan. Opsional, batasi alamat email dengan:
+    bash ~/abongulunggembulstokinsan/scripts/start-termux.sh
 
-```bash
-TUNNEL_EMAIL=alamat-email-anda@example.com bash scripts/start-tunnel.sh
-```
+Server hanya bind ke 127.0.0.1, bukan 0.0.0.0. Dengan demikian, koneksi hanya bisa berasal dari perangkat Android itu sendiri. Buka aplikasi Android pada HP yang sama atau buka http://127.0.0.1:8787 di browser HP.
 
-Quick Tunnel dan tunnel internet tidak akan dapat bekerja ketika HP server kehilangan internet. Akses lokal melalui IP Wi-Fi masih dapat berfungsi.
+Jangan tutup sesi Termux. termux-wake-lock digunakan untuk mengurangi kemungkinan CPU tidur saat server aktif. Nonaktifkan optimasi baterai untuk Termux jika Android sering menghentikan proses.
 
-## Mulai otomatis saat HP restart
-Install add-on Termux:Boot dari sumber instalasi Termux yang sama. Buka Termux:Boot satu kali, lalu di Termux jalankan:
+## Laporan otomatis tengah malam
 
-```bash
-cd ~/abongulunggembulstokinsan
-bash scripts/install-boot.sh
-```
+- Server menggunakan zona waktu lokal Android.
+- Pada pukul 00.00, laporan untuk tanggal yang baru selesai dibuat.
+- Nama file memakai tanggal, bulan Indonesia huruf kecil, dan tahun: 11november2026.txt.
+- Laporan berisi stok awal, perubahan, stok akhir, target produksi, barang masuk, pengurangan stok, outlet, pengguna, dan catatan.
+- Sebelum file laporan dibuat, database dicadangkan ke file TXT.
+- Jika HP/server mati saat tengah malam, laporan tanggal yang belum dibuat akan dikejar saat server berikutnya dinyalakan.
 
-Panduan resmi: https://github.com/termux/termux-boot#readme. Android dapat membatasi proses latar belakang; izinkan Termux berjalan tanpa optimasi baterai. `termux-wake-lock` membantu menjaga CPU aktif tetapi menguras baterai. Mulai otomatis bukan jaminan Android tidak akan menghentikan proses.
+Pastikan tanggal, jam, dan zona waktu Android benar. Laporan tengah malam hanya dapat dibuat otomatis ketika proses Termux berjalan; laporan yang terlewat dibuat saat server hidup kembali.
 
-## Backup dan keamanan
-- Backup database: salin `~/abongulunggembulstokinsan/backend/data/data.json` secara berkala ke lokasi aman.
-- Jangan hapus folder `backend/data` saat memperbarui kode.
-- Jangan commit `.env` atau `data.json` ke GitHub.
-- Sistem ini menyimpan data utama di HP server. Jika HP rusak/hilang tanpa backup, data server berisiko hilang.
-- Password disimpan dalam bentuk hash bcrypt. Tetap gunakan password kuat.
-- Jangan membuka port router secara langsung.
+## Migrasi dan perlindungan data
 
-## Pembaruan kode
-```bash
-cd ~/abongulunggembulstokinsan
-git pull
-cd backend && npm install
-```
-Hentikan server dengan Ctrl+C sebelum memperbarui, lalu jalankan kembali.
+Sebelum pembaruan, sistem menyalin database lama ke file cadangan TXT di Download. Database lama tidak direset. Jangan hapus data sampai stok, target, akun, dan transaksi sudah diverifikasi.
+
+Simpan salinan cadangan di media lain secara berkala. Penyimpanan pada satu HP bukan pengganti cadangan eksternal apabila perangkat hilang atau rusak.
