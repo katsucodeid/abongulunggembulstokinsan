@@ -7,12 +7,12 @@ android {
     compileSdk 35
 
     defaultConfig {
-        // Separate identity so the legacy installation remains untouched.
-        applicationId 'id.katsucode.abongulunggembulstokinsan.new'
+        // Keep the original package identity so this release can update the legacy app.
+        applicationId 'id.katsucode.abongulunggembulstokinsan'
         minSdk 23
         targetSdk 35
-        versionCode 8
-        versionName '1.3.0'
+        versionCode 9
+        versionName '1.3.1'
     }
 
     signingConfigs {
