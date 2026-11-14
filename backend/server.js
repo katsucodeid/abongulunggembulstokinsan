@@ -36,6 +36,7 @@ const itemDefs = {
 };
 const initialStock = { box3: 3897, box5outer: 3463, box5inner: 3595, paper: 1722, mika: 210 };
 let db;
+let dailyReports = null;
 let writeQueue = Promise.resolve();
 
 function freshDb() {
@@ -284,6 +285,16 @@ app.post("/api/update/apply", auth, adminOnly, async (req, res) => {
   }
 });
 
+app.post("/api/daily-report", auth, adminOnly, async (req, res) => {
+  try {
+    if (!dailyReports) return res.status(503).json({ error: "Layanan laporan belum siap." });
+    const result = await dailyReports.createTodayReport();
+    res.json({ ok: true, ...result, message: "Laporan hari ini berhasil dibuat/diperbarui." });
+  } catch (error) {
+    console.error("Gagal membuat laporan manual:", error);
+    res.status(500).json({ error: "Gagal membuat laporan: " + error.message });
+  }
+});
 app.get("/api/report", auth, (req, res) => {
   const s = db.stock, fmt = n => Number(n || 0).toLocaleString("id-ID");
   const report = `*INSAN*:
@@ -343,7 +354,7 @@ async function start() {
     console.log("Akun admin awal dibuat:", process.env.ADMIN_USERNAME);
   }
   await persist();
-  const dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR, backupDir: BACKUP_DIR });
+  dailyReports = createDailyReports({ getDb: () => db, persist, locked, itemDefs, reportDir: REPORT_DIR, backupDir: BACKUP_DIR });
   await dailyReports.start();
   const server = app.listen(PORT, HOST, () => {
     const interfaces = Object.values(os.networkInterfaces()).flat().filter(x => x && x.family === "IPv4" && !x.internal);
