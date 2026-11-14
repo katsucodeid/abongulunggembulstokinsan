@@ -110,7 +110,12 @@ jobs:
           APK=android/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
+          CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
+          echo "$CERT_OUTPUT"
+          echo "$CERT_OUTPUT" | grep -qi "43ecffa454e59b8be2cec3f9c02b451dc9ec2d26dedf150e0a202d07d893d02e" || {
+            echo "ERROR: Release signing certificate does not match the legacy v1.1.0 APK."
+            exit 1
+          }
           ls -lh "$APK"
 
       - name: Prepare named release APK
@@ -121,8 +126,8 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feature/online-hosting'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.3.1
-          name: Abon Gulung Gembul Stok Kertas v1.3.1
+          tag_name: v1.3.2
+          name: Abon Gulung Gembul Stok Kertas v1.3.2
           target_commitish: feature/online-hosting
           files: android/app/build/outputs/apk/release/Abon-Gulung-Gembul-Stok-Kertas.apk
           make_latest: true
