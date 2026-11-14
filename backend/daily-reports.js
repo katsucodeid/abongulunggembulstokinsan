@@ -216,16 +216,6 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir, backu
   async function createForDate(dateKey) {
     const filename = reportFileName(dateKey);
     const destination = path.join(reportDir, filename);
-    try {
-      await fs.promises.access(destination);
-      const database = getDb();
-      database.lastDailyReportDate = dateKey;
-      await persist();
-      return false;
-    } catch (error) {
-      if (error.code !== "ENOENT") throw error;
-    }
-
     await ensureReportDirectory(reportDir);
     await ensureReportDirectory(backupDir || reportDir);
     const backupName = "cadangan-sebelum-laporan-" + filename;
@@ -248,14 +238,18 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir, backu
       if (error.code !== "EEXIST") throw error;
     }
 
-    await fs.promises.writeFile(destination, buildReport(dateKey), {
-      encoding: "utf8", flag: "wx", mode: 0o600
-    });
+    const temporary = destination + "." + process.pid + "." + require("crypto").randomUUID() + ".tmp";
+    try {
+      await fs.promises.writeFile(temporary, buildReport(dateKey), { encoding: "utf8", flag: "wx", mode: 0o600 });
+      await fs.promises.rename(temporary, destination);
+    } finally {
+      await fs.promises.rm(temporary, { force: true }).catch(() => {});
+    }
     const database = getDb();
     database.lastDailyReportDate = dateKey;
     await persist();
-    console.log("Laporan harian tersimpan:", destination);
-    return true;
+    console.log("Laporan harian dibuat/diperbarui:", destination);
+    return { created: true, filename, date: dateKey };
   }
 
   async function catchUp() {
@@ -266,26 +260,24 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir, backu
       .filter(value => /^\d{4}-\d{2}-\d{2}$/.test(value))
       .sort()[0];
     let cursor = database.stockStartDate || firstTransaction || today;
-    const yesterday = addDays(today, -1);
+    const cutoff = new Date().getHours() >= 17 ? today : addDays(today, -1);
 
-    while (cursor <= yesterday) {
+    while (cursor <= cutoff) {
       await locked(() => createForDate(cursor));
       cursor = addDays(cursor, 1);
     }
   }
 
-  function scheduleNextMidnight() {
+  function scheduleNextFivePm() {
     if (stopped) return;
     const now = new Date();
     const next = new Date(now);
-    next.setHours(24, 0, 0, 0);
+    next.setHours(17, 0, 0, 0);
+    if (next <= now) next.setDate(next.getDate() + 1);
     timer = setTimeout(async () => {
-      try {
-        await catchUp();
-      } catch (error) {
-        console.error("Gagal membuat laporan harian:", error.message);
-      }
-      scheduleNextMidnight();
+      try { await locked(() => createForDate(localDateKey())); }
+      catch (error) { console.error("Gagal membuat laporan harian pukul 17.00:", error.message); }
+      scheduleNextFivePm();
     }, Math.max(1000, next.getTime() - now.getTime()));
   }
 
@@ -298,8 +290,9 @@ function createDailyReports({ getDb, persist, locked, itemDefs, reportDir, backu
         console.error("Laporan harian belum dapat dibuat:", error.message);
         console.error("Pastikan izin penyimpanan Termux sudah diberikan dengan termux-setup-storage.");
       }
-      scheduleNextMidnight();
+      scheduleNextFivePm();
     },
+    async createTodayReport() { return locked(() => createForDate(localDateKey())); },
     stop() {
       stopped = true;
       if (timer) clearTimeout(timer);
