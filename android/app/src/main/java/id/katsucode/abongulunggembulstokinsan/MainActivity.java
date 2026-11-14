@@ -44,7 +44,7 @@ public class MainActivity extends Activity {
             channel.setDescription("Peringatan bersuara saat versi baru aplikasi tersedia");
             channel.enableVibration(true);
             channel.setVibrationPattern(new long[]{0,350,180,350,180,600});
-            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),new android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build());
+            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_ALARM),new android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_ALARM).build());
             channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
             manager.createNotificationChannel(channel);
         }
