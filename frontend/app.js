@@ -198,10 +198,18 @@ async function applyUpdate(){
         if(message&&result.message)message.textContent=result.message;
         if(status&&result.message)status.textContent=result.message;
         if(result.status==="completed"){
-          if(title)title.textContent="Pembaruan selesai";
-          if(message)message.textContent="Server Termux sudah aktif kembali. Membuka ulang tampilan aplikasi…";
-          if(status)status.textContent="Berhasil diperbarui. Aplikasi akan dimuat ulang.";
-          await updateDelay(1200);
+          if(title)title.textContent="Kode server diperbarui";
+          if(message)message.textContent="Mengunduh APK Android terbaru…";
+          if(status)status.textContent="Kode server diperbarui. Menyiapkan pemasangan APK…";
+          if(window.InsanNative?.downloadAndInstallApk){
+            const result=window.InsanNative.downloadAndInstallApk("https://github.com/katsucodeid/abongulunggembulstokinsan/releases/latest/download/Abon-Gulung-Gembul-Stok-Kertas.apk");
+            if(result==="STARTED"){if(message)message.textContent="APK diunduh ke folder Download. Konfirmasi pemasangan Android setelah unduhan selesai.";if(status)status.textContent="Unduhan APK dimulai.";if(overlay)overlay.classList.add("hidden");return;}
+            if(result==="PERMISSION_REQUIRED"){if(message)message.textContent="Aktifkan izin memasang aplikasi tidak dikenal untuk aplikasi ini, lalu ulangi Update Aplikasi.";if(status)status.textContent="Izin pemasangan diperlukan.";if(overlay)overlay.classList.add("hidden");return;}
+            if(String(result).startsWith("ERROR:"))throw new Error(result.slice(6));
+          }
+          if(message)message.textContent="APK release tersedia di GitHub Releases, tetapi jembatan Android tidak tersedia pada perangkat ini.";
+          if(status)status.textContent="Kode server diperbarui; pemasangan APK otomatis tidak tersedia pada perangkat ini.";
+          if(overlay)overlay.classList.add("hidden");return;
           try{
             const registration=await navigator.serviceWorker?.getRegistration();
             if(registration){
@@ -235,6 +243,13 @@ async function applyUpdate(){
   }
 }
 async function syncQueue(){if(!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
+async function createDailyReport(){
+  const button=$("createDailyReportButton"),status=$("dailyReportStatus");
+  if(!token||cachedUser?.role!=="admin"){if(status)status.textContent="Pembuatan laporan TXT hanya dapat dilakukan admin.";return;}
+  try{if(button)button.disabled=true;if(status)status.textContent="Membuat/memperbarui laporan hari ini…";const result=await api("/daily-report",{method:"POST",body:JSON.stringify({})});if(status)status.textContent=result.message+" File: "+result.filename+" · Download/Abon Gulung Gembul/Laporan/";}
+  catch(error){if(status)status.textContent="Gagal membuat laporan: "+error.message;}
+  finally{if(button)button.disabled=false;}
+}
 async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
 Box isi 3 : ${fmt(s.box3)}pcs
 Box isi 5 luar : ${fmt(s.box5outer)}pcs
