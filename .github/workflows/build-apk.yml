@@ -19,6 +19,10 @@ on:
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
+concurrency:
+  group: build-apk-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: write
 
