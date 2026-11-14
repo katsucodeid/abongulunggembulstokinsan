@@ -390,6 +390,43 @@ button.danger{background:#b9382d;color:#fff}
 .developer-avatar{width:132px;height:132px;flex:0 0 132px;object-fit:cover;object-position:center 34%;border-radius:50%;border:4px solid var(--accent);box-shadow:0 0 0 5px color-mix(in srgb,var(--accent) 16%,transparent)}
 .developer-copy{min-width:0}.developer-kicker{font-size:11px;font-weight:800;letter-spacing:2px;color:var(--accent)}.developer-copy h3{margin:5px 0 7px;font-size:21px}.developer-copy p{margin:0;color:var(--muted);line-height:1.6}.developer-brand{display:inline-block;margin-top:10px;font-weight:800;letter-spacing:.4px}.developer-brand span{color:var(--accent);padding:0 4px}
 @media(max-width:520px){.developer-card{flex-direction:column;text-align:center;padding:18px 16px}.developer-avatar{width:116px;height:116px;flex-basis:116px}.developer-copy h3{font-size:19px}}
+
+/* INSAN UI polish · warm brand palette with clearer dark surfaces */
+:root{
+ --bg:#fff6e9;--panel:#fffdf8;--text:#382319;--muted:#806c5b;--line:#ead9c5;
+ --accent:#e99a24;--danger:#c94f48;--surface-soft:#f7ead8;
+}
+:root:not(.light){
+ color-scheme:dark;
+ --bg:#111a27;--panel:#1b2938;--text:#f5eee3;--muted:#b6c0cb;--line:#344658;
+ --accent:#efb64f;--danger:#ef7770;--surface-soft:#243648;
+}
+body{background:var(--bg)!important;color:var(--text);line-height:1.48}
+:root:not(.light) body{background:radial-gradient(ellipse at 50% -15%,rgba(239,182,79,.10),transparent 42%),linear-gradient(180deg,#172536 0,#111a27 360px)!important}
+header{box-shadow:none!important;border-bottom:1px solid var(--line)!important}
+.panel,.tab.panel{border-radius:16px!important;box-shadow:0 5px 18px rgba(20,24,30,.07)!important}
+:root:not(.light) .panel,:root:not(.light) .tab.panel{background:var(--panel)!important;border-color:var(--line)!important;box-shadow:0 8px 22px rgba(0,0,0,.16)!important}
+:root:not(.light) .hint,:root:not(.light) .history-card,:root:not(.light) .outlet-target-card,:root:not(.light) .variant-card,:root:not(.light) #alarm .alarm-box,:root:not(.light) #alarm .alarm-stat,:root:not(.light) #alarm .tone-row{background:var(--surface-soft)!important;border-color:#3b5063!important;color:var(--text)}
+:root:not(.light) input,:root:not(.light) select,:root:not(.light) textarea{background:#121f2d!important;border-color:#405468!important;color:var(--text)!important}
+:root:not(.light) .tabs{background:#172536!important;border-color:var(--line)!important}
+:root:not(.light) .tabs button{color:#d5dfeb!important}
+:root:not(.light) .tabs button.nav-active,:root:not(.light) #app #mainNav .nav-group-items .nav-link.nav-active{background:var(--accent)!important;border-color:var(--accent)!important;color:#302113!important}
+:root:not(.light) button:not(.secondary):not(.danger){background:linear-gradient(135deg,#f2c36d,#df9b35)!important;color:#302113!important;box-shadow:none!important}
+:root:not(.light) button.secondary{background:#293b4e!important;border-color:#4a6075!important;color:#e8eef5!important}
+:root:not(.light) #stockGrid>.panel{background:linear-gradient(145deg,#203449,#1b2b3d)!important;border-color:#40566a!important}
+:root:not(.light) .brand-copy b,:root:not(.light) .tab h2,:root:not(.light) .tab h3,:root:not(.light) .qty,:root:not(.light) .production-total strong{color:#f2c36d!important}
+:root:not(.light) .brand-copy .muted,:root:not(.light) .eyebrow{color:#b6c8d3!important}
+:root:not(.light) #connection,:root:not(.light) .clock-chip,:root:not(.light) .menu-toggle{background:var(--panel)!important;border-color:var(--line)!important;color:var(--text)!important}
+:root:not(.light) #productionPreview{background:var(--surface-soft)!important;border-color:#4a6075!important}
+:root:not(.light) .app-footer{border-color:var(--line)!important}
+button,input,select,textarea{border-radius:11px}
+button{min-height:43px;box-shadow:none}
+.tabs button{min-height:44px}
+#stockGrid>.panel{box-shadow:none!important}
+#updateNotice{border:1px solid var(--accent)!important;background:color-mix(in srgb,var(--accent) 9%,var(--panel))!important}
+:root:not(.light) #updateNotice{background:#29384a!important;border-color:#e4ad4e!important}
+@media(max-width:640px){.panel,.tab.panel{border-radius:14px!important}.brand-logo{filter:none}}
+
 </style></head><body>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="icon.png" alt="Logo Abon Gulung Gembul"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false">🌙 Tema Gelap</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
