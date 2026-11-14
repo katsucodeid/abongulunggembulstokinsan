@@ -3,6 +3,9 @@ package id.katsucode.abongulunggembulstokinsan;
 import android.app.Activity;
 import android.app.AlarmManager;
 import android.app.PendingIntent;
+import android.app.Notification;
+import android.app.NotificationChannel;
+import android.app.NotificationManager;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
@@ -23,6 +26,7 @@ import java.io.InputStream;
 import java.net.URL;
 import java.net.HttpURLConnection;
 import android.content.pm.PackageManager;
+import android.media.RingtoneManager;
 import android.provider.Settings;
 import java.io.File;
 import java.io.FileOutputStream;
@@ -32,7 +36,44 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
 
+    private static final String UPDATE_CHANNEL = "app_update_channel";
+    private void ensureUpdateChannel() {
+        if (Build.VERSION.SDK_INT >= 26) {
+            NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
+            NotificationChannel channel=new NotificationChannel(UPDATE_CHANNEL,"Pembaruan aplikasi",NotificationManager.IMPORTANCE_HIGH);
+            channel.setDescription("Peringatan bersuara saat versi baru aplikasi tersedia");
+            channel.enableVibration(true);
+            channel.setVibrationPattern(new long[]{0,350,180,350,180,600});
+            channel.setSound(RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION),new android.media.AudioAttributes.Builder().setUsage(android.media.AudioAttributes.USAGE_NOTIFICATION).build());
+            channel.setLockscreenVisibility(Notification.VISIBILITY_PUBLIC);
+            manager.createNotificationChannel(channel);
+        }
+    }
     private class GembulBridge {
+        @JavascriptInterface
+        public String getAppVersion() {
+            try { return getPackageManager().getPackageInfo(getPackageName(),0).versionName; }
+            catch(Exception e) { return "1.2.0"; }
+        }
+        @JavascriptInterface
+        public String notifyUpdateAvailable(String version,String detail) {
+            try {
+                if(Build.VERSION.SDK_INT>=33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS")!=PackageManager.PERMISSION_GRANTED) return "PERMISSION_REQUIRED";
+                ensureUpdateChannel();
+                Intent open=new Intent(MainActivity.this,MainActivity.class);
+                open.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP|Intent.FLAG_ACTIVITY_SINGLE_TOP);
+                PendingIntent content=PendingIntent.getActivity(MainActivity.this,4106,open,PendingIntent.FLAG_UPDATE_CURRENT|PendingIntent.FLAG_IMMUTABLE);
+                Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(MainActivity.this,UPDATE_CHANNEL):new Notification.Builder(MainActivity.this);
+                builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("Pembaruan aplikasi tersedia")
+                    .setContentText("Versi "+version+" siap dipasang").setStyle(new Notification.BigTextStyle().bigText(detail))
+                    .setCategory(Notification.CATEGORY_RECOMMENDATION).setPriority(Notification.PRIORITY_MAX)
+                    .setAutoCancel(true).setContentIntent(content).setTicker("Pembaruan aplikasi tersedia");
+                ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(4106,builder.build());
+                return "OK";
+            } catch(Exception e) { return "ERROR:"+e.getMessage(); }
+        }
+    }
+
         @JavascriptInterface
         public String saveBackup(String base64, String filename) {
             if (Build.VERSION.SDK_INT < 29) return "ERROR:Android 10+ diperlukan untuk folder Download/Abon Gulung Gembul.";
@@ -137,6 +178,10 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        ensureUpdateChannel();
+        if (Build.VERSION.SDK_INT >= 33 && checkSelfPermission("android.permission.POST_NOTIFICATIONS") != PackageManager.PERMISSION_GRANTED) {
+            requestPermissions(new String[]{"android.permission.POST_NOTIFICATIONS"}, 4105);
+        }
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
