@@ -175,7 +175,7 @@ box.appendChild(card);
 }
 let updateCheckRunning=false;
 function compareVersions(a,b){
- const parts=value=>String(value||"0").replace(/^v/i,"").split(/[.+-]/).map(x=>/^\\d+$/.test(x)?Number(x):x.toLowerCase());
+ const parts=value=>String(value||"0").replace(/^v/i,"").split(/[.+-]/).map(x=>/^\d+$/.test(x)?Number(x):x.toLowerCase());
  const x=parts(a),y=parts(b),length=Math.max(x.length,y.length);
  for(let i=0;i<length;i++){const p=x[i]??0,q=y[i]??0;if(p===q)continue;if(typeof p==="number"&&typeof q==="number")return p>q?1:-1;return String(p)>String(q)?1:-1;}return 0;
 }
@@ -186,7 +186,7 @@ async function checkForUpdates(){
   const response=await fetch("https://api.github.com/repos/katsucodeid/abongulunggembulstokinsan/releases/latest",{headers:{Accept:"application/vnd.github+json"},cache:"no-store"});
   if(!response.ok)throw new Error("GitHub HTTP "+response.status);
   const release=await response.json(),latest=String(release.tag_name||"").replace(/^v/i,"");
-  const installed=window.InsanNative?.getAppVersion?.()||"1.2.0";
+  const installed=window.InsanNative?.getAppVersion?.()||"1.3.0";
   if(!latest||compareVersions(latest,installed)<=0){if(notice)notice.classList.add("hidden");return;}
   if(title)title.textContent="🔔 Pembaruan tersedia · v"+latest;
   if(message)message.textContent=(release.name||"Versi terbaru Abon Gulung Gembul")+" sudah tersedia. Ketuk Update Sekarang untuk memperbarui aplikasi.";
@@ -194,9 +194,10 @@ async function checkForUpdates(){
   const notified=localStorage.getItem("insan_notified_release");
   if(notified!==latest){
    const body="Versi "+latest+" siap dipasang. Buka aplikasi untuk memperbarui.";
-   if(window.InsanNative?.notifyUpdateAvailable){window.InsanNative.notifyUpdateAvailable(latest,body);}
-   else if("Notification"in window&&Notification.permission==="granted"){new Notification("Pembaruan aplikasi tersedia",{body,tag:"insan-app-update"});}
-   localStorage.setItem("insan_notified_release",latest);
+   let delivered=false;
+   if(window.InsanNative?.notifyUpdateAvailable){delivered=window.InsanNative.notifyUpdateAvailable(latest,body)==="OK";}
+   else if("Notification"in window&&Notification.permission==="granted"){new Notification("Pembaruan aplikasi tersedia",{body,tag:"insan-app-update"});delivered=true;}
+   if(delivered)localStorage.setItem("insan_notified_release",latest);
   }
  }catch(error){console.info("Pemeriksaan update dilewati:",error.message);}
  finally{updateCheckRunning=false;}
