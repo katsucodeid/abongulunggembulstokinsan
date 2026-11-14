@@ -1,3 +1,8 @@
+import java.io.InputStream;
+import java.net.URL;
+import java.net.HttpURLConnection;
+import android.content.pm.PackageManager;
+import android.provider.Settings;
 package id.katsucode.abongulunggembulstokinsan;
 
 import android.app.Activity;
@@ -58,6 +63,47 @@ public class MainActivity extends Activity {
                 return "ERROR:" + (e.getMessage() == null ? "Penyimpanan gagal." : e.getMessage());
             }
         }
+        @JavascriptInterface
+        public String downloadAndInstallApk(String urlString) {
+            if (Build.VERSION.SDK_INT < 29) return "ERROR:Fitur unduh APK otomatis memerlukan Android 10 atau lebih baru.";
+            if (urlString == null || !urlString.startsWith("https://github.com/katsucodeid/abongulunggembulstokinsan/releases/")) return "ERROR:Sumber APK tidak diizinkan.";
+            if (Build.VERSION.SDK_INT >= 26 && !getPackageManager().canRequestPackageInstalls()) {
+                try { Intent settings = new Intent(Settings.ACTION_MANAGE_UNKNOWN_APP_SOURCES, Uri.parse("package:" + getPackageName())); settings.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(settings); return "PERMISSION_REQUIRED"; }
+                catch (Exception e) { return "ERROR:Tidak dapat membuka pengaturan izin pemasangan."; }
+            }
+            new Thread(() -> {
+                Uri item = null; HttpURLConnection connection = null;
+                try {
+                    connection = (HttpURLConnection)new URL(urlString).openConnection();
+                    connection.setInstanceFollowRedirects(true); connection.setConnectTimeout(20000); connection.setReadTimeout(90000);
+                    connection.setRequestProperty("User-Agent", "AbonGulungGembul-Android"); connection.connect();
+                    int code = connection.getResponseCode(); if (code < 200 || code >= 300) throw new IllegalStateException("HTTP " + code);
+                    if (connection.getContentLengthLong() > 200L * 1024 * 1024) throw new IllegalStateException("APK melebihi 200 MB.");
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, "Abon-Gulung-Gembul-Stok-Kertas.apk");
+                    values.put(MediaStore.Downloads.MIME_TYPE, "application/vnd.android.package-archive");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, "Download/Abon Gulung Gembul");
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+                    item = getContentResolver().insert(MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY), values);
+                    if (item == null) throw new IllegalStateException("Tidak dapat membuat file APK.");
+                    long total=0;
+                    try (InputStream in=connection.getInputStream(); OutputStream out=getContentResolver().openOutputStream(item,"w")) {
+                        if(out==null)throw new IllegalStateException("Tidak dapat menyimpan APK.");
+                        byte[] buffer=new byte[32768]; int count;
+                        while((count=in.read(buffer))!=-1){total+=count;if(total>200L*1024*1024)throw new IllegalStateException("APK melebihi 200 MB.");out.write(buffer,0,count);}
+                        out.flush();
+                    }
+                    if(total<1024*1024)throw new IllegalStateException("Unduhan APK tidak lengkap.");
+                    ContentValues done=new ContentValues();done.put(MediaStore.Downloads.IS_PENDING,0);getContentResolver().update(item,done,null,null);
+                    Uri apkUri=item;
+                    runOnUiThread(()->{try{Intent install=new Intent(Intent.ACTION_VIEW);install.setDataAndType(apkUri,"application/vnd.android.package-archive");install.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK|Intent.FLAG_GRANT_READ_URI_PERMISSION);startActivity(install);}catch(Exception e){Toast.makeText(MainActivity.this,"APK tersimpan di Download/Abon Gulung Gembul.",Toast.LENGTH_LONG).show();}});
+                } catch(Exception e) {
+                    if(item!=null)try{getContentResolver().delete(item,null,null);}catch(Exception ignored){}
+                    runOnUiThread(()->Toast.makeText(MainActivity.this,"Gagal mengunduh APK: "+e.getMessage(),Toast.LENGTH_LONG).show());
+                } finally {if(connection!=null)connection.disconnect();}
+            }).start(); return "STARTED";
+        }
+
         @JavascriptInterface
         public String scheduleWorkAlarm(long fireAtMillis, String dataUrl) {
             try {
