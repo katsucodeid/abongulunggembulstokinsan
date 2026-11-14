@@ -1,8 +1,3 @@
-import java.io.InputStream;
-import java.net.URL;
-import java.net.HttpURLConnection;
-import android.content.pm.PackageManager;
-import android.provider.Settings;
 package id.katsucode.abongulunggembulstokinsan;
 
 import android.app.Activity;
@@ -24,6 +19,11 @@ import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
 import android.widget.Toast;
 import java.io.OutputStream;
+import java.io.InputStream;
+import java.net.URL;
+import java.net.HttpURLConnection;
+import android.content.pm.PackageManager;
+import android.provider.Settings;
 import java.io.File;
 import java.io.FileOutputStream;
 
