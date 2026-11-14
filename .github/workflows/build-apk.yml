@@ -20,7 +20,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -108,6 +108,21 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK"
           ls -lh "$APK"
+
+      - name: Prepare named release APK
+        if: github.event_name != 'pull_request'
+        run: cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/Abon-Gulung-Gembul-Stok-Kertas.apk
+
+      - name: Publish GitHub Release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feature/online-hosting'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: v1.2.0
+          name: Abon Gulung Gembul Stok Kertas v1.2.0
+          target_commitish: feature/online-hosting
+          files: android/app/build/outputs/apk/release/Abon-Gulung-Gembul-Stok-Kertas.apk
+          make_latest: true
+          overwrite_files: true
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
