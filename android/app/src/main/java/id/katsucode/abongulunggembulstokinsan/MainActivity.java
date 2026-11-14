@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getAppVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(),0).versionName; }
-            catch(Exception e) { return "1.2.0"; }
+            catch(Exception e) { return "1.3.0"; }
         }
         @JavascriptInterface
         public String notifyUpdateAvailable(String version,String detail) {
@@ -72,7 +72,6 @@ public class MainActivity extends Activity {
                 return "OK";
             } catch(Exception e) { return "ERROR:"+e.getMessage(); }
         }
-    }
 
         @JavascriptInterface
         public String saveBackup(String base64, String filename) {
