@@ -117,8 +117,8 @@ jobs:
         if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feature/online-hosting'
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v1.2.0
-          name: Abon Gulung Gembul Stok Kertas v1.2.0
+          tag_name: v1.3.0
+          name: Abon Gulung Gembul Stok Kertas v1.3.0
           target_commitish: feature/online-hosting
           files: android/app/build/outputs/apk/release/Abon-Gulung-Gembul-Stok-Kertas.apk
           make_latest: true
