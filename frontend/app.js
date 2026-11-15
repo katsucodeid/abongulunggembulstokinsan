@@ -186,7 +186,7 @@ async function checkForUpdates(){
   const response=await fetch("https://api.github.com/repos/katsucodeid/abongulunggembulstokinsan/releases/latest",{headers:{Accept:"application/vnd.github+json"},cache:"no-store"});
   if(!response.ok)throw new Error("GitHub HTTP "+response.status);
   const release=await response.json(),latest=String(release.tag_name||"").replace(/^v/i,"");
-  const installed=window.InsanNative?.getAppVersion?.()||"1.3.0";
+  const installed=window.InsanNative?.getAppVersion?.()||"2.0.2";
   if(!latest||compareVersions(latest,installed)<=0){if(notice)notice.classList.add("hidden");return;}
   if(title)title.textContent="🔔 Pembaruan tersedia · v"+latest;
   if(message)message.textContent=(release.name||"Versi terbaru Abon Gulung Gembul")+" sudah tersedia. Ketuk Update Sekarang untuk memperbarui aplikasi.";
