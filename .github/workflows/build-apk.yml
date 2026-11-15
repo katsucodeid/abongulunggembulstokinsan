@@ -86,7 +86,7 @@ jobs:
 
       - name: Build debug APK for pull requests
         if: github.event_name == 'pull_request'
-        run: gradle -p android --no-daemon assembleDebug
+        run: gradle -p android --no-daemon assembleDebug assembleAggkrtsDebug
 
       - name: Build signed release APK
         if: github.event_name != 'pull_request'
@@ -94,7 +94,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle -p android --no-daemon assembleRelease
+        run: gradle -p android --no-daemon assembleRelease assembleAggkrtsRelease
 
       - name: Verify debug APK
         if: github.event_name == 'pull_request'
@@ -118,6 +118,35 @@ jobs:
           }
           ls -lh "$APK"
 
+      - name: Verify and prepare standalone AGGKRts APK
+        if: github.event_name != 'pull_request'
+        run: |
+          APK=android/app-aggkrts/build/outputs/apk/release/app-aggkrts-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
+          echo "$CERT_OUTPUT"
+          echo "$CERT_OUTPUT" | grep -qi "43ecffa454e59b8be2cec3f9c02b451dc9ec2d26dedf150e0a202d07d893d02e" || { echo "ERROR: New app certificate does not match permanent KatsuCode signing certificate."; exit 1; }
+          cp "$APK" android/app-aggkrts/build/outputs/apk/release/Abon-Gulung-Stok-Kertas-V0.1.1.apk
+
+      - name: Publish standalone AGGKRts release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/feature/online-hosting'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: aggkrts-v0.1.1
+          name: Abon Gulung Stok Kertas V0.1.1
+          target_commitish: feature/online-hosting
+          files: android/app-aggkrts/build/outputs/apk/release/Abon-Gulung-Stok-Kertas-V0.1.1.apk
+          make_latest: false
+          overwrite_files: true
+
+      - name: Upload standalone AGGKRts APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Abon-Gulung-Stok-Kertas-V0.1.1-APK
+          path: ${{ github.event_name == 'pull_request' && 'android/app-aggkrts/build/outputs/apk/debug/app-aggkrts-debug.apk' || 'android/app-aggkrts/build/outputs/apk/release/Abon-Gulung-Stok-Kertas-V0.1.1.apk' }}
+          if-no-files-found: error
+          retention-days: 30
       - name: Prepare named release APK
         if: github.event_name != 'pull_request'
         run: cp android/app/build/outputs/apk/release/app-release.apk android/app/build/outputs/apk/release/Abon-Gulung-Gembul-Stok-Kertas.apk
