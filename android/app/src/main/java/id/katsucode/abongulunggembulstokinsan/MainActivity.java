@@ -36,7 +36,7 @@ public class MainActivity extends Activity {
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
 
-    private static final String UPDATE_CHANNEL = "app_update_channel";
+    private static final String UPDATE_CHANNEL = "app_update_alarm_v2";
     private void ensureUpdateChannel() {
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationManager manager=(NotificationManager)getSystemService(NOTIFICATION_SERVICE);
@@ -53,7 +53,7 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String getAppVersion() {
             try { return getPackageManager().getPackageInfo(getPackageName(),0).versionName; }
-            catch(Exception e) { return "1.3.0"; }
+            catch(Exception e) { return "2.0.2"; }
         }
         @JavascriptInterface
         public String notifyUpdateAvailable(String version,String detail) {
