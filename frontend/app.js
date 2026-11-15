@@ -1,4 +1,16 @@
 const API=(window.INSAN_CONFIG?.API_BASE||"").replace(/\/$/,"");
+
+const isAggkrtsApp=new URLSearchParams(location.search).get("app")==="aggkrts";
+if(isAggkrtsApp){
+ document.title="Abon Gulung Stok Kertas V0.1.1";
+ const heading=document.querySelector("#about h2");if(heading)heading.textContent="Tentang Abon Gulung Stok Kertas";
+ const version=document.getElementById("aboutVersion");if(version)version.textContent="Versi 0.1.1";
+ const featureHeading=[...document.querySelectorAll("#about h3")].find(x=>x.textContent.includes("Fitur operasional"));if(featureHeading)featureHeading.textContent="Fitur lengkap · Versi 0.1.1";
+ const featureNote=featureHeading?.nextElementSibling;if(featureNote)featureNote.textContent="Rilis perdana 15 November 2026: aplikasi Android terpisah dengan fitur stok, transaksi, target produksi, laporan TXT, pencadangan, alarm kerja, notifikasi pembaruan, dan sinkronisasi server lokal.";
+ const history=[...document.querySelectorAll("#about .history-card b")].find(x=>x.textContent.includes("Versi 2.0.2"));
+ if(history){const card=history.closest(".history-card");if(card)card.innerHTML="<b>Versi 0.1.1 · 15 November 2026</b><ul><li>Rilis aplikasi Android baru dengan package id.katsucode.aggkrts.</li><li>Fitur stok, stok datang, target produksi, riwayat, laporan TXT, backup, dan pemulihan.</li><li>Alarm kerja Android dengan pilihan nada, tes alarm, dan notifikasi pembaruan.</li><li>Permintaan izin notifikasi dan alarm tepat waktu ketika fitur terkait digunakan.</li><li>Sertifikat permanen KatsuCode dipertahankan.</li></ul>";}
+}
+
 const $=id=>document.getElementById(id);
 let token=localStorage.getItem("insan_token"), state=null, cachedUser=null;
 const DB_NAME="insan-stock-local", STORE="kv", QUEUE="queue";
@@ -183,9 +195,13 @@ async function checkForUpdates(){
  if(updateCheckRunning)return;updateCheckRunning=true;
  const notice=$("updateNotice"),title=$("updateTitle"),message=$("updateMessage");
  try{
-  const response=await fetch("https://api.github.com/repos/katsucodeid/abongulunggembulstokinsan/releases/latest",{headers:{Accept:"application/vnd.github+json"},cache:"no-store"});
+  const releasesUrl=isAggkrtsApp?"https://api.github.com/repos/katsucodeid/abongulunggembulstokinsan/releases?per_page=50":"https://api.github.com/repos/katsucodeid/abongulunggembulstokinsan/releases/latest";
+  const response=await fetch(releasesUrl,{headers:{Accept:"application/vnd.github+json"},cache:"no-store"});
   if(!response.ok)throw new Error("GitHub HTTP "+response.status);
-  const release=await response.json(),latest=String(release.tag_name||"").replace(/^v/i,"");
+  const payload=await response.json();
+  const release=isAggkrtsApp?(payload.find(x=>String(x.tag_name||"").startsWith("aggkrts-v"))||null):payload;
+  const latest=String(release?.tag_name||"").replace(/^aggkrts-v/i,"").replace(/^v/i,"");
+  if(isAggkrtsApp)window.aggkrtsReleaseAssetUrl=release?.assets?.find(x=>x.name==="Abon-Gulung-Stok-Kertas-V0.1.1.apk")?.browser_download_url||release?.assets?.[0]?.browser_download_url||"";
   const installed=window.InsanNative?.getAppVersion?.()||"2.0.2";
   if(!latest||compareVersions(latest,installed)<=0){if(notice)notice.classList.add("hidden");return;}
   if(title)title.textContent="🔔 Pembaruan tersedia · v"+latest;
@@ -227,7 +243,7 @@ async function applyUpdate(){
           if(message)message.textContent="Mengunduh APK Android terbaru…";
           if(status)status.textContent="Kode server diperbarui. Menyiapkan pemasangan APK…";
           if(window.InsanNative?.downloadAndInstallApk){
-            const result=window.InsanNative.downloadAndInstallApk("https://github.com/katsucodeid/abongulunggembulstokinsan/releases/latest/download/Abon-Gulung-Gembul-Stok-Kertas.apk");
+            const result=window.InsanNative.downloadAndInstallApk((isAggkrtsApp?(window.aggkrtsReleaseAssetUrl||""):"https://github.com/katsucodeid/abongulunggembulstokinsan/releases/latest/download/Abon-Gulung-Gembul-Stok-Kertas.apk"));
             if(result==="STARTED"){if(message)message.textContent="APK diunduh ke folder Download. Konfirmasi pemasangan Android setelah unduhan selesai.";if(status)status.textContent="Unduhan APK dimulai.";if(overlay)overlay.classList.add("hidden");return;}
             if(result==="PERMISSION_REQUIRED"){if(message)message.textContent="Aktifkan izin memasang aplikasi tidak dikenal untuk aplikasi ini, lalu ulangi Update Aplikasi.";if(status)status.textContent="Izin pemasangan diperlukan.";if(overlay)overlay.classList.add("hidden");return;}
             if(String(result).startsWith("ERROR:"))throw new Error(result.slice(6));
