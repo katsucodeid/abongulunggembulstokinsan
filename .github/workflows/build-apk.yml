@@ -86,7 +86,7 @@ jobs:
 
       - name: Build debug APK for pull requests
         if: github.event_name == 'pull_request'
-        run: gradle -p android --no-daemon assembleDebug assembleAggkrtsDebug
+        run: gradle -p android --no-daemon assembleDebug :app-aggkrts:assembleDebug
 
       - name: Build signed release APK
         if: github.event_name != 'pull_request'
@@ -94,7 +94,7 @@ jobs:
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: gradle -p android --no-daemon assembleRelease assembleAggkrtsRelease
+        run: gradle -p android --no-daemon assembleRelease :app-aggkrts:assembleRelease
 
       - name: Verify debug APK
         if: github.event_name == 'pull_request'
