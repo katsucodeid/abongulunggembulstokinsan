@@ -66,7 +66,7 @@ public class MainActivity extends Activity {
                 Notification.Builder builder=Build.VERSION.SDK_INT>=26?new Notification.Builder(MainActivity.this,UPDATE_CHANNEL):new Notification.Builder(MainActivity.this);
                 builder.setSmallIcon(android.R.drawable.ic_lock_idle_alarm).setContentTitle("Pembaruan aplikasi tersedia")
                     .setContentText("Versi "+version+" siap dipasang").setStyle(new Notification.BigTextStyle().bigText(detail))
-                    .setCategory(Notification.CATEGORY_RECOMMENDATION).setPriority(Notification.PRIORITY_MAX)
+                    .setCategory(Notification.CATEGORY_ALARM).setPriority(Notification.PRIORITY_MAX)
                     .setAutoCancel(true).setContentIntent(content).setTicker("Pembaruan aplikasi tersedia");
                 ((NotificationManager)getSystemService(NOTIFICATION_SERVICE)).notify(4106,builder.build());
                 return "OK";
@@ -156,7 +156,7 @@ public class MainActivity extends Activity {
                 PendingIntent pending = PendingIntent.getBroadcast(MainActivity.this, 4104, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
                 manager.cancel(pending);
                 if (Build.VERSION.SDK_INT >= 31 && !manager.canScheduleExactAlarms()) {
-                    Intent permission = new Intent(AlarmManager.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + getPackageName()));
+                    Intent permission = new Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM, Uri.parse("package:" + getPackageName()));
                     permission.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(permission); return "PERMISSION_REQUIRED";
                 }
                 if (Build.VERSION.SDK_INT >= 23) {
