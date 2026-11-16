@@ -22,6 +22,18 @@ cd abongulunggembulstokinsan
 bash scripts/install-termux.sh
 ```
 
+### Jika skrip start tidak ditemukan pada clone lama
+
+Jika Termux menampilkan `No such file or directory` untuk `scripts/start-termux.sh`, clone lokal mungkin belum memuat versi repository terbaru. Perbarui checkout tanpa memaksa atau menimpa perubahan lokal:
+
+```bash
+cd ~/abongulunggembulstokinsan
+git pull --ff-only
+ls -l scripts/start-termux.sh
+```
+
+Jika `git pull --ff-only` berhenti karena ada perubahan lokal, amankan perubahan tersebut terlebih dahulu; jangan gunakan `git reset --hard`. Pembaruan ini tidak memerlukan penghapusan `backend/.env` atau database lokal. Setelah skrip tersedia, jalankan perintah pada bagian **Jalankan server**.
+
 Jalankan server:
 
 ```bash
