@@ -96,7 +96,7 @@ public final class LegacyBackupImporter {
             for (int i=0; i<processed.length(); i++) {
                 android.content.ContentValues v = new android.content.ContentValues();
                 v.put("operation_id", processed.getString(i));
-                db.insertOrThrow("processed_operations", v);
+                db.insertOrThrow("processed_operations", null, v);
             }
             for (int i=0; i<audit.length(); i++) {
                 JSONObject row = audit.getJSONObject(i);
