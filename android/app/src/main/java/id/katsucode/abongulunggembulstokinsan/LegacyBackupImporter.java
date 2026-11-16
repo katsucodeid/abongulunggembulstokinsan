@@ -34,8 +34,8 @@ public final class LegacyBackupImporter {
 
     public static ImportResult importStream(LocalDatabase helper, InputStream input, String sourceName) throws Exception {
         if (input == null) throw new IllegalArgumentException("File cadangan tidak dapat dibaca.");
-        byte[] bytes = readAll(input);
-        if (bytes.length == 0 || bytes.length > 50 * 1024 * 1024) throw new IllegalArgumentException("Ukuran file cadangan tidak valid (maksimal 50 MB).");
+        byte[] bytes = readAll(input, 50 * 1024 * 1024);
+        if (bytes.length == 0) throw new IllegalArgumentException("File cadangan kosong.");
         JSONObject envelope = new JSONObject(new String(bytes, StandardCharsets.UTF_8));
         if (!"INSAN-STOCK-BACKUP".equals(envelope.optString("format")) || envelope.optInt("formatVersion", -1) != 1)
             throw new IllegalArgumentException("Format cadangan bukan INSAN-STOCK-BACKUP versi 1.");
@@ -50,15 +50,22 @@ public final class LegacyBackupImporter {
             throw new IllegalArgumentException("Struktur database tidak lengkap; data lokal tidak diubah.");
 
         for (String key : STOCK_KEYS) {
+            if (!stock.has(key)) throw new IllegalArgumentException("Data stok wajib tidak ditemukan: " + key);
+        }
+        Iterator<String> stockKeys = stock.keys();
+        while (stockKeys.hasNext()) {
+            String key = stockKeys.next();
             Object value = stock.opt(key);
             if (!(value instanceof Number) || !isWholeNonNegative((Number)value))
                 throw new IllegalArgumentException("Nilai stok " + key + " tidak valid.");
         }
         validateUniqueRecords(users, "username", "pengguna");
         validateUniqueRecords(transactions, "id", "transaksi");
+        java.util.HashSet<String> processedIds = new java.util.HashSet<>();
         for (int i=0; i<processed.length(); i++) {
-            if (!(processed.opt(i) instanceof String) || ((String)processed.opt(i)).isEmpty())
-                throw new IllegalArgumentException("Daftar ID transaksi diproses tidak valid.");
+            if (!(processed.opt(i) instanceof String) || ((String)processed.opt(i)).isEmpty() ||
+                    !processedIds.add((String) processed.opt(i)))
+                throw new IllegalArgumentException("Daftar ID transaksi diproses tidak valid atau berisi duplikat.");
         }
         JSONArray audit = data.optJSONArray("auditLog");
         if (audit == null) audit = new JSONArray();
@@ -73,7 +80,9 @@ public final class LegacyBackupImporter {
         db.beginTransaction();
         try {
             if (!helper.isEmpty(db)) throw new IllegalStateException("Database lokal sudah berisi data. Impor hanya diizinkan ke database kosong; data yang ada tidak akan ditimpa.");
-            for (String key : STOCK_KEYS) {
+            Iterator<String> importedStockKeys = stock.keys();
+            while (importedStockKeys.hasNext()) {
+                String key = importedStockKeys.next();
                 android.content.ContentValues v = new android.content.ContentValues();
                 v.put("item_key", key); v.put("quantity", stock.getLong(key));
                 db.insertOrThrow("stock", null, v);
@@ -118,6 +127,8 @@ public final class LegacyBackupImporter {
                 }
             }
             LocalDatabase.putRaw(db, "metadata", "meta_key", "legacy_root", metadata.toString());
+            // Keep a complete source snapshot as a forward-compatibility safety net.
+            LocalDatabase.putRaw(db, "metadata", "meta_key", "legacy_database", data.toString());
             JSONObject settings = data.optJSONObject("settings");
             if (settings != null) LocalDatabase.putRaw(db, "app_settings", "setting_key", "legacy", settings.toString());
 
@@ -125,7 +136,7 @@ public final class LegacyBackupImporter {
             imported.put("imported_at", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).format(new Date()));
             imported.put("source_name", sourceName == null ? "backup" : sourceName);
             imported.put("checksum", digest);
-            imported.put("stock_count", STOCK_KEYS.length); imported.put("user_count", users.length());
+            imported.put("stock_count", stock.length()); imported.put("user_count", users.length());
             imported.put("transaction_count", transactions.length()); imported.put("processed_count", processed.length());
             imported.put("audit_count", audit.length());
             db.insertOrThrow("imports", null, imported);
@@ -133,7 +144,7 @@ public final class LegacyBackupImporter {
         } finally {
             db.endTransaction();
         }
-        return new ImportResult(STOCK_KEYS.length, users.length(), transactions.length(), processed.length(), audit.length(), digest);
+        return new ImportResult(stock.length(), users.length(), transactions.length(), processed.length(), audit.length(), digest);
     }
 
     private static void validateUniqueRecords(JSONArray rows, String key, String label) throws JSONException {
@@ -151,10 +162,13 @@ public final class LegacyBackupImporter {
         return Double.isFinite(d) && d >= 0 && d == Math.rint(d) && d <= Long.MAX_VALUE;
     }
 
-    private static byte[] readAll(InputStream in) throws Exception {
+    private static byte[] readAll(InputStream in, int maxBytes) throws Exception {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buffer = new byte[8192]; int n;
-        while ((n=in.read(buffer))!=-1) out.write(buffer,0,n);
+        while ((n=in.read(buffer))!=-1) {
+            if (out.size() + n > maxBytes) throw new IllegalArgumentException("Ukuran file cadangan melebihi batas 50 MB.");
+            out.write(buffer,0,n);
+        }
         return out.toByteArray();
     }
 
