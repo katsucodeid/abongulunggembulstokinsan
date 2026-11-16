@@ -128,17 +128,70 @@ function renderHistory(){
 const filter=$("historyFilter")?$("historyFilter").value:"all";
 const list=(state.history||[]).filter(x=>filter==="all"||x.type===filter);
 const admin=(cachedUser?.role||state.user?.role)==="admin";
+const username=cachedUser?.username||state.user?.username;
 const root=$("historyList");root.innerHTML="";
 list.forEach(x=>{
 const card=document.createElement("article");card.className="history-card";
-const title=document.createElement("b");title.textContent=x.type==="stock-in"?"Barang masuk":x.type==="stock-out"?"Pengurangan stok manual":"Target produksi";card.appendChild(title);
+const title=document.createElement("b");
+title.textContent=x.type==="stock-in"?"Barang masuk":x.type==="stock-out"?"Pengurangan stok manual":x.type==="stock-correction"?"Koreksi pengurangan stok":"Target produksi";
+card.appendChild(title);
 const meta=document.createElement("div");meta.className="muted";meta.textContent=(x.date||"")+" · Oleh: "+(x.createdBy||"-");card.appendChild(meta);
 const detail=document.createElement("div");detail.className="detail";
-const l=x.lines||{};detail.textContent=x.type==="stock-in"?"Barang: "+(state.itemDefs?.[l.item]?.label||l.item)+" · Total masuk: "+(l.total||0)+" pcs":x.type==="stock-out"?"Barang: "+(state.itemDefs?.[l.item]?.label||l.item)+" · Dikurangi: "+(l.quantity||0)+" pcs · Alasan: "+(l.reason||x.note||"-"):"Outlet: "+(x.location||"-")+" · Ori: "+(l.ori||0)+" · Beef: "+(l.beef||0)+" · Spicy: "+(l.spicy||0)+" · Cheese: "+(l.cheese||0)+" · Total: "+(l.total||0)+" loyang"+(l.requestNote?" · Request: "+l.requestNote:"");
-if(x.note)detail.textContent+=" · Catatan: "+x.note;card.appendChild(detail);
+const l=x.lines||{};
+if(x.type==="stock-in")detail.textContent="Barang: "+(state.itemDefs?.[l.item]?.label||l.item)+" · Total masuk: "+(l.total||0)+" pcs";
+else if(x.type==="stock-out")detail.textContent="Barang: "+(state.itemDefs?.[l.item]?.label||l.item)+" · Dikurangi awal: "+(l.quantity||0)+" pcs · Alasan: "+(l.reason||x.note||"-");
+else if(x.type==="stock-correction"){
+const label=state.itemDefs?.[l.item]?.label||l.item;
+const direction=Number(l.returnedDelta||0)>0?"Stok dikembalikan: +"+l.returnedDelta+" pcs":"Pengurangan ditambahkan: "+l.returnedDelta+" pcs";
+detail.textContent="Barang: "+label+" · Pengurangan awal: "+(l.originalQuantity||0)+" pcs · Pengurangan benar: "+(l.correctedQuantity||0)+" pcs · "+direction+" · Alasan: "+(l.reason||x.note||"-")+" · ID transaksi awal: "+(l.targetTransactionId||"-");
+}else detail.textContent="Outlet: "+(x.location||"-")+" · Ori: "+(l.ori||0)+" · Beef: "+(l.beef||0)+" · Spicy: "+(l.spicy||0)+" · Cheese: "+(l.cheese||0)+" · Total: "+(l.total||0)+" loyang"+(l.requestNote?" · Request: "+l.requestNote:"");
+if(x.note&&x.type!=="stock-correction")detail.textContent+=" · Catatan: "+x.note;
+card.appendChild(detail);
+if(x.type==="stock-out"&&(admin||x.createdBy===username)){
+const actions=document.createElement("div");actions.className="row";
+const revise=document.createElement("button");revise.className="secondary";revise.textContent="Revisi jumlah";revise.onclick=()=>correctManualStockOut(x.id,"revise");actions.appendChild(revise);
+const addBack=document.createElement("button");addBack.className="secondary";addBack.textContent="Kembalikan sebagian";addBack.onclick=()=>correctManualStockOut(x.id,"return");actions.appendChild(addBack);
+const reverse=document.createElement("button");reverse.className="danger";reverse.textContent="Batalkan pengurangan";reverse.onclick=()=>correctManualStockOut(x.id,"reverse");actions.appendChild(reverse);
+card.appendChild(actions);
+}
 if(admin){const btn=document.createElement("button");btn.className="danger";btn.textContent="Hapus transaksi";btn.onclick=()=>deleteTransaction(x.id);card.appendChild(btn);}
-root.appendChild(card);});
+root.appendChild(card);
+});
 if(!list.length)root.textContent="Belum ada riwayat pada filter ini.";
+}
+async function correctManualStockOut(id,action){
+const original=(state?.history||[]).find(x=>x.id===id&&x.type==="stock-out");
+if(!original)return alert("Transaksi pengurangan tidak ditemukan. Muat ulang data.");
+if(!navigator.onLine||!token)return alert("Koreksi transaksi lama membutuhkan koneksi ke server utama.");
+try{
+const queued=await queueAll();
+if(queued.length)return alert("Masih ada transaksi offline yang belum tersinkron. Sinkronkan dahulu agar koreksi memakai data stok terbaru.");
+const l=original.lines||{},quantity=Number(l.quantity||0);
+const corrections=(state.history||[]).filter(x=>x.type==="stock-correction"&&x.lines?.targetTransactionId===id);
+const alreadyReturned=corrections.reduce((sum,x)=>sum+Number(x.lines?.returnedDelta||0),0);
+const currentReduction=quantity-alreadyReturned;
+let correctedQuantity=0;
+if(action==="revise"){
+const value=prompt("Jumlah pengurangan yang benar untuk "+(state.itemDefs?.[l.item]?.label||l.item)+" (pcs). Isi 0 untuk membatalkan seluruh pengurangan.",String(currentReduction));
+if(value===null)return;
+correctedQuantity=Number(value);
+if(!Number.isSafeInteger(correctedQuantity)||correctedQuantity<0||correctedQuantity>quantity)throw new Error("Masukkan bilangan bulat antara 0 dan "+quantity+".");
+}else if(action==="return"){
+const value=prompt("Berapa pcs yang ingin dikembalikan ke stok? Sisa pengurangan saat ini: "+currentReduction+" pcs.",String(currentReduction));
+if(value===null)return;
+const returned=Number(value);
+if(!Number.isSafeInteger(returned)||returned<=0||returned>currentReduction)throw new Error("Masukkan jumlah antara 1 dan "+currentReduction+".");
+correctedQuantity=currentReduction-returned;
+}else correctedQuantity=0;
+const reason=prompt("Tuliskan alasan koreksi stok (wajib).");
+if(reason===null)return;
+if(reason.trim().length<3)throw new Error("Alasan koreksi wajib diisi minimal 3 karakter.");
+const actionText=action==="revise"?"Revisi pengurangan menjadi "+correctedQuantity+" pcs":action==="return"?"Kembalikan sebagian stok":"Batalkan seluruh pengurangan";
+if(!confirm(actionText+"? Stok akan disesuaikan dan koreksi dicatat di riwayat."))return;
+const data=await api("/transactions/"+encodeURIComponent(id)+"/corrections",{method:"POST",body:JSON.stringify({correctionId:newId(),action,quantity:action==="return"?currentReduction-correctedQuantity:correctedQuantity,reason:reason.trim()})});
+state=data.state;await kvSet("state",state);await renderAll();
+alert(data.duplicate?"Koreksi ini sudah pernah diproses.":"Koreksi stok berhasil disimpan.");
+}catch(e){alert("Koreksi gagal: "+e.message);}
 }
 async function deleteTransaction(id){if(!id||!confirm("Yakin menghapus transaksi ini? Stok akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;try{const d=await api("/transactions/"+encodeURIComponent(id),{method:"DELETE"});state=d.state;await kvSet("state",state);await renderAll();$("syncErrors").textContent="Transaksi dihapus; perubahan stok sudah dibatalkan.";showTab("history");}catch(e){alert("Gagal menghapus transaksi: "+e.message);}}
 function applyLocal(op){const p=op.payload;let changes={};if(op.type==="stock-in"){const total=(p.packs||0)*(p.perPack||0)+(p.extra||0);changes[p.item]=total;}else if(op.type==="stock-out"){changes[p.item]=-(p.quantity||0);}else{const total=(p.ori||0)+(p.beef||0)+(p.spicy||0)+(p.cheese||0);if(p.custom?.enabled){changes={box3:-(p.custom.box3||0),box5outer:-(p.custom.box5||0),box5inner:-(p.custom.box5||0),paper:-(p.custom.box5||0)};}else{const use=total*2;changes={box3:-use,box5outer:-use,box5inner:-use,paper:-use};}}
