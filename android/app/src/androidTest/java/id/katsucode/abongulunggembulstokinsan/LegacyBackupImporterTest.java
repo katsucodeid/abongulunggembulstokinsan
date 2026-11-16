@@ -50,7 +50,7 @@ public class LegacyBackupImporterTest {
             if (inString) {
                 out.append(ch);
                 if (escaped) escaped=false;
-                else if (ch=='\\\\') escaped=true;
+                else if (ch=='\\') escaped=true;
                 else if (ch=='"') inString=false;
             } else if (ch=='"') { inString=true; out.append(ch); }
             else if (ch==',' || ch==':') out.append(ch).append(' ');
