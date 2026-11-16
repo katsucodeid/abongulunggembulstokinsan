@@ -19,8 +19,6 @@ if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/term
 app.use(cors());
 app.use(express.json({ limit: "25mb" }));
 
-require("./stock-corrections")(app, { auth, locked, persist, getDb: () => db, recordAudit, itemDefs });
-
 const itemDefs = {
   box3: { label: "Box isi 3", min: null },
   box5outer: { label: "Box isi 5 luar (Slongsong)", min: null },
@@ -75,6 +73,8 @@ function recordAudit(user, action, details = {}) {
   db.auditLog.push({ id: require("crypto").randomUUID(), at: new Date().toISOString(), username: user?.username || "system", role: user?.role || "system", action, details });
   if (db.auditLog.length > 10000) db.auditLog = db.auditLog.slice(-10000);
 }
+require("./stock-corrections")(app, { auth, locked, persist, getDb: () => db, recordAudit, itemDefs });
+
 function int(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) throw new Error(label + " harus bilangan bulat nol atau lebih.");
   return value;
