@@ -159,7 +159,7 @@ public final class LegacyBackupImporter {
 
     private static boolean isWholeNonNegative(Number n) {
         double d=n.doubleValue();
-        return Double.isFinite(d) && d >= 0 && d == Math.rint(d) && d <= Long.MAX_VALUE;
+        return !Double.isNaN(d) && !Double.isInfinite(d) && d >= 0 && d == Math.rint(d) && d <= Long.MAX_VALUE;
     }
 
     private static byte[] readAll(InputStream in, int maxBytes) throws Exception {
