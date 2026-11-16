@@ -162,6 +162,16 @@ public class MainActivity extends Activity {
         title.setTextSize(25);
         title.setTypeface(null, android.graphics.Typeface.BOLD);
         root.addView(title);
+        android.widget.ImageView brandLogo = new android.widget.ImageView(this);
+        brandLogo.setImageResource(R.mipmap.ic_launcher);
+        brandLogo.setAdjustViewBounds(true);
+        brandLogo.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        android.widget.LinearLayout.LayoutParams logoParams = new android.widget.LinearLayout.LayoutParams(
+                (int)(getResources().getDisplayMetrics().density * 176),
+                (int)(getResources().getDisplayMetrics().density * 176));
+        logoParams.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        logoParams.bottomMargin = pad / 2;
+        root.addView(brandLogo, logoParams);
         android.widget.TextView intro = new android.widget.TextView(this);
         intro.setText("Pilih cara membuka aplikasi. Database lokal SQLite dapat digunakan tanpa internet. Mode Termux lama tetap tersedia selama proses migrasi.");
         intro.setTextSize(15);
