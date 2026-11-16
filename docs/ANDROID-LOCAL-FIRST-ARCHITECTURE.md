@@ -115,3 +115,5 @@ Initial code has been added on `feature/android-local-first`:
 - The importer now accepts and stores additional stock keys beyond the current five, rejects duplicate processed-operation IDs, caps input while streaming at 50 MB, and retains a complete legacy database JSON snapshot as a forward-compatibility safety net.
 - The fixture test includes an extra future stock key to verify unknown stock fields are not silently discarded.
 - CI has been expanded to run the instrumentation suite on an Android 35 emulator, in addition to building and verifying the APK.
+
+- Android preview version is now `2.2.0-local-preview` (versionCode 6) so it is distinguishable from the current Termux-dependent release. This remains a development preview, not a production replacement.
