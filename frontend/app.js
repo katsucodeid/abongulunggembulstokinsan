@@ -388,6 +388,7 @@ async function copyReport(){try{await navigator.clipboard.writeText($("reportTex
 function updateLiveClock(){const now=new Date();const time=$("liveClock"),date=$("liveDate");if(time)time.textContent=new Intl.DateTimeFormat("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);if(date)date.textContent=new Intl.DateTimeFormat("id-ID",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}).format(now);}
 themeInit();updateLiveClock();setInterval(updateLiveClock,1000);
 $("prodDate").value=new Date().toISOString().slice(0,10);
+{const now=new Date();$("dailyReportDate").value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");}
 if("serviceWorker" in navigator && location.protocol!=="file:")navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
 window.addEventListener("online",()=>{setStatus("Koneksi tersedia · memperbarui data…");refresh();});
 
