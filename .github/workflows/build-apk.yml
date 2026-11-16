@@ -81,6 +81,9 @@ jobs:
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
 
+      - name: Compile Android instrumentation tests
+        run: gradle -p android --no-daemon assembleDebugAndroidTest
+
       - name: Verify APK exists
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
