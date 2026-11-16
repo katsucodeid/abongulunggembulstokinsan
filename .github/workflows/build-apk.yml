@@ -18,6 +18,10 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: android-local-first-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
 jobs:
   build:
     name: Build Android APK
@@ -89,11 +93,13 @@ jobs:
       - name: Run database import tests on Android emulator
         uses: reactivecircus/android-emulator-runner@v2
         with:
-          api-level: 35
-          target: google_apis
+          api-level: 30
+          target: default
           arch: x86_64
           profile: pixel_2
+          emulator-options: -no-window -gpu swiftshader_indirect -no-snapshot -noaudio -no-boot-anim -memory 2048 -cores 2
           disable-animations: true
+          disable-spellchecker: true
           script: gradle -p android --no-daemon connectedDebugAndroidTest
 
       - name: Verify APK exists
