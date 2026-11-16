@@ -18,9 +18,9 @@ async function api(path,opts={}){const r=await fetch(API+"/api"+path,{...opts,he
 function showLogin(){ $("login").classList.remove("hidden");$("app").classList.add("hidden");}
 function showApp(){ $("login").classList.add("hidden");$("app").classList.remove("hidden");}
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
-async function logout(){token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
+async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
-async function renderAll(){if(!state)return;const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=(cachedUser?.role||state.user?.role)!=="admin";syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
+async function renderAll(){if(!state)return;const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=(cachedUser?.role||state.user?.role)!=="admin";syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();await maybeAutoDailyReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");}
 function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;const open=!nav.classList.contains("open");nav.classList.toggle("open",open);backdrop.classList.toggle("visible",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Tutup navigasi":"Buka navigasi");document.body.classList.toggle("nav-open",open);}
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
@@ -314,19 +314,48 @@ function buildDailyProductionReport(dateKey){
 }
 function generateDailyProductionReport(){
  const dateKey=$("dailyReportDate")?.value;
- try{$("dailyProductionReportText").value=buildDailyProductionReport(dateKey);$("dailyProductionReportStatus").textContent="Laporan berhasil dibuat dari target dan transaksi stok tanggal "+dateKey+".";}
+ try{$("dailyProductionReportText").value=buildDailyProductionReport(dateKey);$("dailyProductionReportStatus").textContent="Pratinjau laporan berhasil dibuat untuk "+dateKey+".";}
  catch(e){$("dailyProductionReportStatus").textContent="Gagal membuat laporan: "+e.message;}
 }
-function downloadDailyProductionReportTxt(){
- const content=$("dailyProductionReportText")?.value||"";
- if(!content.trim()){generateDailyProductionReport();}
- const ready=$("dailyProductionReportText")?.value||"";
- if(!ready.trim())return;
- const dateKey=$("dailyReportDate")?.value||new Date().toISOString().slice(0,10);
- const blob=new Blob(["\uFEFF",ready+"\n"],{type:"text/plain;charset=utf-8"});
- const url=URL.createObjectURL(blob),link=document.createElement("a");
- link.href=url;link.download="laporan-target-"+dateKey+".txt";
- document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+function wibDateParts(){
+ const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
+ return Object.fromEntries(parts.filter(x=>x.type!=="literal").map(x=>[x.type,x.value]));
+}
+function wibDateKey(){const p=wibDateParts();return p.year+"-"+p.month+"-"+p.day;}
+function dailyReportFilename(dateKey){
+ const [year,month,day]=dateKey.split("-").map(Number);
+ const months=["januari","februari","maret","april","mei","juni","juli","agustus","september","oktober","november","desember"];
+ return day+months[month-1]+year+".txt";
+}
+async function saveDailyProductionReport(automatic=false){
+ const dateKey=automatic?wibDateKey():($("dailyReportDate")?.value||wibDateKey());
+ const status=$("dailyProductionReportStatus");
+ try{
+  if(!$("dailyProductionReportText"))return false;
+  $("dailyReportDate").value=dateKey;
+  const content=buildDailyProductionReport(dateKey);
+  $("dailyProductionReportText").value=content;
+  const filename=dailyReportFilename(dateKey);
+  const blob=new Blob(["\uFEFF",content+"\n"],{type:"text/plain;charset=utf-8"});
+  if(window.InsanNative?.saveDailyReport){
+   const saved=window.InsanNative.saveDailyReport(await blobToBase64(blob),filename);
+   if(!saved||!saved.startsWith("OK:"))throw new Error(String(saved||"Penyimpanan laporan gagal."));
+   if(status)status.textContent=(automatic?"Laporan otomatis":"Laporan berhasil dibuat dan disimpan")+": Download/Abon Gulung Gembul/"+filename+" · file tanggal yang sama akan diperbarui.";
+  }else{
+   const url=URL.createObjectURL(blob),link=document.createElement("a");
+   link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+   if(status)status.textContent=(automatic?"Laporan otomatis disiapkan":"Laporan dibuat")+". Unduhan "+filename+" dimulai; pada browser/PWA, pilih folder Download/Abon Gulung Gembul. Penyimpanan langsung dan penimpaan otomatis memerlukan aplikasi Android.";
+  }
+  if(automatic)localStorage.setItem("insan_daily_report_auto_"+dateKey,"saved");
+  return true;
+ }catch(e){if(status)status.textContent="Gagal membuat/menyimpan laporan: "+(e.message||e);return false;}
+}
+function downloadDailyProductionReportTxt(){return saveDailyProductionReport(false);}
+async function maybeAutoDailyReport(){
+ if(!state)return;
+ const p=wibDateParts(),dateKey=p.year+"-"+p.month+"-"+p.day;
+ if(Number(p.hour)<18||localStorage.getItem("insan_daily_report_auto_"+dateKey)==="saved")return;
+ await saveDailyProductionReport(true);
 }
 function formatManualStockOutReport(rows){
  const fmt=n=>Number(n||0).toLocaleString("id-ID");
@@ -386,9 +415,9 @@ $("stockOpnameMsg").textContent="Berhasil! Hanya bagian *INSAN* yang diperbarui 
 }
 async function copyReport(){try{await navigator.clipboard.writeText($("reportText").value);alert("Laporan disalin.");}catch{$("reportText").select();document.execCommand("copy");alert("Laporan disalin.");}}
 function updateLiveClock(){const now=new Date();const time=$("liveClock"),date=$("liveDate");if(time)time.textContent=new Intl.DateTimeFormat("id-ID",{hour:"2-digit",minute:"2-digit",second:"2-digit",hour12:false}).format(now);if(date)date.textContent=new Intl.DateTimeFormat("id-ID",{weekday:"short",day:"2-digit",month:"short",year:"numeric"}).format(now);}
-themeInit();updateLiveClock();setInterval(updateLiveClock,1000);
+themeInit();updateLiveClock();setInterval(updateLiveClock,1000);setInterval(()=>{maybeAutoDailyReport();},60000);document.addEventListener("visibilitychange",()=>{if(!document.hidden)maybeAutoDailyReport();});
 $("prodDate").value=new Date().toISOString().slice(0,10);
-{const now=new Date();$("dailyReportDate").value=[now.getFullYear(),String(now.getMonth()+1).padStart(2,"0"),String(now.getDate()).padStart(2,"0")].join("-");}
+{$("dailyReportDate").value=wibDateKey();}
 if("serviceWorker" in navigator && location.protocol!=="file:")navigator.serviceWorker.register("./sw.js",{updateViaCache:"none"}).catch(()=>{});
 window.addEventListener("online",()=>{setStatus("Koneksi tersedia · memperbarui data…");refresh();});
 
