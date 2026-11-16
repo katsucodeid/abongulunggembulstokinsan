@@ -106,6 +106,8 @@ function recordAudit(user, action, details = {}) {
   db.auditLog.push({ id: require("crypto").randomUUID(), at: new Date().toISOString(), username: user?.username || "system", role: user?.role || "system", action, details });
   if (db.auditLog.length > 10000) db.auditLog = db.auditLog.slice(-10000);
 }
+
+require("./stock-corrections")(app, { auth, locked, persist, getDb: () => db, recordAudit, itemDefs });
 function int(value, label) {
   if (!Number.isSafeInteger(value) || value < 0) throw new Error(label + " harus bilangan bulat nol atau lebih.");
   return value;
@@ -239,6 +241,7 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
       const index = db.transactions.findIndex(x => x.id === req.params.id);
       if (index < 0) throw new Error("Transaksi tidak ditemukan atau sudah dihapus.");
       const tx = db.transactions[index];
+      if (tx.type === "stock-out" && db.transactions.some(t => t.type === "stock-correction" && t.lines?.targetTransactionId === tx.id)) throw new Error("Transaksi pengurangan ini sudah memiliki koreksi. Hapus/selesaikan catatan koreksinya terlebih dahulu sebelum menghapus transaksi awal.");
       for (const [key, delta] of Object.entries(tx.changes || {})) {
         if (!Object.hasOwn(itemDefs, key) || !Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] - delta) || db.stock[key] - delta < 0) throw new Error("Pembatalan transaksi tidak aman. Periksa stok terlebih dahulu.");
       }
