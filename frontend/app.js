@@ -261,8 +261,8 @@ function buildDailyProductionReport(dateKey){
   for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(target,key)&&Number.isSafeInteger(delta))target[key]+=delta;
  }
  for(const tx of day){
-  if(!["production","stock-out"].includes(tx.type))continue;
-  for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(used,key)&&Number.isSafeInteger(delta)&&delta<0)used[key]+=Math.abs(delta);
+  if(!["production","stock-out","stock-correction"].includes(tx.type))continue;
+  for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(used,key)&&Number.isSafeInteger(delta)){if(delta<0)used[key]+=Math.abs(delta);else if(tx.type==="stock-correction")used[key]=Math.max(0,used[key]-delta);}
  }
  const closing={},opening={};
  for(const key of keys){closing[key]=Number(state.stock?.[key]||0)-future[key];opening[key]=closing[key]-daily[key];}
