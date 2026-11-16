@@ -245,12 +245,45 @@ box.appendChild(card);
 async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){window.insanLatestCommit=d.latest;window.insanUpdateAvailable=(cachedUser?.role||state?.user?.role)==="admin";$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}}catch(e){/* update check is optional while offline */}}
 async function applyUpdate(commitSha=window.insanLatestCommit){if(!window.insanUpdateAvailable||!commitSha)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Terapkan commit "+commitSha.slice(0,7)+" dari GitHub? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({commitSha})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const r=await fetch(API+"/api/health",{cache:"no-store"});if(r.ok){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=90)clearInterval(watcher);},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
 async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
-async function loadReport(){if(!state)return;const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");$("reportText").value=`*INSAN*:
+function formatManualStockOutReport(rows){
+ const fmt=n=>Number(n||0).toLocaleString("id-ID");
+ const lines=["","========================================","RIWAYAT PENGURANGAN STOK MANUAL","========================================"];
+ if(!rows.length){lines.push("Belum ada transaksi pengurangan stok manual.");return lines.join("\n");}
+ rows.forEach((tx,index)=>{
+  const item=state?.itemDefs?.[tx.item]?.label||tx.item||"Barang tidak diketahui";
+  lines.push("",(index+1)+". Tanggal: "+(tx.date||"-"),"   Barang: "+item,"   Jumlah dikurangi: "+fmt(tx.quantity)+" pcs","   Alasan: "+(tx.reason||tx.note||"-"),"   Dicatat oleh: "+(tx.createdBy||"-"),"   ID transaksi: "+(tx.id||"-"));
+  (tx.corrections||[]).forEach((c,i)=>{
+   lines.push("   Koreksi "+(i+1)+": "+(c.date||"-")+" · jumlah benar "+fmt(c.correctedQuantity)+" pcs · pengembalian "+fmt(c.returnedDelta)+" pcs","   Alasan koreksi: "+(c.reason||"-"),"   Dikoreksi oleh: "+(c.createdBy||"-"));
+  });
+ });
+ return lines.join("\n");
+}
+async function loadReport(){
+ if(!state)return;
+ const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");
+ let manualRows=(state.history||[]).filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdAt:tx.createdAt,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:(state.history||[]).filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
+ if(token&&navigator.onLine){
+  try{const report=await api("/report");if(Array.isArray(report.manualStockOuts))manualRows=report.manualStockOuts;}catch(e){/* use cached history while offline/server is unavailable */}
+ }
+ const stockText=`*INSAN*:
 Box isi 3 : ${fmt(s.box3)}pcs
 Box isi 5 luar : ${fmt(s.box5outer)}pcs
 Box isi 5 dalam : ${fmt(s.box5inner)}pcs
 Kertas Minyak: ${fmt(s.paper)}pcs
-Mika roti roll : ${fmt(s.mika)}pcs`;}
+Mika roti roll : ${fmt(s.mika)}pcs`;
+ $("reportText").value=stockText+formatManualStockOutReport(manualRows);
+}
+async function downloadManualStockReportTxt(){
+ let manualRows=(state?.history||[]).filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:(state.history||[]).filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
+ if(token&&navigator.onLine){try{const report=await api("/report");if(Array.isArray(report.manualStockOuts))manualRows=report.manualStockOuts;}catch(e){/* cached history remains available */}}
+ let reportText=$("reportText").value;
+ if(!reportText.includes("RIWAYAT PENGURANGAN STOK MANUAL"))reportText+="\n"+formatManualStockOutReport(manualRows);
+ const content="LAPORAN STOK INSAN\nDibuat: "+new Date().toLocaleString("id-ID")+"\n\n"+reportText+"\n";
+ const blob=new Blob(["\uFEFF",content],{type:"text/plain;charset=utf-8"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="laporan-stok-insan-"+new Date().toISOString().slice(0,10)+".txt";
+ document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
 function generateFullStockReport(){
 const source=$("stockOpnameInput").value;
 if(!source.trim()){ $("stockOpnameMsg").textContent="Tempel pesan stock opname terlebih dahulu."; return; }
