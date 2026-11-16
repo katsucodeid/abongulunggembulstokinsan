@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Abon Gulung Gembul - Stok Kertas",
   "short_name": "Gembul Stok",
-  "description": "Sistem persediaan kertas, produksi, dan operasional Abon Gulung Gembul.",
+  "description": "Aplikasi operasional Abon Gulung Gembul untuk manajemen stok kemasan, target produksi, laporan harian otomatis, riwayat transaksi, dan sinkronisasi server.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
