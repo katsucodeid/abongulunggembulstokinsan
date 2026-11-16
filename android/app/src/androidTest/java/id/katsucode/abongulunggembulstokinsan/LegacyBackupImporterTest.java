@@ -42,6 +42,44 @@ public class LegacyBackupImporterTest {
                 .put("checksum",checksum(raw)).put("database",db).toString();
     }
 
+    private String prettyWhitespace(String json) {
+        StringBuilder out = new StringBuilder();
+        boolean inString = false, escaped = false;
+        for (int i=0; i<json.length(); i++) {
+            char ch=json.charAt(i);
+            if (inString) {
+                out.append(ch);
+                if (escaped) escaped=false;
+                else if (ch=='\\\\') escaped=true;
+                else if (ch=='"') inString=false;
+            } else if (ch=='"') { inString=true; out.append(ch); }
+            else if (ch==',' || ch==':') out.append(ch).append(' ');
+            else out.append(ch);
+        }
+        return out.toString();
+    }
+
+    private String prettyBackup() throws Exception {
+        JSONObject compact = new JSONObject(backup());
+        JSONObject db = compact.getJSONObject("database");
+        return new JSONObject().put("format", compact.getString("format"))
+                .put("formatVersion", compact.getInt("formatVersion"))
+                .put("checksum", compact.getString("checksum"))
+                .put("database", new JSONObject(prettyWhitespace(db.toString())))
+                .toString(2);
+    }
+
+    @Test public void acceptsPrettyPrintedBackupWithoutChangingChecksumSemantics() throws Exception {
+        Context context=ApplicationProvider.getApplicationContext();
+        context.deleteDatabase(LocalDatabase.FILE_NAME);
+        LocalDatabase helper=new LocalDatabase(context);
+        LegacyBackupImporter.ImportResult result=LegacyBackupImporter.importStream(helper,
+                new ByteArrayInputStream(prettyBackup().getBytes(StandardCharsets.UTF_8)),"pretty-fixture.insanbackup");
+        assertEquals(6,result.stockCount);
+        assertEquals(1,LocalDatabase.count(helper.getReadableDatabase(),"transactions"));
+        helper.close(); context.deleteDatabase(LocalDatabase.FILE_NAME);
+    }
+
     @Test public void importsAllRecordsAndKeepsStock() throws Exception {
         Context context=ApplicationProvider.getApplicationContext();
         context.deleteDatabase(LocalDatabase.FILE_NAME);
