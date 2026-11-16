@@ -149,6 +149,46 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        showStartScreen();
+    }
+
+    private void showStartScreen() {
+        android.widget.LinearLayout root = new android.widget.LinearLayout(this);
+        root.setOrientation(android.widget.LinearLayout.VERTICAL);
+        int pad = (int)(getResources().getDisplayMetrics().density * 24);
+        root.setPadding(pad, pad, pad, pad);
+        android.widget.TextView title = new android.widget.TextView(this);
+        title.setText("Abon Gulung Gembul");
+        title.setTextSize(25);
+        title.setTypeface(null, android.graphics.Typeface.BOLD);
+        root.addView(title);
+        android.widget.ImageView brandLogo = new android.widget.ImageView(this);
+        brandLogo.setImageResource(R.mipmap.ic_launcher);
+        brandLogo.setAdjustViewBounds(true);
+        brandLogo.setScaleType(android.widget.ImageView.ScaleType.FIT_CENTER);
+        android.widget.LinearLayout.LayoutParams logoParams = new android.widget.LinearLayout.LayoutParams(
+                (int)(getResources().getDisplayMetrics().density * 176),
+                (int)(getResources().getDisplayMetrics().density * 176));
+        logoParams.gravity = android.view.Gravity.CENTER_HORIZONTAL;
+        logoParams.bottomMargin = pad / 2;
+        root.addView(brandLogo, logoParams);
+        android.widget.TextView intro = new android.widget.TextView(this);
+        intro.setText("Pilih cara membuka aplikasi. Database lokal SQLite dapat digunakan tanpa internet. Mode Termux lama tetap tersedia selama proses migrasi.");
+        intro.setTextSize(15);
+        intro.setPadding(0, pad / 2, 0, pad);
+        root.addView(intro);
+        android.widget.Button local = new android.widget.Button(this);
+        local.setText("Database Lokal (fondasi offline)");
+        local.setOnClickListener(v -> startActivity(new Intent(this, LocalDataActivity.class)));
+        root.addView(local);
+        android.widget.Button legacy = new android.widget.Button(this);
+        legacy.setText("Buka Mode Lama (Termux)");
+        legacy.setOnClickListener(v -> openTermuxMode());
+        root.addView(legacy);
+        setContentView(root);
+    }
+
+    private void openTermuxMode() {
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -188,9 +228,15 @@ public class MainActivity extends Activity {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Toast.makeText(MainActivity.this,
-                        "Server belum berjalan. Buka Termux dan jalankan start-termux.sh.",
+                        "Mode Termux belum berjalan. Buka Termux dan jalankan scripts/start-termux.sh.",
                         Toast.LENGTH_LONG).show();
                 }
+            }
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri uri = request.getUrl();
+                if ("http".equals(uri.getScheme()) && "127.0.0.1".equals(uri.getHost()) && uri.getPort() == 8787) return false;
+                try { startActivity(new Intent(Intent.ACTION_VIEW, uri)); } catch (Exception ignored) { }
+                return true;
             }
         });
         setContentView(webView);
