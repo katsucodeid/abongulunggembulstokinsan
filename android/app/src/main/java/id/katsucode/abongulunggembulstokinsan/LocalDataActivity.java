@@ -23,6 +23,7 @@ public final class LocalDataActivity extends Activity {
     private LocalDatabase database;
     private LinearLayout content;
     private TextView status;
+    private TextView summary;
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -41,6 +42,7 @@ public final class LocalDataActivity extends Activity {
         addButton("Perbarui tampilan data", v -> refreshData());
         status = addText("Belum ada impor pada perangkat ini.", 14, false);
         addText("Ringkasan database", 19, true);
+        summary = addText("Memuat…", 15, false);
         refreshData();
         addText("Catatan: layar ini adalah fondasi migrasi dan pemeriksaan data. Fitur transaksi, koreksi stok, laporan, manajemen pengguna, serta sinkronisasi belum dipindahkan ke mode SQLite.", 14, false);
     }
@@ -110,10 +112,7 @@ public final class LocalDataActivity extends Activity {
             report.append("\nRiwayat audit: ").append(LocalDatabase.count(db, "audit_log"));
             report.append("\nPengaturan: ").append(LocalDatabase.count(db, "app_settings"));
             report.append("\nCatatan impor: ").append(LocalDatabase.count(db, "imports"));
-            if (content.getChildCount() > 0) {
-                TextView existing = (TextView) content.getChildAt(4);
-                existing.setText(report.toString());
-            }
+            if (summary != null) summary.setText(report.toString());
         } catch (Exception e) {
             status.setText("Database lokal belum dapat dibaca: " + e.getMessage());
         }
