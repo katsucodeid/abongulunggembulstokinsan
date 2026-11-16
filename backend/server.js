@@ -19,6 +19,8 @@ if (!JWT_SECRET) { console.error("JWT_SECRET belum diatur. Jalankan scripts/term
 app.use(cors());
 app.use(express.json({ limit: "25mb" }));
 
+require("./stock-corrections")(app, { auth, locked, persist, getDb: () => db, recordAudit, itemDefs });
+
 const itemDefs = {
   box3: { label: "Box isi 3", min: null },
   box5outer: { label: "Box isi 5 luar (Slongsong)", min: null },
@@ -205,6 +207,7 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
       const index = db.transactions.findIndex(x => x.id === req.params.id);
       if (index < 0) throw new Error("Transaksi tidak ditemukan atau sudah dihapus.");
       const tx = db.transactions[index];
+      if (tx.type === "stock-out" && db.transactions.some(t => t.type === "stock-correction" && t.lines?.targetTransactionId === tx.id)) throw new Error("Transaksi pengurangan ini sudah memiliki koreksi. Hapus/selesaikan catatan koreksinya terlebih dahulu sebelum menghapus transaksi awal.");
       for (const [key, delta] of Object.entries(tx.changes || {})) {
         if (!Object.hasOwn(itemDefs, key) || !Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] - delta) || db.stock[key] - delta < 0) throw new Error("Pembatalan transaksi tidak aman. Periksa stok terlebih dahulu.");
       }
