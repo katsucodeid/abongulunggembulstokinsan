@@ -247,6 +247,87 @@ box.appendChild(card);
 async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){window.insanLatestCommit=d.latest;window.insanUpdateAvailable=(cachedUser?.role||state?.user?.role)==="admin";$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}}catch(e){/* update check is optional while offline */}}
 async function applyUpdate(commitSha=window.insanLatestCommit){if(!window.insanUpdateAvailable||!commitSha)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Terapkan commit "+commitSha.slice(0,7)+" dari GitHub? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({commitSha})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const r=await fetch(API+"/api/health",{cache:"no-store"});if(r.ok){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=90)clearInterval(watcher);},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
 async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
+function buildDailyProductionReport(dateKey){
+ if(!state||!dateKey)throw new Error("Data stok atau tanggal laporan belum tersedia.");
+ const fmt=n=>Number(n||0).toLocaleString("id-ID");
+ const names={box3:"Box isi 3",box5outer:"Box isi 5 luar",box5inner:"Box isi 5 dalam",paper:"Kertas Minyak",mika:"Mika roti roll"};
+ const all=(state.history||[]).filter(tx=>tx&&tx.date);
+ const day=all.filter(tx=>tx.date===dateKey).sort((a,b)=>String(a.createdAt||"").localeCompare(String(b.createdAt||"")));
+ const later=all.filter(tx=>String(tx.date)>dateKey);
+ const keys=Object.keys(names),daily=Object.fromEntries(keys.map(k=>[k,0])),future=Object.fromEntries(keys.map(k=>[k,0])),used=Object.fromEntries(keys.map(k=>[k,0]));
+ for(const tx of all){
+  const target=tx.date===dateKey?daily:String(tx.date)>dateKey?future:null;
+  if(!target)continue;
+  for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(target,key)&&Number.isSafeInteger(delta))target[key]+=delta;
+ }
+ for(const tx of day){
+  if(!["production","stock-out"].includes(tx.type))continue;
+  for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(used,key)&&Number.isSafeInteger(delta)&&delta<0)used[key]+=Math.abs(delta);
+ }
+ const closing={},opening={};
+ for(const key of keys){closing[key]=Number(state.stock?.[key]||0)-future[key];opening[key]=closing[key]-daily[key];}
+ const [year,month,date]=dateKey.split("-").map(Number);
+ const dateLabel=new Date(year,month-1,date,12).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}).toLowerCase();
+ const order=["Harapan Indah","Grand Wisata","Bektim"],variants=[["ori","Ori"],["beef","Beef"],["spicy","Spicy"],["cheese","Cheese"]];
+ const groups=new Map();
+ for(const tx of day.filter(x=>x.type==="production")){
+  const outlet=tx.location||"Outlet tidak diketahui";
+  if(!groups.has(outlet))groups.set(outlet,[]);
+  groups.get(outlet).push(tx);
+ }
+ const outlets=[...order.filter(x=>groups.has(x)),...Array.from(groups.keys()).filter(x=>!order.includes(x))];
+ const lines=["Target ( "+dateLabel+" )",""];
+ if(!outlets.length)lines.push("Belum ada target produksi pada tanggal ini.","");
+ for(const outlet of outlets){
+  const rows=groups.get(outlet),totals=Object.fromEntries(variants.map(([k])=>[k,0]));
+  for(const tx of rows)for(const [key] of variants)totals[key]+=Number(tx.lines?.[key]||0);
+  const total=Object.values(totals).reduce((a,b)=>a+b,0);
+  lines.push("› "+outlet+" | Total "+fmt(total)+" Loyang","");
+  for(const [key,label] of variants)if(totals[key]>0)lines.push("~ "+label+" - "+fmt(totals[key])+" Loyang");
+  lines.push("-----------------------------","");
+ }
+ lines.push("Stok Sebelumnya:","");
+ for(const key of keys)lines.push(names[key]+" : "+fmt(opening[key])+"pcs");
+ lines.push("","Jumlah Stok Terpakai:");
+ const usedRows=keys.filter(k=>used[k]>0);
+ if(!usedRows.length)lines.push("- Tidak ada pemakaian stok tercatat.");
+ else for(const key of usedRows)lines.push("- "+names[key]+" : "+fmt(used[key])+"pcs");
+ const incoming=Object.fromEntries(keys.map(k=>[k,0]));
+ for(const tx of day.filter(x=>x.type==="stock-in"))for(const [key,delta] of Object.entries(tx.changes||{}))if(Object.hasOwn(incoming,key)&&Number.isSafeInteger(delta)&&delta>0)incoming[key]+=delta;
+ if(keys.some(k=>incoming[k]>0)){lines.push("","Barang Masuk:");for(const key of keys)if(incoming[key]>0)lines.push("+ "+names[key]+" : "+fmt(incoming[key])+"pcs");}
+ lines.push("","Jumlah:","");
+ for(const key of keys){
+  const expression=incoming[key]>0?fmt(opening[key])+" + "+fmt(incoming[key])+" - "+fmt(used[key]):fmt(opening[key])+" - "+fmt(used[key]);
+  lines.push(names[key]+" : "+expression+" = "+fmt(closing[key])+"pcs");
+ }
+ const outs=day.filter(x=>x.type==="stock-out");
+ lines.push("","Pengurangan Stok Diluar Target:");
+ if(!outs.length)lines.push("- Tidak ada pengurangan stok manual.");
+ else for(const tx of outs){
+  const item=names[tx.lines?.item]||tx.lines?.item||"Barang";
+  const corrections=day.filter(x=>x.type==="stock-correction"&&x.lines?.targetTransactionId===tx.id);
+  const effective=Math.max(0,Number(tx.lines?.quantity||0)-corrections.reduce((sum,x)=>sum+Number(x.lines?.returnedDelta||0),0));
+  lines.push("- "+item+" : "+fmt(effective)+"pcs"+(tx.lines?.reason||tx.note?" · "+(tx.lines?.reason||tx.note):""));
+ }
+ lines.push("","Keterangan: Laporan Ini Dibuat Otomatis","");
+ return lines.join("\n");
+}
+function generateDailyProductionReport(){
+ const dateKey=$("dailyReportDate")?.value;
+ try{$("dailyProductionReportText").value=buildDailyProductionReport(dateKey);$("dailyProductionReportStatus").textContent="Laporan berhasil dibuat dari target dan transaksi stok tanggal "+dateKey+".";}
+ catch(e){$("dailyProductionReportStatus").textContent="Gagal membuat laporan: "+e.message;}
+}
+function downloadDailyProductionReportTxt(){
+ const content=$("dailyProductionReportText")?.value||"";
+ if(!content.trim()){generateDailyProductionReport();}
+ const ready=$("dailyProductionReportText")?.value||"";
+ if(!ready.trim())return;
+ const dateKey=$("dailyReportDate")?.value||new Date().toISOString().slice(0,10);
+ const blob=new Blob(["\uFEFF",ready+"\n"],{type:"text/plain;charset=utf-8"});
+ const url=URL.createObjectURL(blob),link=document.createElement("a");
+ link.href=url;link.download="laporan-target-"+dateKey+".txt";
+ document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
+}
 function formatManualStockOutReport(rows){
  const fmt=n=>Number(n||0).toLocaleString("id-ID");
  const lines=["","========================================","RIWAYAT PENGURANGAN STOK MANUAL","========================================"];
