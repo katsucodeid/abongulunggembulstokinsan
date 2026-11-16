@@ -9,6 +9,13 @@ dependencies {
 }
 
 android {
+    buildTypes {
+        debug {
+            // Keep preview installs isolated from the current production/Termux app.
+            applicationIdSuffix '.preview'
+        }
+    }
+
     namespace 'id.katsucode.abongulunggembulstokinsan'
     compileSdk 35
 
