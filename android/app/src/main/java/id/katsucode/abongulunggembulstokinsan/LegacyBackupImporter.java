@@ -1,6 +1,5 @@
 package id.katsucode.abongulunggembulstokinsan;
 
-import android.database.Cursor;
 import android.database.sqlite.SQLiteDatabase;
 
 import org.json.JSONArray;
@@ -12,6 +11,9 @@ import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.util.Iterator;
+import java.text.SimpleDateFormat;
+import java.util.Date;
+import java.util.Locale;
 
 /**
  * One-time, all-or-nothing importer for the existing INSAN-STOCK-BACKUP v1 envelope.
@@ -120,7 +122,7 @@ public final class LegacyBackupImporter {
             if (settings != null) LocalDatabase.putRaw(db, "app_settings", "setting_key", "legacy", settings.toString());
 
             android.content.ContentValues imported = new android.content.ContentValues();
-            imported.put("imported_at", java.time.Instant.now().toString());
+            imported.put("imported_at", new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSSZ", Locale.US).format(new Date()));
             imported.put("source_name", sourceName == null ? "backup" : sourceName);
             imported.put("checksum", digest);
             imported.put("stock_count", STOCK_KEYS.length); imported.put("user_count", users.length());
