@@ -52,6 +52,8 @@ module.exports = function registerStockCorrections(app, ctx) {
         const nextStock = db.stock[item] + returnedDelta;
         if (!Number.isSafeInteger(nextStock) || nextStock < 0) throw new Error("Koreksi ditolak karena akan membuat stok " + itemDefs[item].label + " tidak valid.");
 
+        const previousStock = db.stock[item];
+        const auditLength = (db.auditLog || []).length;
         db.stock[item] = nextStock;
         const now = new Date().toISOString();
         const lines = {
@@ -86,7 +88,15 @@ module.exports = function registerStockCorrections(app, ctx) {
           returnedDelta,
           reason
         });
-        await persist();
+        try {
+          await persist();
+        } catch (error) {
+          db.stock[item] = previousStock;
+          const insertedAt = db.transactions.findIndex(t => t.id === correctionId);
+          if (insertedAt >= 0) db.transactions.splice(insertedAt, 1);
+          if (db.auditLog) db.auditLog.length = auditLength;
+          throw error;
+        }
         return {
           duplicate: false,
           state: { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: { username: req.user.username, role: req.user.role } }
