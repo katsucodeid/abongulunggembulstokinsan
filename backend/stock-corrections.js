@@ -1,5 +1,3 @@
-const crypto = require("crypto");
-
 module.exports = function registerStockCorrections(app, ctx) {
   const { auth, locked, persist, getDb, recordAudit, itemDefs } = ctx;
 
@@ -15,7 +13,15 @@ module.exports = function registerStockCorrections(app, ctx) {
         if (reason.length < 3) throw new Error("Alasan koreksi wajib diisi (minimal 3 karakter).");
 
         const duplicate = db.transactions.find(t => t.id === correctionId);
-        if (duplicate) return { duplicate: true, state: { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: { username: req.user.username, role: req.user.role } } };
+        if (duplicate) {
+          const sameRequest = duplicate.type === "stock-correction"
+            && duplicate.lines?.targetTransactionId === req.params.id
+            && duplicate.lines?.action === action
+            && duplicate.lines?.reason === reason
+            && duplicate.lines?.correctedQuantity === req.body?.quantity;
+          if (!sameRequest) throw new Error("ID koreksi sudah digunakan oleh transaksi lain.");
+          return { duplicate: true, state: { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: { username: req.user.username, role: req.user.role } } };
+        }
 
         const original = db.transactions.find(t => t.id === req.params.id);
         if (!original || original.type !== "stock-out") throw new Error("Transaksi pengurangan manual tidak ditemukan.");
