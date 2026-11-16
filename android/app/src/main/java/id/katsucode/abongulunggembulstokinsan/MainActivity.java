@@ -64,6 +64,59 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
+        public String saveDailyReport(String base64, String filename) {
+            if (Build.VERSION.SDK_INT < 29) return "ERROR:Android 10+ diperlukan untuk menyimpan langsung ke folder Download.";
+            Uri item = null;
+            try {
+                if (filename == null || !filename.matches("[0-9]{1,2}[a-z]+[0-9]{4}\\.txt")) return "ERROR:Nama file laporan tidak valid.";
+                byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
+                Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
+                String folder = "Download/Abon Gulung Gembul";
+                try (android.database.Cursor cursor = getContentResolver().query(
+                        collection,
+                        new String[] { MediaStore.Downloads._ID },
+                        MediaStore.Downloads.DISPLAY_NAME + "=? AND " + MediaStore.Downloads.RELATIVE_PATH + "=?",
+                        new String[] { filename, folder + "/" },
+                        null)) {
+                    if (cursor != null && cursor.moveToFirst()) {
+                        long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
+                        item = Uri.withAppendedPath(collection, String.valueOf(id));
+                        ContentValues pending = new ContentValues();
+                        pending.put(MediaStore.Downloads.IS_PENDING, 1);
+                        getContentResolver().update(item, pending, null, null);
+                    }
+                }
+                if (item == null) {
+                    ContentValues values = new ContentValues();
+                    values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
+                    values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, folder);
+                    values.put(MediaStore.Downloads.IS_PENDING, 1);
+                    item = getContentResolver().insert(collection, values);
+                }
+                if (item == null) return "ERROR:Gagal membuat file laporan.";
+                try (OutputStream out = getContentResolver().openOutputStream(item, "wt")) {
+                    if (out == null) throw new IllegalStateException("Tidak dapat membuka file laporan.");
+                    out.write(bytes);
+                    out.flush();
+                }
+                ContentValues done = new ContentValues();
+                done.put(MediaStore.Downloads.IS_PENDING, 0);
+                getContentResolver().update(item, done, null, null);
+                return "OK:Download/Abon Gulung Gembul/" + filename;
+            } catch (Exception e) {
+                if (item != null) {
+                    try {
+                        ContentValues failed = new ContentValues();
+                        failed.put(MediaStore.Downloads.IS_PENDING, 0);
+                        getContentResolver().update(item, failed, null, null);
+                    } catch (Exception ignored) { }
+                }
+                return "ERROR:" + (e.getMessage() == null ? "Penyimpanan laporan gagal." : e.getMessage());
+            }
+        }
+
+        @JavascriptInterface
         public String scheduleWorkAlarm(long fireAtMillis, String dataUrl) {
             try {
                 if (dataUrl == null || !dataUrl.contains(",")) return "ERROR:Nada alarm tidak valid.";
