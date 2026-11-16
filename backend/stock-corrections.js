@@ -18,7 +18,7 @@ module.exports = function registerStockCorrections(app, ctx) {
             && duplicate.lines?.targetTransactionId === req.params.id
             && duplicate.lines?.action === action
             && duplicate.lines?.reason === reason
-            && duplicate.lines?.correctedQuantity === req.body?.quantity;
+            && duplicate.lines?.requestQuantity === (req.body?.quantity ?? null);
           if (!sameRequest) throw new Error("ID koreksi sudah digunakan oleh transaksi lain.");
           return { duplicate: true, state: { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: { username: req.user.username, role: req.user.role } } };
         }
@@ -70,6 +70,7 @@ module.exports = function registerStockCorrections(app, ctx) {
           returnedDelta,
           returnedTotal: desiredReturned,
           correctedQuantity: desiredReduction,
+          requestQuantity: req.body?.quantity ?? null,
           action,
           reason
         };
