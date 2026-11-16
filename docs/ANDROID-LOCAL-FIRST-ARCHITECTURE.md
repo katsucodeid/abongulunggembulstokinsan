@@ -119,3 +119,5 @@ Initial code has been added on `feature/android-local-first`:
 - Android preview version is now `2.2.0-local-preview` (versionCode 6) so it is distinguishable from the current Termux-dependent release. This remains a development preview, not a production replacement.
 
 - The importer numeric validator uses APIs compatible with the declared minimum Android API level 23; no reliance on `Double.isFinite` is required.
+
+- Debug APK uses the separate package suffix `.preview`, so it can be installed alongside the current production/Termux app and does not overwrite its private app data. A production release will use the original application ID only after migration and release validation are complete.
