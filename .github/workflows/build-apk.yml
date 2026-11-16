@@ -22,7 +22,7 @@ jobs:
   build:
     name: Build Android APK
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 45
     steps:
       - name: Checkout repository
         uses: actions/checkout@v5
@@ -71,7 +71,9 @@ jobs:
           sdkmanager --install \
             "platform-tools" \
             "platforms;android-35" \
-            "build-tools;35.0.0"
+            "build-tools;35.0.0" \
+            "emulator" \
+            "system-images;android-35;google_apis;x86_64"
 
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
@@ -83,6 +85,16 @@ jobs:
 
       - name: Compile Android instrumentation tests
         run: gradle -p android --no-daemon assembleDebugAndroidTest
+
+      - name: Run database import tests on Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: 35
+          target: google_apis
+          arch: x86_64
+          profile: pixel_2
+          disable-animations: true
+          script: gradle -p android --no-daemon connectedDebugAndroidTest
 
       - name: Verify APK exists
         run: |
