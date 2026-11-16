@@ -59,7 +59,10 @@ module.exports = function registerStockCorrections(app, ctx) {
         if (!Number.isSafeInteger(nextStock) || nextStock < 0) throw new Error("Koreksi ditolak karena akan membuat stok " + itemDefs[item].label + " tidak valid.");
 
         const previousStock = db.stock[item];
-        const auditLength = (db.auditLog || []).length;
+        // recordAudit may replace the array when it trims the 10,000-entry cap.
+        // Keep a snapshot so a failed disk write restores the exact prior audit log.
+        const hadAuditLog = Array.isArray(db.auditLog);
+        const previousAuditLog = hadAuditLog ? db.auditLog.slice() : null;
         db.stock[item] = nextStock;
         const now = new Date().toISOString();
         const lines = {
@@ -101,7 +104,8 @@ module.exports = function registerStockCorrections(app, ctx) {
           db.stock[item] = previousStock;
           const insertedAt = db.transactions.findIndex(t => t.id === correctionId);
           if (insertedAt >= 0) db.transactions.splice(insertedAt, 1);
-          if (db.auditLog) db.auditLog.length = auditLength;
+          if (hadAuditLog) db.auditLog = previousAuditLog;
+          else delete db.auditLog;
           throw error;
         }
         return {
