@@ -96,3 +96,16 @@ Status: implementation plan; no production data or Termux installation has been 
 - Revoking a device prevents future sync; local records remain available on that phone.
 - Concurrent stock changes are detected and never silently overwritten.
 - Existing Termux data is untouched unless the user explicitly starts an export/import flow.
+
+
+## Implementation progress — Phase 1 foundation
+
+Initial code has been added on `feature/android-local-first`:
+
+- `LocalDatabase`: SQLiteOpenHelper schema for stock, users, full transaction JSON, processed operation IDs, audit entries, settings, metadata, and import receipts. Stock rows have a non-negative database constraint; transactions are indexed by date; WAL is enabled.
+- `LegacyBackupImporter`: reads the existing `INSAN-STOCK-BACKUP` version 1 envelope, validates required collections, stock quantities, unique record IDs, and SHA-256 checksum, then imports in one SQLite transaction.
+- The importer stores complete JSON for users, transactions, and audit rows so fields not yet modeled natively are not discarded. It also retains other root-level legacy fields and settings.
+- Import is permitted only into an empty local database. A populated local database is never cleared or overwritten. A failed validation or failed SQL insert rolls back the entire import.
+- Instrumentation tests cover a successful import, checksum rejection, and refusal to overwrite existing local data. CI compiles the Android instrumentation-test APK; execution on an emulator is a separate validation step.
+
+**Not yet complete:** the launcher still uses the existing Termux-backed WebView. The importer is a foundation API and is not yet connected to a user-facing file picker/import screen. Do not install this branch as a standalone replacement or stop the existing Termux service until later phases implement native startup, local business logic, and full feature parity.
