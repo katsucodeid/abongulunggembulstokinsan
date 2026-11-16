@@ -1,11 +1,17 @@
 name: Build Abon Gulung Gembul APK
 
 on:
+  pull_request:
+    branches: [main]
+    paths:
+      - 'android/**'
+      - 'frontend/**'
+      - '.github/workflows/build-apk.yml'
   push:
     branches: [main]
     paths:
       - 'android/**'
-      - 'frontend/manifest.json'
+      - 'frontend/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
