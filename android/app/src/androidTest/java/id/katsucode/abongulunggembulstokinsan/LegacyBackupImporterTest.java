@@ -30,7 +30,7 @@ public class LegacyBackupImporterTest {
         JSONObject db=new JSONObject();
         JSONObject stock=new JSONObject();
         stock.put("box3",123); stock.put("box5outer",234); stock.put("box5inner",345);
-        stock.put("paper",456); stock.put("mika",56);
+        stock.put("paper",456); stock.put("mika",56); stock.put("futureMaterial",789);
         db.put("version",1); db.put("stock",stock); db.put("stockStartDate","2026-11-11");
         db.put("users",new JSONArray().put(new JSONObject().put("username","admin").put("role","admin").put("passwordHash","hash")));
         db.put("transactions",new JSONArray().put(new JSONObject().put("id","tx-1").put("type","stock-in").put("date","2026-11-16").put("lines",new JSONObject().put("total",10))));
@@ -48,10 +48,11 @@ public class LegacyBackupImporterTest {
         LocalDatabase helper=new LocalDatabase(context);
         LegacyBackupImporter.ImportResult result=LegacyBackupImporter.importStream(helper,
                 new ByteArrayInputStream(backup().getBytes(StandardCharsets.UTF_8)),"fixture.insanbackup");
-        assertEquals(5,result.stockCount); assertEquals(1,result.userCount);
+        assertEquals(6,result.stockCount); assertEquals(1,result.userCount);
         assertEquals(1,result.transactionCount); assertEquals(1,result.processedCount);
         assertEquals(1,result.auditCount);
         assertEquals(123,helper.readStock().getLong("box3"));
+        assertEquals(789,helper.readStock().getLong("futureMaterial"));
         SQLiteDatabase db=helper.getReadableDatabase();
         assertEquals(1,LocalDatabase.count(db,"users"));
         assertEquals(1,LocalDatabase.count(db,"transactions"));
