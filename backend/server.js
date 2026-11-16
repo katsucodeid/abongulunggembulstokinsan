@@ -321,7 +321,34 @@ Box isi 5 luar : ${fmt(s.box5outer)}pcs
 Box isi 5 dalam : ${fmt(s.box5inner)}pcs
 Kertas Minyak: ${fmt(s.paper)}pcs
 Mika roti roll : ${fmt(s.mika)}pcs`;
-  res.json({ report, stock: s, stockStartDate: db.stockStartDate || null });
+  // Return the complete manual stock-out history, not only the latest 1,000
+  // transactions included in the regular dashboard snapshot.
+  const manualStockOuts = (db.transactions || [])
+    .filter(tx => tx.type === "stock-out")
+    .slice()
+    .sort((a, b) => String(a.createdAt || a.date || "").localeCompare(String(b.createdAt || b.date || "")))
+    .map(tx => ({
+      id: tx.id,
+      date: tx.date || null,
+      createdAt: tx.createdAt || null,
+      createdBy: tx.createdBy || "-",
+      item: tx.lines?.item || Object.keys(tx.changes || {}).find(key => (tx.changes || {})[key] < 0) || "",
+      quantity: Number(tx.lines?.quantity || 0),
+      reason: String(tx.lines?.reason || tx.note || "").trim(),
+      note: String(tx.note || "").trim(),
+      corrections: (db.transactions || [])
+        .filter(correction => correction.type === "stock-correction" && correction.lines?.targetTransactionId === tx.id)
+        .map(correction => ({
+          date: correction.date || null,
+          createdAt: correction.createdAt || null,
+          createdBy: correction.createdBy || "-",
+          originalQuantity: Number(correction.lines?.originalQuantity || 0),
+          correctedQuantity: Number(correction.lines?.correctedQuantity || 0),
+          returnedDelta: Number(correction.lines?.returnedDelta || 0),
+          reason: String(correction.lines?.reason || correction.note || "").trim()
+        }))
+    }));
+  res.json({ report, stock: s, stockStartDate: db.stockStartDate || null, manualStockOuts });
 });
 app.get("/api/users", auth, adminOnly, (req, res) => res.json({ users: db.users.map(({ username, role }) => ({ username, role })) }));
 app.post("/api/users", auth, adminOnly, async (req, res) => {
