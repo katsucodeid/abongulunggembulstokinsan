@@ -340,7 +340,7 @@ async function saveDailyProductionReport(automatic=false){
   if(window.InsanNative?.saveDailyReport){
    const saved=window.InsanNative.saveDailyReport(await blobToBase64(blob),filename);
    if(!saved||!saved.startsWith("OK:"))throw new Error(String(saved||"Penyimpanan laporan gagal."));
-   if(status)status.textContent=(automatic?"Laporan otomatis":"Laporan berhasil dibuat dan disimpan")+": Download/Abon Gulung Gembul/"+filename+" · file tanggal yang sama akan diperbarui.";
+   if(status)status.textContent=(automatic?"Laporan otomatis":"Laporan berhasil dibuat dan disimpan")+": Download/Abon Gulung Gembul/Laporan/"+filename+" · file tanggal yang sama akan diperbarui.";
   }else{
    const url=URL.createObjectURL(blob),link=document.createElement("a");
    link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
