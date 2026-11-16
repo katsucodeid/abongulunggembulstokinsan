@@ -36,7 +36,8 @@ public final class LocalDatabase extends SQLiteOpenHelper {
     public boolean isEmpty(SQLiteDatabase db) {
         return count(db, "stock") == 0 && count(db, "users") == 0 &&
                 count(db, "transactions") == 0 && count(db, "processed_operations") == 0 &&
-                count(db, "audit_log") == 0;
+                count(db, "audit_log") == 0 && count(db, "app_settings") == 0 &&
+                count(db, "metadata") == 0 && count(db, "imports") == 0;
     }
 
     public static long count(SQLiteDatabase db, String table) {
