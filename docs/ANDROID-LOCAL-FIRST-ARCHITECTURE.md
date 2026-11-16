@@ -109,3 +109,9 @@ Initial code has been added on `feature/android-local-first`:
 - Instrumentation tests cover a successful import, checksum rejection, and refusal to overwrite existing local data. CI compiles the Android instrumentation-test APK; execution on an emulator is a separate validation step. The first CI compile caught an incorrect SQLite insert overload, which has been corrected in the branch; the corrected commit is awaiting a fresh build.
 
 **Not yet complete:** the launcher still uses the existing Termux-backed WebView. The importer is a foundation API and is not yet connected to a user-facing file picker/import screen. Do not install this branch as a standalone replacement or stop the existing Termux service until later phases implement native startup, local business logic, and full feature parity.
+
+- A local-first launcher now offers two explicit paths: **Database Lokal (fondasi offline)** and **Mode Lama (Termux)**. The old Termux-backed WebView remains available as a migration fallback.
+- The local database screen provides a system file picker for `.insanbackup`, imports on a background thread, and displays stock plus imported record counts. It clearly labels missing native business features rather than pretending feature parity.
+- The importer now accepts and stores additional stock keys beyond the current five, rejects duplicate processed-operation IDs, caps input while streaming at 50 MB, and retains a complete legacy database JSON snapshot as a forward-compatibility safety net.
+- The fixture test includes an extra future stock key to verify unknown stock fields are not silently discarded.
+- CI has been expanded to run the instrumentation suite on an Android 35 emulator, in addition to building and verifying the APK.
