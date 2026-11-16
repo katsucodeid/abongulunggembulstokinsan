@@ -54,7 +54,7 @@ public class MainActivity extends Activity {
                 ContentValues done = new ContentValues();
                 done.put(MediaStore.Downloads.IS_PENDING, 0);
                 getContentResolver().update(item, done, null, null);
-                return "OK:Download/Abon Gulung Gembul/" + filename;
+                return "OK:Download/Abon Gulung Gembul/Laporan/" + filename;
             } catch (Exception e) {
                 if (item != null) {
                     try { getContentResolver().delete(item, null, null); } catch (Exception ignored) { }
@@ -71,7 +71,7 @@ public class MainActivity extends Activity {
                 if (filename == null || !filename.matches("[0-9]{1,2}[a-z]+[0-9]{4}\\.txt")) return "ERROR:Nama file laporan tidak valid.";
                 byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
                 Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
-                String folder = "Download/Abon Gulung Gembul";
+                String folder = "Download/Abon Gulung Gembul/Laporan";
                 try (android.database.Cursor cursor = getContentResolver().query(
                         collection,
                         new String[] { MediaStore.Downloads._ID },
