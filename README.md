@@ -39,7 +39,9 @@ Jalankan backend hanya pada **satu HP server** di Termux. Sambungkan HP server d
 bash scripts/show-lan-url.sh
 ```
 
-Buka alamat IP yang ditampilkan dari browser perangkat lain, misalnya `http://192.168.1.20:8787`. Semua perangkat akan memakai database pusat yang sama pada HP server. Perangkat klien tidak perlu menjalankan server/database kedua. Untuk akses dari luar jaringan lokal, gunakan VPN privat atau tunnel yang diamankan; jangan membuka port Termux langsung ke internet.
+Buka alamat IP yang ditampilkan dari browser perangkat lain, misalnya `http://192.168.1.20:8787`. Semua perangkat akan memakai database pusat yang sama pada HP server. Perangkat klien tidak perlu menjalankan Termux atau database kedua.
+
+**Batasan keamanan dan instalasi:** alamat LAN HTTP cocok untuk uji coba pada Wi-Fi tepercaya. Browser Android umumnya tidak mengizinkan pemasangan PWA penuh atau service worker pada alamat IP HTTP biasa karena bukan secure context. Untuk memasang PWA dan akses dari luar rumah/kantor, siapkan HTTPS melalui reverse proxy/tunnel atau gunakan aplikasi Android WebView yang dikonfigurasi untuk alamat server. Jangan membuka port Termux langsung ke internet. Lihat panduan jaringan dan keamanan di `docs/MULTI_DEVICE_AND_ALARM.md`.
 
 Lihat [panduan multi-perangkat dan alarm](docs/MULTI_DEVICE_AND_ALARM.md).
 
