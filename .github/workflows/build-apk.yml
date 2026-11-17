@@ -18,8 +18,9 @@ on:
   workflow_dispatch:
 
 concurrency:
-  group: android-apk-${{ github.ref }}
-  cancel-in-progress: true
+  # Each build gets its own group so a newer request cannot cancel an active APK build.
+  group: android-apk-${{ github.run_id }}
+  cancel-in-progress: false
 
 permissions:
   contents: read
