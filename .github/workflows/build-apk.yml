@@ -62,6 +62,18 @@ jobs:
               canvas.save(folder / "ic_launcher_round.png", optimize=True)
           PY
 
+      - name: Bundle frontend and image assets for the standalone app
+        run: |
+          mkdir -p android/app/src/main/assets/www
+          cp -R frontend/. android/app/src/main/assets/www/
+          mkdir -p android/app/src/main/assets/www/img
+          cp -R img/. android/app/src/main/assets/www/img/
+          test -s android/app/src/main/assets/www/index.html
+          test -s android/app/src/main/assets/www/app.js
+          test -s android/app/src/main/assets/www/img/BackgroundEraser_20261016_074306739.png
+          echo "Bundled files:"
+          find android/app/src/main/assets/www -type f -printf '%P %s bytes\\n' | sort
+
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
         with:
