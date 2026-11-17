@@ -86,9 +86,9 @@ jobs:
 
       - name: Install required Android SDK packages
         run: |
-          sdkmanager --install \
-            "platform-tools" \
-            "platforms;android-35" \
+          sdkmanager --install \\
+            "platform-tools" \\
+            "platforms;android-35" \\
             "build-tools;35.0.0"
 
       - name: Set up Gradle 8.9
@@ -116,17 +116,66 @@ jobs:
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
 
-      - name: Verify APK exists
+      - name: Verify debug APK exists and is signed
         run: |
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           ls -lh "$APK"
 
-      - name: Upload APK
+      - name: Build and verify Wasmida-signed release APK
+        if: github.ref == 'refs/heads/cobaapkmandiri' && github.event_name != 'pull_request'
+        env:
+          WASMIDA_KEYSTORE_BASE64: ${{ secrets.WASMIDA_KEYSTORE_BASE64 }}
+          WASMIDA_STORE_PASSWORD: ${{ secrets.WASMIDA_STORE_PASSWORD }}
+          WASMIDA_KEY_ALIAS: ${{ secrets.WASMIDA_KEY_ALIAS }}
+          WASMIDA_KEY_PASSWORD: ${{ secrets.WASMIDA_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          for secret_name in WASMIDA_KEYSTORE_BASE64 WASMIDA_STORE_PASSWORD WASMIDA_KEY_ALIAS WASMIDA_KEY_PASSWORD; do
+            if [[ -z "${!secret_name:-}" ]]; then
+              echo "::error::Required GitHub Actions secret $secret_name is missing."
+              exit 1
+            fi
+          done
+
+          KEYSTORE_DIR="$RUNNER_TEMP/wasmida-signing"
+          KEYSTORE_PATH="$KEYSTORE_DIR/wasmida.jks"
+          mkdir -p "$KEYSTORE_DIR"
+          chmod 700 "$KEYSTORE_DIR"
+          printf '%s' "$WASMIDA_KEYSTORE_BASE64" | base64 --decode > "$KEYSTORE_PATH"
+          chmod 600 "$KEYSTORE_PATH"
+          test -s "$KEYSTORE_PATH"
+
+          export WASMIDA_KEYSTORE_PATH="$KEYSTORE_PATH"
+          gradle -p android --no-daemon assembleRelease
+
+          APK=android/app/build/outputs/apk/release/app-release.apk
+          test -s "$APK"
+          "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
+          CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
+          printf '%s\\n' "$CERT_OUTPUT"
+          EXPECTED_CERT_SHA256="07d4dc8246a2d776ec650a0b52ef446009b683165b0ac4a0a0c76dce0e68f72d"
+          if ! printf '%s\\n' "$CERT_OUTPUT" | grep -qi "$EXPECTED_CERT_SHA256"; then
+            echo "::error::Release APK certificate does not match the registered Wasmida certificate."
+            exit 1
+          fi
+          echo "Wasmida signing certificate verified."
+          ls -lh "$APK"
+
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
-          name: Abon-Gulung-Gembul-Stok-Kertas-APK
+          name: Abon-Gulung-Gembul-Stok-Kertas-APK-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Upload Wasmida release APK
+        if: github.ref == 'refs/heads/cobaapkmandiri' && github.event_name != 'pull_request'
+        uses: actions/upload-artifact@v4
+        with:
+          name: Abon-Gulung-Gembul-Stok-Kertas-APK-Wasmida-3.0.1
+          path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
