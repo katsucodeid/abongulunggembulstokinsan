@@ -164,6 +164,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             row.put("document_json", document.toString());
             row.put("updated_at", utcNow());
             db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
+            syncProjectionTables(db, document);
             db.setTransactionSuccessful();
         } finally {
             db.endTransaction();
@@ -195,6 +196,91 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             JSONObject tx = transactions.optJSONObject(i);
             if (tx == null || tx.optString("id").isEmpty() || tx.optString("type").isEmpty())
                 throw new IllegalArgumentException("Data transaksi tidak valid.");
+        }
+    }
+
+    /**
+     * Rebuild indexed projections in the same SQLite transaction as the canonical
+     * document. The JSON document remains authoritative and retains unknown fields.
+     */
+    private static void syncProjectionTables(SQLiteDatabase db, JSONObject document) throws Exception {
+        db.delete("stock", null, null);
+        db.delete("users", null, null);
+        db.delete("transactions", null, null);
+        db.delete("processed_operations", null, null);
+        db.delete("audit_log", null, null);
+
+        JSONObject stock = document.getJSONObject("stock");
+        JSONObject minimums = document.optJSONObject("settings") == null
+            ? new JSONObject() : document.optJSONObject("settings").optJSONObject("minStock");
+        for (String[] item : ITEMS) {
+            ContentValues row = new ContentValues();
+            row.put("item_key", item[0]);
+            row.put("label", item[1]);
+            row.put("quantity", stock.getLong(item[0]));
+            Object minimum = minimums == null ? null : minimums.opt(item[0]);
+            if (minimum instanceof Number && ((Number) minimum).longValue() >= 0 &&
+                ((Number) minimum).doubleValue() == ((Number) minimum).longValue()) {
+                row.put("minimum", ((Number) minimum).longValue());
+            } else row.putNull("minimum");
+            db.insertOrThrow("stock", null, row);
+        }
+
+        JSONArray users = document.getJSONArray("users");
+        for (int i = 0; i < users.length(); i++) {
+            JSONObject user = users.getJSONObject(i);
+            String username = user.getString("username");
+            String id = user.optString("id", username);
+            String passwordHash = user.optString("passwordHash", "");
+            String role = user.optString("role", "staff");
+            String createdAt = user.optString("createdAt", utcNow());
+            if (passwordHash.isEmpty()) throw new IllegalArgumentException("Hash kata sandi pengguna " + username + " tidak tersedia.");
+            if (!"admin".equals(role) && !"staff".equals(role)) throw new IllegalArgumentException("Peran pengguna " + username + " tidak valid.");
+            ContentValues row = new ContentValues();
+            row.put("id", id);
+            row.put("username", username);
+            row.put("password_hash", passwordHash);
+            row.put("role", role);
+            row.put("created_at", createdAt);
+            db.insertOrThrow("users", null, row);
+        }
+
+        JSONArray transactions = document.getJSONArray("transactions");
+        for (int i = 0; i < transactions.length(); i++) {
+            JSONObject tx = transactions.getJSONObject(i);
+            ContentValues row = new ContentValues();
+            row.put("id", tx.getString("id"));
+            row.put("type", tx.getString("type"));
+            row.put("date", tx.optString("date", ""));
+            row.put("payload_json", tx.toString());
+            row.put("created_by", tx.optString("createdBy", "system"));
+            row.put("created_at", tx.optString("createdAt", utcNow()));
+            if (tx.has("updatedAt")) row.put("updated_at", tx.optString("updatedAt"));
+            else row.putNull("updated_at");
+            db.insertOrThrow("transactions", null, row);
+        }
+
+        JSONArray processed = document.getJSONArray("processed");
+        for (int i = 0; i < processed.length(); i++) {
+            String operationId = processed.getString(i);
+            ContentValues row = new ContentValues();
+            row.put("operation_id", operationId);
+            row.put("processed_at", utcNow());
+            db.insertOrThrow("processed_operations", null, row);
+        }
+
+        JSONArray audit = document.optJSONArray("auditLog");
+        if (audit != null) for (int i = 0; i < audit.length(); i++) {
+            JSONObject entry = audit.getJSONObject(i);
+            ContentValues row = new ContentValues();
+            row.put("id", entry.getString("id"));
+            row.put("at", entry.optString("at", utcNow()));
+            row.put("username", entry.optString("username", "system"));
+            row.put("role", entry.optString("role", "system"));
+            row.put("action", entry.optString("action", "unknown"));
+            row.put("details_json", entry.optJSONObject("details") == null
+                ? "{}" : entry.optJSONObject("details").toString());
+            db.insertOrThrow("audit_log", null, row);
         }
     }
 
