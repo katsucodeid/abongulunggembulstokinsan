@@ -23,6 +23,7 @@ public final class LocalApiServer extends NanoHTTPD {
     private static final String[] KEYS={"box3","box5outer","box5inner","paper","mika"};
     private static final String[] LABELS={"Box isi 3","Box isi 5 luar (Slongsong)","Box isi 5 dalam (Tatakan Polos)","Kertas Minyak","Mika roti roll"};
     private static final String[] OUTLETS={"Grand Wisata","Bektim","Harapan Indah"};
+    private static final long MAX_SAFE_INTEGER=9007199254740991L;
 
     public LocalApiServer(Context c, InsanLocalDatabase db) throws java.io.IOException {
         super("127.0.0.1",18787); context=c.getApplicationContext(); database=db; start(SOCKET_READ_TIMEOUT,false);
@@ -61,7 +62,7 @@ public final class LocalApiServer extends NanoHTTPD {
     }
     private long number(JSONObject o,String k,long fallback)throws Exception{
         Object v=o.has(k)?o.get(k):fallback;if(!(v instanceof Number))throw new Exception("Nilai "+k+" harus bilangan bulat.");
-        double x=((Number)v).doubleValue();if(x<0||x!=Math.rint(x)||x>Long.MAX_VALUE)throw new Exception("Nilai "+k+" harus bilangan bulat nol atau lebih.");return (long)x;
+        double x=((Number)v).doubleValue();if(x<0||x!=Math.rint(x)||x>MAX_SAFE_INTEGER)throw new Exception("Nilai "+k+" harus bilangan bulat aman nol atau lebih.");return (long)x;
     }
     private JSONObject operation(JSONObject op,JSONObject actor,JSONObject d)throws Exception{
         String username=actor.optString("username");
@@ -74,16 +75,16 @@ public final class LocalApiServer extends NanoHTTPD {
             String item=p.optString("item");if(!Arrays.asList(KEYS).contains(item))throw new Exception("Barang tidak dikenal.");
             long qty;
             if("stock-out".equals(type)){qty=number(p,"quantity",0);if(qty<=0)throw new Exception("Jumlah pengurangan harus lebih dari nol.");note=p.optString("note").trim();if(note.isEmpty())throw new Exception("Alasan pengurangan wajib diisi.");lines.put("item",item).put("quantity",qty).put("reason",note);changes.put(item,-qty);}
-            else{long packs=number(p,"packs",0),per=number(p,"perPack",0),extra=number(p,"extra",0);qty=Math.addExact(Math.multiplyExact(packs,per),extra);if(qty<=0)throw new Exception("Jumlah barang masuk harus lebih dari nol.");lines.put("item",item).put("packs",packs).put("perPack",per).put("extra",extra).put("total",qty);changes.put(item,qty);}
+            else{long packs=number(p,"packs",0),per=number(p,"perPack",0),extra=number(p,"extra",0);qty=Math.addExact(Math.multiplyExact(packs,per),extra);if(qty>MAX_SAFE_INTEGER)throw new Exception("Jumlah barang masuk terlalu besar.");if(qty<=0)throw new Exception("Jumlah barang masuk harus lebih dari nol.");lines.put("item",item).put("packs",packs).put("perPack",per).put("extra",extra).put("total",qty);changes.put(item,qty);}
         } else if("production".equals(type)){
-            long ori=number(p,"ori",0),beef=number(p,"beef",0),spicy=number(p,"spicy",0),cheese=number(p,"cheese",0),total=Math.addExact(Math.addExact(ori,beef),Math.addExact(spicy,cheese));
+            long ori=number(p,"ori",0),beef=number(p,"beef",0),spicy=number(p,"spicy",0),cheese=number(p,"cheese",0),total=Math.addExact(Math.addExact(ori,beef),Math.addExact(spicy,cheese));if(total>MAX_SAFE_INTEGER)throw new Exception("Jumlah produksi terlalu besar.");
             if(total<=0)throw new Exception("Jumlah loyang harus lebih dari nol.");
             location=p.optString("location");if(!Arrays.asList(OUTLETS).contains(location))throw new Exception("Pilih salah satu outlet yang tersedia.");
             JSONObject packaging=new JSONObject();long box3=0,box5=0;
             JSONObject by=p.optJSONObject("packagingByVariant"),custom=p.optJSONObject("custom");
             String[] variants={"ori","beef","spicy","cheese"};long[] amounts={ori,beef,spicy,cheese};
-            if(by==null&&custom!=null&&custom.optBoolean("enabled")){box3=number(custom,"box3",0);box5=number(custom,"box5",0);for(int i=0;i<4;i++)packaging.put(variants[i],new JSONObject().put("enabled",false).put("box3",amounts[i]*2).put("box5",amounts[i]*2));}
-            else for(int i=0;i<4;i++){JSONObject v=by==null?null:by.optJSONObject(variants[i]);boolean enabled=v!=null&&v.optBoolean("enabled");long b3=enabled?number(v,"box3",0):amounts[i]*2,b5=enabled?number(v,"box5",0):amounts[i]*2;box3=Math.addExact(box3,b3);box5=Math.addExact(box5,b5);packaging.put(variants[i],new JSONObject().put("enabled",enabled).put("box3",b3).put("box5",b5));}
+            if(by==null&&custom!=null&&custom.optBoolean("enabled")){box3=number(custom,"box3",0);box5=number(custom,"box5",0);for(int i=0;i<4;i++)packaging.put(variants[i],new JSONObject().put("enabled",false).put("box3",Math.multiplyExact(amounts[i],2)).put("box5",Math.multiplyExact(amounts[i],2)));}
+            else for(int i=0;i<4;i++){JSONObject v=by==null?null:by.optJSONObject(variants[i]);boolean enabled=v!=null&&v.optBoolean("enabled");long b3=enabled?number(v,"box3",0):Math.multiplyExact(amounts[i],2),b5=enabled?number(v,"box5",0):Math.multiplyExact(amounts[i],2);box3=Math.addExact(box3,b3);box5=Math.addExact(box5,b5);if(box3>MAX_SAFE_INTEGER||box5>MAX_SAFE_INTEGER)throw new Exception("Jumlah kemasan terlalu besar.");packaging.put(variants[i],new JSONObject().put("enabled",enabled).put("box3",b3).put("box5",b5));}
             if(by==null&&custom!=null&&custom.optBoolean("enabled")){box3=-box3;box5=-box5;}
             changes.put("box3",-box3).put("box5outer",-box5).put("box5inner",-box5).put("paper",-box5);
             lines.put("ori",ori).put("beef",beef).put("spicy",spicy).put("cheese",cheese).put("total",total).put("packagingByVariant",packaging).put("requestNote",p.optString("requestNote",""));
