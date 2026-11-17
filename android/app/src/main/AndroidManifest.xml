@@ -7,11 +7,11 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <application
         android:allowBackup="false"
-        android:label="Abon Gulung Gembul Mandiri"
+        android:label="Abon Gulung Gembul Wasmida - Stok Kertas"
         android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:usesCleartextTraffic="true"
-        android:theme="@android:style/Theme.Material.Light.NoActionBar">
+        android:theme="@android:style/Theme.Material.NoActionBar">
         <receiver android:name=".WorkAlarmReceiver" android:exported="false"/>
         <service android:name=".WorkAlarmService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
         <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize|keyboardHidden">
