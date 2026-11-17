@@ -29,9 +29,73 @@ public class MainActivity extends Activity {
     private static final String APP_URL = "http://127.0.0.1:8787";
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
+    private InsanLocalDatabase localDatabase;
     private ValueCallback<Uri[]> filePathCallback;
 
+    private String sha256(String value) throws Exception {
+        java.security.MessageDigest digest = java.security.MessageDigest.getInstance("SHA-256");
+        byte[] bytes = digest.digest(value.getBytes(java.nio.charset.StandardCharsets.UTF_8));
+        StringBuilder out = new StringBuilder();
+        for (byte b : bytes) out.append(String.format(java.util.Locale.US, "%02x", b & 0xff));
+        return out.toString();
+    }
+
     private class GembulBridge {
+        @JavascriptInterface
+        public String createLocalBackup() {
+            try {
+                org.json.JSONObject database = localDatabase.readDatabase();
+                org.json.JSONObject backup = new org.json.JSONObject();
+                backup.put("format", "INSAN-STOCK-BACKUP");
+                backup.put("formatVersion", 1);
+                backup.put("app", "INSAN Stock Manager");
+                backup.put("createdAt", new java.text.SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US).format(new java.util.Date()));
+                backup.put("checksum", sha256(database.toString()));
+                backup.put("database", database);
+                return Base64.encodeToString(backup.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8), Base64.NO_WRAP);
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "Gagal membuat cadangan lokal." : e.getMessage());
+            }
+        }
+
+        @JavascriptInterface
+        public String restoreLocalBackup(String base64) {
+            try {
+                byte[] raw = Base64.decode(base64, Base64.DEFAULT);
+                if (raw.length == 0 || raw.length > 25 * 1024 * 1024) return "ERROR:Ukuran cadangan tidak valid.";
+                org.json.JSONObject backup = new org.json.JSONObject(new String(raw, java.nio.charset.StandardCharsets.UTF_8));
+                if (!"INSAN-STOCK-BACKUP".equals(backup.optString("format")) || backup.optInt("formatVersion") != 1)
+                    return "ERROR:Format file bukan cadangan INSAN yang didukung.";
+                org.json.JSONObject database = backup.optJSONObject("database");
+                if (database == null) return "ERROR:Database di dalam cadangan tidak ditemukan.";
+                String expected = backup.optString("checksum");
+                if (expected.isEmpty() || !expected.equals(sha256(database.toString())))
+                    return "ERROR:Checksum tidak cocok. File rusak atau telah diubah.";
+                InsanLocalDatabase.validateDatabase(database);
+                org.json.JSONObject previous = localDatabase.readDatabase();
+                java.io.File safety = new java.io.File(getFilesDir(), "pre-restore-" + System.currentTimeMillis() + ".insanbackup");
+                org.json.JSONObject safetyBackup = new org.json.JSONObject();
+                safetyBackup.put("format", "INSAN-STOCK-BACKUP");
+                safetyBackup.put("formatVersion", 1);
+                safetyBackup.put("app", "INSAN Stock Manager");
+                safetyBackup.put("createdAt", new java.util.Date().toString());
+                safetyBackup.put("checksum", sha256(previous.toString()));
+                safetyBackup.put("database", previous);
+                try (FileOutputStream out = new FileOutputStream(safety)) {
+                    out.write(safetyBackup.toString().getBytes(java.nio.charset.StandardCharsets.UTF_8));
+                    out.flush();
+                }
+                localDatabase.saveDatabase(database);
+                org.json.JSONObject summary = new org.json.JSONObject();
+                summary.put("ok", true);
+                summary.put("users", database.getJSONArray("users").length());
+                summary.put("transactions", database.getJSONArray("transactions").length());
+                summary.put("stock", database.getJSONObject("stock"));
+                return "OK:" + summary.toString();
+            } catch (Exception e) {
+                return "ERROR:" + (e.getMessage() == null ? "Pemulihan gagal; data aktif tidak diubah." : e.getMessage());
+            }
+        }
         @JavascriptInterface
         public String saveBackup(String base64, String filename) {
             if (Build.VERSION.SDK_INT < 29) return "ERROR:Android 10+ diperlukan untuk folder Download/Abon Gulung Gembul.";
@@ -171,7 +235,7 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        webView = new WebView(this);
+        localDatabase = new InsanLocalDatabase(this);\n        webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
