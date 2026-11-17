@@ -10,15 +10,16 @@ import org.json.JSONArray;
 import org.json.JSONObject;
 
 /**
- * Local-first persistence foundation for the standalone APK experiment.
+ * SQLite persistence for the complete INSAN business document.
  *
- * The current production UI is not wired to this class yet. Keep the
- * Termux/Express data path unchanged until the complete API adapter and
- * backup migration have been implemented and tested.
+ * The JSON document preserves every backend field (including settings,
+ * stockStartDate, users, transactions, processed IDs and auditLog) while
+ * SQLite supplies durable, atomic commits. The normalized tables remain
+ * available for indexed projections as the local API is ported.
  */
 public final class InsanLocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "insan-stock-local.db";
-    private static final int DB_VERSION = 1;
+    private static final int DB_VERSION = 2;
 
     private static final String[][] ITEMS = {
         {"box3", "Box isi 3", "3897"},
@@ -39,6 +40,31 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
     }
 
     @Override public void onCreate(SQLiteDatabase db) {
+        createProjectionTables(db);
+        db.execSQL("CREATE TABLE app_state (singleton INTEGER PRIMARY KEY CHECK(singleton=1), document_json TEXT NOT NULL, updated_at TEXT NOT NULL)");
+        try {
+            JSONObject initial = new JSONObject();
+            initial.put("version", 1);
+            JSONObject stock = new JSONObject();
+            for (String[] item : ITEMS) stock.put(item[0], Long.parseLong(item[2]));
+            initial.put("stock", stock);
+            initial.put("stockStartDate", "2026-11-11");
+            initial.put("users", new JSONArray());
+            initial.put("transactions", new JSONArray());
+            initial.put("processed", new JSONArray());
+            initial.put("auditLog", new JSONArray());
+            initial.put("settings", new JSONObject());
+            ContentValues row = new ContentValues();
+            row.put("singleton", 1);
+            row.put("document_json", initial.toString());
+            row.put("updated_at", java.time.Instant.now().toString());
+            db.insertOrThrow("app_state", null, row);
+        } catch (Exception e) {
+            throw new IllegalStateException("Unable to initialize local INSAN database", e);
+        }
+    }
+
+    private void createProjectionTables(SQLiteDatabase db) {
         db.execSQL("CREATE TABLE stock (" +
             "item_key TEXT PRIMARY KEY NOT NULL," +
             "label TEXT NOT NULL," +
@@ -70,7 +96,6 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             "details_json TEXT NOT NULL)");
         db.execSQL("CREATE INDEX transactions_date_idx ON transactions(date)");
         db.execSQL("CREATE INDEX audit_log_at_idx ON audit_log(at)");
-
         for (String[] item : ITEMS) {
             ContentValues row = new ContentValues();
             row.put("item_key", item[0]);
@@ -82,63 +107,126 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
     }
 
     @Override public void onUpgrade(SQLiteDatabase db, int oldVersion, int newVersion) {
-        // Never drop local inventory. Add explicit, forward-only migrations here.
-        throw new IllegalStateException("Unsupported local database migration: " +
-            oldVersion + " -> " + newVersion);
-    }
-
-    /** Read stock rows as JSON for the future JavaScript adapter. */
-    public JSONObject readStock() throws Exception {
-        JSONObject result = new JSONObject();
-        SQLiteDatabase db = getReadableDatabase();
-        try (Cursor cursor = db.query("stock",
-                new String[]{"item_key", "quantity", "label", "minimum"},
-                null, null, null, null, "item_key ASC")) {
-            while (cursor.moveToNext()) {
-                JSONObject item = new JSONObject();
-                item.put("quantity", cursor.getLong(1));
-                item.put("label", cursor.getString(2));
-                item.put("minimum", cursor.isNull(3) ? JSONObject.NULL : cursor.getLong(3));
-                result.put(cursor.getString(0), item);
+        if (oldVersion < 2) {
+            db.execSQL("CREATE TABLE app_state (singleton INTEGER PRIMARY KEY CHECK(singleton=1), document_json TEXT NOT NULL, updated_at TEXT NOT NULL)");
+            try {
+                JSONObject state = new JSONObject();
+                JSONObject stock = new JSONObject();
+                try (Cursor c = db.query("stock", new String[]{"item_key","quantity"}, null,null,null,null,null)) {
+                    while (c.moveToNext()) stock.put(c.getString(0), c.getLong(1));
+                }
+                state.put("version", 1);
+                state.put("stock", stock);
+                state.put("stockStartDate", "2026-11-11");
+                state.put("users", new JSONArray());
+                state.put("transactions", new JSONArray());
+                state.put("processed", new JSONArray());
+                state.put("auditLog", new JSONArray());
+                state.put("settings", new JSONObject());
+                ContentValues row = new ContentValues();
+                row.put("singleton", 1);
+                row.put("document_json", state.toString());
+                row.put("updated_at", java.time.Instant.now().toString());
+                db.insertOrThrow("app_state", null, row);
+            } catch (Exception e) {
+                throw new IllegalStateException("Cannot migrate existing local inventory safely", e);
             }
         }
-        return result;
     }
 
-    /** Count records before/after backup import verification. */
+    /** Return the complete persisted backend-compatible database document. */
+    public JSONObject readDatabase() throws Exception {
+        try (Cursor c = getReadableDatabase().query("app_state",
+                new String[]{"document_json"}, "singleton=1", null, null, null, null)) {
+            if (!c.moveToFirst()) throw new IllegalStateException("Local database state is missing.");
+            return new JSONObject(c.getString(0));
+        }
+    }
+
+    /**
+     * Atomically replace the full business document. Unknown extension fields
+     * are retained so future backend fields are not silently discarded.
+     */
+    public void saveDatabase(JSONObject document) throws Exception {
+        validateDatabase(document);
+        SQLiteDatabase db = getWritableDatabase();
+        db.beginTransaction();
+        try {
+            ContentValues row = new ContentValues();
+            row.put("singleton", 1);
+            row.put("document_json", document.toString());
+            row.put("updated_at", java.time.Instant.now().toString());
+            db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
+            db.setTransactionSuccessful();
+        } finally {
+            db.endTransaction();
+        }
+    }
+
+    /** Validate the minimum data contract before import or persistence. */
+    public static void validateDatabase(JSONObject document) throws Exception {
+        if (document == null) throw new IllegalArgumentException("Database kosong.");
+        JSONObject stock = document.optJSONObject("stock");
+        JSONArray users = document.optJSONArray("users");
+        JSONArray transactions = document.optJSONArray("transactions");
+        JSONArray processed = document.optJSONArray("processed");
+        if (stock == null || users == null || transactions == null || processed == null)
+            throw new IllegalArgumentException("Struktur database INSAN tidak lengkap.");
+        for (String[] item : ITEMS) {
+            Object value = stock.opt(item[0]);
+            if (!(value instanceof Number) || ((Number)value).longValue() < 0 ||
+                ((Number)value).doubleValue() != ((Number)value).longValue())
+                throw new IllegalArgumentException("Nilai stok " + item[0] + " tidak valid.");
+        }
+        for (int i = 0; i < users.length(); i++) {
+            JSONObject user = users.optJSONObject(i);
+            if (user == null || user.optString("username").isEmpty() ||
+                user.optString("role").isEmpty())
+                throw new IllegalArgumentException("Data pengguna tidak valid.");
+        }
+        for (int i = 0; i < transactions.length(); i++) {
+            JSONObject tx = transactions.optJSONObject(i);
+            if (tx == null || tx.optString("id").isEmpty() || tx.optString("type").isEmpty())
+                throw new IllegalArgumentException("Data transaksi tidak valid.");
+        }
+    }
+
+    /** Counts used by migration diagnostics and restore verification. */
     public JSONObject recordCounts() throws Exception {
+        JSONObject state = readDatabase();
         JSONObject counts = new JSONObject();
-        SQLiteDatabase db = getReadableDatabase();
-        String[] tables = {"stock", "users", "transactions", "processed_operations", "audit_log"};
-        for (String table : tables) {
-            try (Cursor cursor = db.rawQuery("SELECT COUNT(*) FROM " + table, null)) {
-                counts.put(table, cursor.moveToFirst() ? cursor.getLong(0) : 0);
-            }
-        }
+        counts.put("stock", state.optJSONObject("stock").length());
+        counts.put("users", state.optJSONArray("users").length());
+        counts.put("transactions", state.optJSONArray("transactions").length());
+        counts.put("processed_operations", state.optJSONArray("processed").length());
+        counts.put("audit_log", state.optJSONArray("auditLog") == null ? 0 : state.optJSONArray("auditLog").length());
         return counts;
     }
 
-    /** Apply a stock delta atomically; reject unknown items, overflow and negative stock. */
+    /** Atomic stock delta against the canonical SQLite business document. */
     public boolean applyStockDelta(String itemKey, long delta) {
         if (itemKey == null || itemKey.isEmpty()) return false;
         SQLiteDatabase db = getWritableDatabase();
         db.beginTransaction();
         try {
-            long current;
-            try (Cursor cursor = db.query("stock", new String[]{"quantity"},
-                    "item_key=?", new String[]{itemKey}, null, null, null)) {
-                if (!cursor.moveToFirst()) return false;
-                current = cursor.getLong(0);
-            }
+            JSONObject state = readDatabase();
+            JSONObject stock = state.getJSONObject("stock");
+            if (!stock.has(itemKey)) return false;
+            long current = stock.getLong(itemKey);
             if ((delta > 0 && current > Long.MAX_VALUE - delta) ||
                 (delta < 0 && current < Long.MIN_VALUE - delta)) return false;
             long next = current + delta;
             if (next < 0) return false;
-            ContentValues values = new ContentValues();
-            values.put("quantity", next);
-            if (db.update("stock", values, "item_key=?", new String[]{itemKey}) != 1) return false;
+            stock.put(itemKey, next);
+            ContentValues row = new ContentValues();
+            row.put("singleton", 1);
+            row.put("document_json", state.toString());
+            row.put("updated_at", java.time.Instant.now().toString());
+            db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
             db.setTransactionSuccessful();
             return true;
+        } catch (Exception e) {
+            return false;
         } finally {
             db.endTransaction();
         }
