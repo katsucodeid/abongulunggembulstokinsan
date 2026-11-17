@@ -72,25 +72,33 @@ public class MainActivity extends Activity {
                 byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
                 Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
                 String folder = "Download/Abon Gulung Gembul/Laporan";
+                // Normalize RELATIVE_PATH so trailing-slash differences do not create duplicate files.
+                String wantedPath = folder.replaceAll("/+$", "");
                 try (android.database.Cursor cursor = getContentResolver().query(
                         collection,
-                        new String[] { MediaStore.Downloads._ID },
-                        MediaStore.Downloads.DISPLAY_NAME + "=? AND " + MediaStore.Downloads.RELATIVE_PATH + "=?",
-                        new String[] { filename, folder + "/" },
-                        null)) {
-                    if (cursor != null && cursor.moveToFirst()) {
-                        long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
-                        item = Uri.withAppendedPath(collection, String.valueOf(id));
-                        ContentValues pending = new ContentValues();
-                        pending.put(MediaStore.Downloads.IS_PENDING, 1);
-                        getContentResolver().update(item, pending, null, null);
+                        new String[] { MediaStore.Downloads._ID, MediaStore.Downloads.RELATIVE_PATH,
+                                MediaStore.Downloads.DATE_MODIFIED },
+                        MediaStore.Downloads.DISPLAY_NAME + "=?",
+                        new String[] { filename },
+                        MediaStore.Downloads.DATE_MODIFIED + " DESC")) {
+                    if (cursor != null) {
+                        while (cursor.moveToNext()) {
+                            String relativePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Downloads.RELATIVE_PATH));
+                            if (relativePath == null || !relativePath.replaceAll("/+$", "").equals(wantedPath)) continue;
+                            long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
+                            item = Uri.withAppendedPath(collection, String.valueOf(id));
+                            ContentValues pending = new ContentValues();
+                            pending.put(MediaStore.Downloads.IS_PENDING, 1);
+                            if (getContentResolver().update(item, pending, null, null) > 0) break;
+                            item = null;
+                        }
                     }
                 }
                 if (item == null) {
                     ContentValues values = new ContentValues();
                     values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
                     values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, folder);
+                    values.put(MediaStore.Downloads.RELATIVE_PATH, folder + "/");
                     values.put(MediaStore.Downloads.IS_PENDING, 1);
                     item = getContentResolver().insert(collection, values);
                 }
@@ -103,7 +111,7 @@ public class MainActivity extends Activity {
                 ContentValues done = new ContentValues();
                 done.put(MediaStore.Downloads.IS_PENDING, 0);
                 getContentResolver().update(item, done, null, null);
-                return "OK:Download/Abon Gulung Gembul/" + filename;
+                return "OK:Download/Abon Gulung Gembul/Laporan/" + filename;
             } catch (Exception e) {
                 if (item != null) {
                     try {
