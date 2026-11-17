@@ -1,46 +1,43 @@
-# Audit Percobaan APK Mandiri Offline
+# Android APK mandiri — branch cobaapkmandiri
 
-Status: audit awal pada branch `cobaapkmandiri`. Dokumen ini sengaja menjadi pagar keselamatan sebelum migrasi data dan operasi stok.
+## Arsitektur yang diterapkan
 
-## Kesimpulan
+APK tidak lagi bergantung pada Termux atau server Node.js eksternal.
 
-Repository dapat dijadikan APK Android mandiri tanpa Termux dan tanpa server jaringan, tetapi **belum dapat langsung disebut mandiri pada kondisi saat ini**. APK sekarang adalah WebView yang membuka `http://127.0.0.1:8787`; alamat tersebut hanya tersedia jika backend Node.js berjalan di Termux.
+- `MainActivity` memulai `LocalApiServer` di dalam proses Android pada loopback `127.0.0.1:18787`.
+- Port khusus 18787 sengaja dipisahkan dari server Termux lama (8787), sehingga aplikasi tidak dapat diam-diam memakai backend Termux jika backend tersebut sedang hidup.
+- Frontend dan gambar disalin ke `android/app/src/main/assets/www` saat workflow build, lalu disajikan dari aset APK.
+- API lokal menangani autentikasi BCrypt, bootstrap admin pertama, state, sinkronisasi antrean, transaksi barang masuk/keluar/produksi, edit dan hapus transaksi, koreksi pengurangan manual, laporan, pengguna, pengaturan minimum stok, kalender produksi, audit, ekspor CSV, backup, dan restore.
+- Seluruh dokumen bisnis dipersistenkan di SQLite melalui `InsanLocalDatabase`. Tabel proyeksi disinkronkan dalam transaksi SQLite yang sama.
+- Backup/restore native memvalidasi format dan checksum serta menyimpan salinan sebelum pemulihan.
+- API hanya mendengarkan pada alamat loopback perangkat. WebView dibatasi ke origin lokal.
 
-## Temuan dari kode saat ini
+## Penggunaan pertama
 
-- `android/.../MainActivity.java`: `APP_URL` menunjuk ke `http://127.0.0.1:8787`. WebView menampilkan pesan bahwa server harus dijalankan dari Termux.
-- `frontend/config.js`: API memakai same-origin (`API_BASE: ""`).
-- `frontend/app.js`: cache state dan antrean transaksi memang sudah memakai IndexedDB, tetapi operasi utama tetap memanggil endpoint `/api`; antrean offline disinkronkan ke backend.
-- `frontend/sw.js`: hanya cache shell/aset GET; request `/api/` sengaja dilewatkan ke jaringan. Ini bukan backend lokal mandiri.
-- `backend/server.js`: logika stok, validasi, akun, transaksi, riwayat, audit, dan persistensi berada di Node/Express. Database utama adalah `backend/data/data.json`.
-- `backend/management.js` dan `backend/stock-corrections.js`: fitur administrasi dan koreksi stok juga berada di backend dan harus ikut dimigrasikan, bukan dibuang.
-- Workflow APK saat ini hanya membangun Android WebView wrapper; belum mengemas frontend dan database/API lokal ke dalam APK.
-- Logo ada di `img/BackgroundEraser_20261016_074306739.png`; workflow sudah menggunakannya untuk ikon launcher, tetapi UI masih perlu memakai aset lokal yang ikut APK.
+1. Pasang APK mandiri dari workflow branch ini.
+2. Jika aplikasi memiliki data lama di Termux, buat file backup INSAN dari sistem lama terlebih dahulu. Jangan menghapus atau mengubah database Termux.
+3. Di APK baru, buka Pencadangan & Pemulihan dan pulihkan file `.insanbackup` milik sistem lama. Jika memulai dari nol, buat akun admin pertama pada layar login.
+4. Periksa stok, akun, riwayat, dan laporan sebelum menggunakan aplikasi untuk transaksi operasional.
 
-## Rancangan percobaan
+Database baru memakai nilai awal bawaan proyek; nilai tersebut bukan pengganti database operasional. Pulihkan backup yang benar sebelum mencatat transaksi sebenarnya.
 
-APK mandiri harus membuka UI dari `file:///android_asset/www/index.html` (atau WebViewAssetLoader dengan origin lokal aman), bukan localhost atau website.
+## Verifikasi otomatis
 
-Lapisan data harus dipindahkan ke penyimpanan di perangkat:
-1. SQLite Android sebagai database utama persisten untuk stok, definisi barang, akun lokal, transaksi, ID operasi yang telah diproses, koreksi stok, dan audit.
-2. Java repository/service sebagai pengganti route Express; JavaScript memanggilnya melalui bridge yang sempit dan tervalidasi.
-3. Migrasi satu kali dari format backup `.insanbackup` yang sudah digunakan aplikasi. Jangan mengubah atau menimpa database lama otomatis.
-4. Login dan role admin/staff harus tetap tersedia. Password tetap di-hash; token server/JWT tidak boleh dijadikan mekanisme autentikasi lokal.
-5. Semua halaman, gambar, ikon, font, audio, dan library harus dibundel. Tidak boleh ada CDN, remote API, GitHub update check, atau font eksternal sebagai dependensi runtime.
-6. Backup/restore lokal harus dapat berjalan tanpa koneksi; ekspor/impor harus mempertahankan seluruh tabel dan riwayat.
-7. Sinkronisasi antarperangkat adalah fitur opsional saat jaringan tersedia. Mode mandiri tidak boleh menunggu sinkronisasi untuk membaca atau menyimpan transaksi.
+Workflow `.github/workflows/build-apk.yml` menjalankan Android instrumentation test pada emulator sebelum membuat APK. Tes mencakup:
+- layanan lokal dan status bootstrap;
+- pembuatan admin dan autentikasi BCrypt;
+- transaksi barang masuk/keluar serta idempotensi;
+- koreksi stok manual dan pengulangan request;
+- target produksi, edit, hapus dan pengembalian stok;
+- pengaturan minimum, kalender, laporan, audit, ekspor CSV;
+- persistensi setelah server dan koneksi SQLite ditutup lalu dibuka kembali.
 
-## Urutan implementasi dan kriteria lulus
+Build dan tes emulator tidak dapat menggantikan pemeriksaan di ponsel fisik. Setelah memasang APK, lakukan pemeriksaan akhir dengan mode pesawat aktif, tutup paksa lalu buka kembali aplikasi, dan pastikan stok/riwayat tetap ada.
 
-- [ ] Paketkan UI dan semua aset ke APK; aplikasi dapat dibuka pada mode pesawat setelah instalasi.
-- [ ] Buat skema SQLite dan migrasi backup; validasi jumlah barang, pengguna, transaksi, koreksi, dan audit sebelum/selepas migrasi.
-- [ ] Porting seluruh aturan bisnis backend secara setara: barang masuk, pengurangan, target produksi, edit/hapus yang diizinkan, koreksi, laporan, dan role.
-- [ ] Ganti seluruh pemanggilan `/api` dengan adapter data lokal; tidak boleh ada request jaringan untuk alur stok normal.
-- [ ] Uji tutup paksa, restart perangkat, mode pesawat, dan data tetap utuh.
-- [ ] Uji kasus stok tidak cukup, ID transaksi duplikat, transaksi invalid, staff mengedit data yang bukan miliknya, dan admin menghapus transaksi.
-- [ ] Uji backup lalu restore ke instalasi bersih dan bandingkan seluruh ringkasan data.
-- [ ] Jalankan build APK dan tes instrumentasi; jangan menyebutnya siap produksi sebelum seluruh kriteria lulus.
+## Batasan
 
-## Keputusan keselamatan
-
-Percobaan ini tidak mengubah branch `main`, tidak mengubah database Termux, tidak menghapus backend lama, dan tidak mengganti alur multi-perangkat. Jangan memasang APK percobaan di atas aplikasi aktif sebelum backup dibuat dan migrasi diuji. Branch ini adalah jalur eksperimen terpisah.
+- Pemeriksaan commit GitHub dan pemasangan versi APK baru membutuhkan internet. Fitur operasional dan data lokal tidak membutuhkannya.
+- Sesi login lokal dibuat ulang ketika proses aplikasi dimulai ulang; pengguna mungkin perlu login kembali.
+- APK debug dari Actions bukan APK rilis bertanda tangan produksi.
+- Jangan memasang versi uji sebelum membuat backup database operasional.
+- Branch ini tidak mengubah `main` dan tidak mengakses atau memodifikasi database Termux aktif.
