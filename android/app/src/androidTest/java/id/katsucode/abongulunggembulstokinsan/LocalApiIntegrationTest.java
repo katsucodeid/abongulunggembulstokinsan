@@ -42,6 +42,8 @@ public class LocalApiIntegrationTest {
         InsanLocalDatabase db=new InsanLocalDatabase(context);
         LocalApiServer server=new LocalApiServer(context,db);
         try{
+            HttpURLConnection home=(HttpURLConnection)new URL(BASE+"/").openConnection();home.setConnectTimeout(7000);assertEquals(200,home.getResponseCode());String html=new String(home.getInputStream().readAllBytes(),StandardCharsets.UTF_8);assertTrue(html.contains("Selamat datang"));home.disconnect();
+            HttpURLConnection logo=(HttpURLConnection)new URL(BASE+"/img/BackgroundEraser_20261016_074306739.png").openConnection();assertEquals(200,logo.getResponseCode());assertTrue(logo.getContentType().startsWith("image/png"));logo.getInputStream().close();logo.disconnect();
             Reply health=request("GET","/api/health",null,null);
             assertStatus(health,200);assertEquals("sqlite",health.json.getString("storage"));
             assertTrue(request("GET","/api/auth/status",null,null).json.getBoolean("setupRequired"));
