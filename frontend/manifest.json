@@ -1,13 +1,13 @@
 {
   "id": "./",
-  "name": "Abon Gulung Gembul - Stok Kertas",
-  "short_name": "Gembul Stok",
+  "name": "Abon Gulung Gembul Wasmida - Stok Kertas",
+  "short_name": "Gembul Wasmida",
   "description": "Aplikasi operasional Abon Gulung Gembul untuk manajemen stok kemasan, target produksi, laporan harian otomatis, riwayat transaksi, dan sinkronisasi server.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fff8ef",
-  "theme_color": "#bd4e1c",
+  "background_color": "#17120f",
+  "theme_color": "#f2a93b",
   "orientation": "portrait",
   "icons": [
     {
