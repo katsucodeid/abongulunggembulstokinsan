@@ -87,60 +87,16 @@ async function restoreBackupFile(){
   }catch(e){if(status)status.textContent="Pemulihan dibatalkan: "+e.message;}
   finally{if(button)button.disabled=false;}
 }
-async function loadAbout(){
-  const versionEl=$("aboutVersion"), list=$("changeLogList"), status=$("changeLogStatus");
-  const remoteList=$("latestCommitList"), remoteStatus=$("latestCommitStatus"), applyBtn=$("applyLatestCommit");
-  if(!list)return;
-  try{
-    const data=await api("/update/history");
-    if(versionEl)versionEl.textContent="Versi "+(data.version||"—");
-    list.replaceChildren();
-    (data.commits||[]).forEach(item=>{
-      const card=document.createElement("article");card.className="history-card";
-      const title=document.createElement("b");title.textContent=item.message||"Pembaruan";
-      const meta=document.createElement("div");meta.className="muted";meta.textContent=(item.date||"")+(item.sha?" · "+item.sha:"");
-      card.append(title,meta);list.appendChild(card);
-    });
-    if(status)status.textContent="Riwayat commit yang sudah terpasang · hingga 8 commit terakhir.";
-  }catch(e){
-    if(status)status.textContent="Riwayat lokal belum tersedia: "+e.message;
-  }
-  try{
-    const remote=await api("/update/commits");
-    const commits=remote.commits||[];
-    window.insanLatestCommit=commits[0]?.sha||null;
-    window.insanUpdateAvailable=!!(window.insanLatestCommit&&window.insanLatestCommit!==remote.current&&(cachedUser?.role||state?.user?.role)==="admin");
-    if(remoteList)remoteList.replaceChildren();
-    commits.forEach((item,index)=>{
-      if(!remoteList)return;
-      const card=document.createElement("article");card.className="history-card";
-      const title=document.createElement("b");title.textContent=item.message||"Pembaruan";
-      const meta=document.createElement("div");meta.className="muted";
-      const date=item.date?new Date(item.date).toLocaleString("id-ID"):"Tanggal tidak tersedia";
-      meta.textContent=date+" · "+(item.author||"Kontributor")+" · "+item.shortSha+(item.sha===remote.current?" · Terpasang":"");
-      card.append(title,meta);
-      if(index===0&&item.sha!==remote.current){
-        const tag=document.createElement("p");tag.className="muted";tag.textContent="Commit terbaru pada branch main";
-        card.appendChild(tag);
-      }
-      remoteList.appendChild(card);
-    });
-    if(remoteStatus)remoteStatus.textContent=commits.length
-      ?(remote.current===commits[0].sha?"Aplikasi sudah berada pada commit terbaru.":"Ditemukan "+commits.length+" commit terbaru dari GitHub.")
-      :"Belum ada commit yang dapat ditampilkan.";
-    if(applyBtn){
-      const admin=(cachedUser?.role||state?.user?.role)==="admin";
-      applyBtn.hidden=!admin||!window.insanUpdateAvailable;
-      applyBtn.disabled=!window.insanUpdateAvailable;
-      applyBtn.textContent=window.insanUpdateAvailable?"Terapkan commit terbaru":"Sudah menggunakan commit terbaru";
-    }
-  }catch(e){
-    window.insanLatestCommit=null;window.insanUpdateAvailable=false;
-    if(remoteStatus)remoteStatus.textContent="Gagal mengambil commit dari GitHub: "+e.message;
-    if(applyBtn)applyBtn.hidden=true;
-  }
+function loadAbout(){
+  const versionEl=$("aboutVersion"),list=$("changeLogList"),status=$("changeLogStatus");
+  const remoteList=$("latestCommitList"),remoteStatus=$("latestCommitStatus"),applyBtn=$("applyLatestCommit");
+  if(versionEl)versionEl.textContent="Versi 2.3.0";
+  if(list){list.replaceChildren();const card=document.createElement("article");card.className="history-card";const title=document.createElement("b");title.textContent="Arsitektur Android mandiri";const detail=document.createElement("p");detail.className="muted";detail.textContent="API tertanam, database SQLite, login lokal, transaksi, koreksi stok, laporan, serta backup dan restore tanpa Termux atau internet.";card.append(title,detail);list.appendChild(card);}
+  if(status)status.textContent="Versi APK mandiri 2.3.0 · data tersimpan di SQLite perangkat.";
+  if(remoteList)remoteList.replaceChildren();
+  if(remoteStatus)remoteStatus.textContent="Untuk memperbarui aplikasi, pasang APK versi terbaru. Data SQLite tetap dipertahankan.";
+  if(applyBtn)applyBtn.hidden=true;
 }
-
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
 function renderHistory(){
 const filter=$("historyFilter")?$("historyFilter").value:"all";
@@ -260,7 +216,7 @@ line.append(name,qty);card.appendChild(line);
 box.appendChild(card);
 });
 }
-async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){window.insanLatestCommit=d.latest;window.insanUpdateAvailable=(cachedUser?.role||state?.user?.role)==="admin";$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}}catch(e){/* update check is optional while offline */}}
+async function checkForUpdates(){$("updateNotice")?.classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}
 async function applyUpdate(commitSha=window.insanLatestCommit){if(!window.insanUpdateAvailable||!commitSha)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Terapkan commit "+commitSha.slice(0,7)+" dari GitHub? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({commitSha})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const status=await api("/update/check");if(status.current===commitSha){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=120){clearInterval(watcher);$("updateButton").disabled=false;$("updateButton").textContent="Periksa dan coba lagi";$("updateMessage").textContent="Pembaruan otomatis tidak tersedia pada APK mandiri. Pasang APK versi terbaru untuk memperbarui aplikasi."; }},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
 async function syncQueue(){if(!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok lokal berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Antrean transaksi tersimpan ke database lokal","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
 function buildDailyProductionReport(dateKey){
