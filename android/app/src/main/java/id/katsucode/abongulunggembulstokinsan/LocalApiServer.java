@@ -25,7 +25,7 @@ public final class LocalApiServer extends NanoHTTPD {
     private static final String[] OUTLETS={"Grand Wisata","Bektim","Harapan Indah"};
 
     public LocalApiServer(Context c, InsanLocalDatabase db) throws java.io.IOException {
-        super("127.0.0.1",8787); context=c.getApplicationContext(); database=db; start(SOCKET_READ_TIMEOUT,false);
+        super("127.0.0.1",18787); context=c.getApplicationContext(); database=db; start(SOCKET_READ_TIMEOUT,false);
     }
     private JSONObject read() throws Exception { return database.readDatabase(); }
     private synchronized void save(JSONObject d) throws Exception { database.saveDatabase(d); }
