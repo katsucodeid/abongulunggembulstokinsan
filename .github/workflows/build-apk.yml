@@ -76,7 +76,7 @@ jobs:
           test -s android/app/src/main/assets/www/app.js
           test -s android/app/src/main/assets/www/img/BackgroundEraser_20261016_074306739.png
           echo "Bundled files:"
-          find android/app/src/main/assets/www -type f -printf '%P %s bytes\\n' | sort
+          find android/app/src/main/assets/www -type f -printf '%P %s bytes\n' | sort
 
       - name: Set up Android SDK
         uses: android-actions/setup-android@v4
@@ -86,9 +86,9 @@ jobs:
 
       - name: Install required Android SDK packages
         run: |
-          sdkmanager --install \\
-            "platform-tools" \\
-            "platforms;android-35" \\
+          sdkmanager --install \
+            "platform-tools" \
+            "platforms;android-35" \
             "build-tools;35.0.0"
 
       - name: Set up Gradle 8.9
@@ -154,9 +154,9 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           CERT_OUTPUT=$("$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --print-certs "$APK")
-          printf '%s\\n' "$CERT_OUTPUT"
+          printf '%s\n' "$CERT_OUTPUT"
           EXPECTED_CERT_SHA256="07d4dc8246a2d776ec650a0b52ef446009b683165b0ac4a0a0c76dce0e68f72d"
-          if ! printf '%s\\n' "$CERT_OUTPUT" | grep -qi "$EXPECTED_CERT_SHA256"; then
+          if ! printf '%s\n' "$CERT_OUTPUT" | grep -qi "$EXPECTED_CERT_SHA256"; then
             echo "::error::Release APK certificate does not match the registered Wasmida certificate."
             exit 1
           fi
