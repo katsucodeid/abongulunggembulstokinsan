@@ -9,7 +9,7 @@ on:
       - 'img/**'
       - '.github/workflows/build-apk.yml'
   push:
-    branches: [main]
+    branches: [main, cobaapkmandiri]
     paths:
       - 'android/**'
       - 'frontend/**'
