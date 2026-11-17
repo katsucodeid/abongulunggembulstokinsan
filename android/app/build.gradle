@@ -2,6 +2,19 @@ plugins {
     id 'com.android.application'
 }
 
+// Signing credentials are supplied only by the CI environment.
+// The private keystore is never committed to this repository.
+def wasmidaKeystorePath = System.getenv('WASMIDA_KEYSTORE_PATH')
+def wasmidaStorePassword = System.getenv('WASMIDA_STORE_PASSWORD')
+def wasmidaKeyAlias = System.getenv('WASMIDA_KEY_ALIAS')
+def wasmidaKeyPassword = System.getenv('WASMIDA_KEY_PASSWORD')
+def wasmidaSigningEnabled = [
+    wasmidaKeystorePath,
+    wasmidaStorePassword,
+    wasmidaKeyAlias,
+    wasmidaKeyPassword
+].every { it != null && !it.trim().isEmpty() }
+
 android {
     namespace 'id.katsucode.abongulunggembulstokinsan'
     compileSdk 35
@@ -10,9 +23,28 @@ android {
         applicationId 'id.katsucode.abongulunggembulstokinsan.mandiri'
         minSdk 23
         targetSdk 35
-        versionCode 9
-        versionName '3.0.0-mandiri'
+        versionCode 10
+        versionName '3.0.1-wasmida'
         testInstrumentationRunner 'androidx.test.runner.AndroidJUnitRunner'
+    }
+
+    signingConfigs {
+        if (wasmidaSigningEnabled) {
+            wasmidaRelease {
+                storeFile file(wasmidaKeystorePath)
+                storePassword wasmidaStorePassword
+                keyAlias wasmidaKeyAlias
+                keyPassword wasmidaKeyPassword
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            if (wasmidaSigningEnabled) {
+                signingConfig signingConfigs.wasmidaRelease
+            }
+        }
     }
 
     compileOptions {
