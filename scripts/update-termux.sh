@@ -1,9 +1,10 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
-ROOT="$HOME/abongulunggembulstokinsan"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 OLD_PID="${1:-}"
 TARGET_COMMIT="${2:-}"
-LOG="$HOME/abongulunggembulstokinsan-update.log"
+LOG="$HOME/$(basename "$ROOT")-update.log"
 exec >>"$LOG" 2>&1
 sleep 2
 cd "$ROOT"
