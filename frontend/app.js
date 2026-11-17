@@ -313,7 +313,7 @@ function buildDailyProductionReport(dateKey){
  return lines.join("\n");
 }
 function isValidReportDate(dateKey){
- if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(dateKey||"")))return false;
+ if(!/^\d{4}-\d{2}-\d{2}$/.test(String(dateKey||"")))return false;
  const [year,month,day]=dateKey.split("-").map(Number);
  const check=new Date(Date.UTC(year,month-1,day));
  return check.getUTCFullYear()===year&&check.getUTCMonth()===month-1&&check.getUTCDate()===day;
