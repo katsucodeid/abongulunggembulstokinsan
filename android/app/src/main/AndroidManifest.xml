@@ -14,7 +14,7 @@
         android:theme="@android:style/Theme.Material.Light.NoActionBar">
         <receiver android:name=".WorkAlarmReceiver" android:exported="false"/>
         <service android:name=".WorkAlarmService" android:exported="false" android:foregroundServiceType="mediaPlayback"/>
-        <activity android:name=".MainActivity" android:exported="true">
+        <activity android:name=".MainActivity" android:exported="true" android:configChanges="orientation|screenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN"/>
                 <category android:name="android.intent.category.LAUNCHER"/>
