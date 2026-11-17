@@ -81,7 +81,7 @@ public class LocalApiIntegrationTest {
             assertStatus(request("GET","/api/production/calendar?month=2026-11",null,token),200);
             assertStatus(request("GET","/api/report",null,token),200);
             assertStatus(request("GET","/api/admin/audit?limit=50",null,token),200);
-            assertStatus(request("GET","/api/export/transactions.csv",null,token),200);
+            HttpURLConnection csvConnection=(HttpURLConnection)new URL(BASE+"/api/export/transactions.csv").openConnection();csvConnection.setRequestMethod("GET");csvConnection.setRequestProperty("Authorization","Bearer "+token);csvConnection.setConnectTimeout(7000);csvConnection.setReadTimeout(7000);assertEquals(200,csvConnection.getResponseCode());String csvText=new String(csvConnection.getInputStream().readAllBytes(),StandardCharsets.UTF_8);assertTrue(csvText.contains("Tanggal")&&csvText.contains("Perubahan stok"));csvConnection.disconnect();
 
             Reply users=request("GET","/api/users",null,token);assertStatus(users,200);assertEquals(1,users.json.getJSONArray("users").length());
             JSONObject before=state(token).getJSONObject("stock");
