@@ -25,7 +25,7 @@ import android.widget.Toast;
 import java.io.OutputStream;
 
 public class MainActivity extends Activity {
-    private static final String APP_URL = "http://127.0.0.1:8787";
+    private static final String APP_URL = "http://127.0.0.1:18787";
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private InsanLocalDatabase localDatabase;
