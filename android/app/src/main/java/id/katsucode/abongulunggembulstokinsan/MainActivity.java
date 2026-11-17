@@ -234,7 +234,8 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        localDatabase = new InsanLocalDatabase(this);\n        webView = new WebView(this);
+        localDatabase = new InsanLocalDatabase(this);
+        webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
