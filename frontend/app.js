@@ -312,10 +312,23 @@ function buildDailyProductionReport(dateKey){
  lines.push("","Keterangan: Laporan Ini Dibuat Otomatis","");
  return lines.join("\n");
 }
+function isValidReportDate(dateKey){
+ if(!/^\\d{4}-\\d{2}-\\d{2}$/.test(String(dateKey||"")))return false;
+ const [year,month,day]=dateKey.split("-").map(Number);
+ const check=new Date(Date.UTC(year,month-1,day));
+ return check.getUTCFullYear()===year&&check.getUTCMonth()===month-1&&check.getUTCDate()===day;
+}
 function generateDailyProductionReport(){
  const dateKey=$("dailyReportDate")?.value;
- try{$("dailyProductionReportText").value=buildDailyProductionReport(dateKey);$("dailyProductionReportStatus").textContent="Pratinjau laporan berhasil dibuat untuk "+dateKey+".";}
- catch(e){$("dailyProductionReportStatus").textContent="Gagal membuat laporan: "+e.message;}
+ try{
+  if(!isValidReportDate(dateKey))throw new Error("Pilih tanggal laporan yang valid terlebih dahulu.");
+  $("dailyProductionReportText").value=buildDailyProductionReport(dateKey);
+  $("dailyProductionReportStatus").textContent="Pratinjau laporan tanggal "+dateKey+" siap. Tekan Buat / Perbarui untuk menyimpan file tanggal tersebut.";
+ }
+ catch(e){
+  if($("dailyProductionReportText"))$("dailyProductionReportText").value="";
+  $("dailyProductionReportStatus").textContent="Gagal membuat laporan: "+e.message;
+ }
 }
 function wibDateParts(){
  const parts=new Intl.DateTimeFormat("en-CA",{timeZone:"Asia/Jakarta",year:"numeric",month:"2-digit",day:"2-digit",hour:"2-digit",minute:"2-digit",hourCycle:"h23"}).formatToParts(new Date());
@@ -332,6 +345,7 @@ async function saveDailyProductionReport(automatic=false){
  const status=$("dailyProductionReportStatus");
  try{
   if(!$("dailyProductionReportText"))return false;
+  if(!isValidReportDate(dateKey))throw new Error("Pilih tanggal laporan yang valid terlebih dahulu.");
   $("dailyReportDate").value=dateKey;
   const content=buildDailyProductionReport(dateKey);
   $("dailyProductionReportText").value=content;
@@ -340,11 +354,11 @@ async function saveDailyProductionReport(automatic=false){
   if(window.InsanNative?.saveDailyReport){
    const saved=window.InsanNative.saveDailyReport(await blobToBase64(blob),filename);
    if(!saved||!saved.startsWith("OK:"))throw new Error(String(saved||"Penyimpanan laporan gagal."));
-   if(status)status.textContent=(automatic?"Laporan otomatis":"Laporan berhasil dibuat dan disimpan")+": Download/Abon Gulung Gembul/Laporan/"+filename+" · file tanggal yang sama akan diperbarui.";
+   if(status)status.textContent=(automatic?"Laporan otomatis":"Laporan berhasil dibuat / diperbarui")+": Download/Abon Gulung Gembul/Laporan/"+filename+" · file dengan tanggal yang sama ditimpa, bukan dibuat sebagai salinan baru.";
   }else{
    const url=URL.createObjectURL(blob),link=document.createElement("a");
    link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);
-   if(status)status.textContent=(automatic?"Laporan otomatis disiapkan":"Laporan dibuat")+". Unduhan "+filename+" dimulai; pada browser/PWA, pilih folder Download/Abon Gulung Gembul. Penyimpanan langsung dan penimpaan otomatis memerlukan aplikasi Android.";
+   if(status)status.textContent=(automatic?"Laporan otomatis disiapkan":"Laporan dibuat")+". Unduhan "+filename+" dimulai. Browser dapat menambahkan akhiran (1) karena pembatasan unduhan; penimpaan file yang sudah ada dijamin melalui aplikasi Android.";
   }
   if(automatic)localStorage.setItem("insan_daily_report_auto_"+dateKey,"saved");
   return true;
