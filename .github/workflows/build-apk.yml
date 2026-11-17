@@ -104,12 +104,14 @@ jobs:
           arch: x86_64
           profile: pixel_2
           script: |
+            set -eux
             gradle -p android --no-daemon assembleDebug assembleDebugAndroidTest
-            adb shell settings put global airplane_mode_on 1
-            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
-            gradle -p android --no-daemon --offline connectedDebugAndroidTest
-            adb shell settings put global airplane_mode_on 0
-            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false
+            adb install -r android/app/build/outputs/apk/debug/app-debug.apk
+            adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
+            adb shell svc wifi disable
+            adb shell svc data disable
+            adb shell am instrument -w -r id.katsucode.abongulunggembulstokinsan.test/androidx.test.runner.AndroidJUnitRunner
+            adb shell svc wifi enable
 
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
