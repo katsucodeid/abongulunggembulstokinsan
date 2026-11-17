@@ -29,6 +29,13 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
         {"mika", "Mika roti roll", "210"}
     };
 
+    private static String utcNow() {
+        java.text.SimpleDateFormat format = new java.text.SimpleDateFormat(
+            "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'", java.util.Locale.US);
+        format.setTimeZone(java.util.TimeZone.getTimeZone("UTC"));
+        return format.format(new java.util.Date());
+    }
+
     public InsanLocalDatabase(Context context) {
         super(context, DB_NAME, null, DB_VERSION);
         setWriteAheadLoggingEnabled(true);
@@ -57,7 +64,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             ContentValues row = new ContentValues();
             row.put("singleton", 1);
             row.put("document_json", initial.toString());
-            row.put("updated_at", java.time.Instant.now().toString());
+            row.put("updated_at", utcNow());
             db.insertOrThrow("app_state", null, row);
         } catch (Exception e) {
             throw new IllegalStateException("Unable to initialize local INSAN database", e);
@@ -126,7 +133,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
                 ContentValues row = new ContentValues();
                 row.put("singleton", 1);
                 row.put("document_json", state.toString());
-                row.put("updated_at", java.time.Instant.now().toString());
+                row.put("updated_at", utcNow());
                 db.insertOrThrow("app_state", null, row);
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot migrate existing local inventory safely", e);
@@ -155,7 +162,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             ContentValues row = new ContentValues();
             row.put("singleton", 1);
             row.put("document_json", document.toString());
-            row.put("updated_at", java.time.Instant.now().toString());
+            row.put("updated_at", utcNow());
             db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
             db.setTransactionSuccessful();
         } finally {
@@ -221,7 +228,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             ContentValues row = new ContentValues();
             row.put("singleton", 1);
             row.put("document_json", state.toString());
-            row.put("updated_at", java.time.Instant.now().toString());
+            row.put("updated_at", utcNow());
             db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
             db.setTransactionSuccessful();
             return true;
