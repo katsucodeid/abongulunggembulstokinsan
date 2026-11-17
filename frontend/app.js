@@ -11,7 +11,7 @@ async function queueAdd(op){const d=await openDB();return new Promise((resolve,r
 async function queueRemove(ids){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite"),s=t.objectStore(QUEUE);ids.forEach(id=>s.delete(id));t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
 function newId(){return (crypto.randomUUID?crypto.randomUUID():"tx-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
 function setStatus(text,kind="muted"){$("connection").textContent=text;$("connection").className=kind;}
-function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#171b22");}
+function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#17120f");}
 function themeInit(){let saved="dark";try{saved=localStorage.getItem("insan_theme")||"dark";}catch{}applyTheme(saved);}
 function toggleTheme(){applyTheme(document.documentElement.classList.contains("light")?"dark":"light");}
 async function api(path,opts={}){const r=await fetch(API+"/api"+path,{...opts,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json();}catch{}if(!r.ok){const e=new Error(d.error||"Permintaan gagal");e.status=r.status;throw e;}return d;}
@@ -91,9 +91,9 @@ async function restoreBackupFile(){
 function loadAbout(){
   const versionEl=$("aboutVersion"),list=$("changeLogList"),status=$("changeLogStatus");
   const remoteList=$("latestCommitList"),remoteStatus=$("latestCommitStatus"),applyBtn=$("applyLatestCommit");
-  if(versionEl)versionEl.textContent="Versi 2.3.0";
+  if(versionEl)versionEl.textContent="Versi 3.1.0 Wasmida";
   if(list){list.replaceChildren();const card=document.createElement("article");card.className="history-card";const title=document.createElement("b");title.textContent="Arsitektur Android mandiri";const detail=document.createElement("p");detail.className="muted";detail.textContent="API tertanam, database SQLite, login lokal, transaksi, koreksi stok, laporan, serta backup dan restore tanpa Termux atau internet.";card.append(title,detail);list.appendChild(card);}
-  if(status)status.textContent="Versi APK mandiri 2.3.0 · data tersimpan di SQLite perangkat.";
+  if(status)status.textContent="Versi APK Wasmida 3.1.0 · data tersimpan di SQLite perangkat.";
   if(remoteList)remoteList.replaceChildren();
   if(remoteStatus)remoteStatus.textContent="Untuk memperbarui aplikasi, pasang APK versi terbaru. Data SQLite tetap dipertahankan.";
   if(applyBtn)applyBtn.hidden=true;
