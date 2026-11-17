@@ -275,6 +275,10 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
+            @Override public boolean shouldOverrideUrlLoading(WebView view, WebResourceRequest request) {
+                Uri target = request.getUrl();
+                return !"127.0.0.1".equals(target.getHost()) || target.getPort() != 18787 || !"http".equals(target.getScheme());
+            }
             @Override public void onReceivedError(WebView view, WebResourceRequest request,
                     android.webkit.WebResourceError error) {
                 super.onReceivedError(view, request, error);
