@@ -1,6 +1,7 @@
 #!/data/data/com.termux/files/usr/bin/bash
 set -e
-ROOT="$HOME/abongulunggembulstokinsan"
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT/backend"
 if [ ! -f .env ]; then echo "File .env belum ada. Jalankan scripts/install-termux.sh"; exit 1; fi
 PORT="$(sed -n 's/^PORT=//p' .env | tail -n 1)"
