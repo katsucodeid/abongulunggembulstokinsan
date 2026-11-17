@@ -84,6 +84,10 @@ public class LocalApiIntegrationTest {
             HttpURLConnection csvConnection=(HttpURLConnection)new URL(BASE+"/api/export/transactions.csv").openConnection();csvConnection.setRequestMethod("GET");csvConnection.setRequestProperty("Authorization","Bearer "+token);csvConnection.setConnectTimeout(7000);csvConnection.setReadTimeout(7000);assertEquals(200,csvConnection.getResponseCode());String csvText=new String(csvConnection.getInputStream().readAllBytes(),StandardCharsets.UTF_8);assertTrue(csvText.contains("Tanggal")&&csvText.contains("Perubahan stok"));csvConnection.disconnect();
 
             Reply users=request("GET","/api/users",null,token);assertStatus(users,200);assertEquals(1,users.json.getJSONArray("users").length());
+            Reply backup=request("GET","/api/admin/backup",null,token);assertStatus(backup,200);assertEquals("INSAN-STOCK-BACKUP",backup.json.getString("format"));
+            Reply restored=request("POST","/api/admin/restore",backup.json,token);assertStatus(restored,200);assertTrue(restored.json.has("safetyBackup"));
+            boolean safetyFound=false;java.io.File[] localFiles=context.getFilesDir().listFiles();if(localFiles!=null)for(java.io.File file:localFiles)if(file.getName().equals(restored.json.getString("safetyBackup")))safetyFound=true;assertTrue("Pre-restore safety backup must exist",safetyFound);
+            login=request("POST","/api/auth/login",new JSONObject().put("username","localadmin").put("password","StrongPass123!"),null);assertStatus(login,200);token=login.json.getString("token");
             JSONObject before=state(token).getJSONObject("stock");
             server.stop();db.close();
             InsanLocalDatabase reopened=new InsanLocalDatabase(context);
