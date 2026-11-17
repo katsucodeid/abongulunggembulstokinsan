@@ -16,7 +16,7 @@ APK tidak lagi bergantung pada Termux atau server Node.js eksternal.
 
 1. Pasang APK mandiri dari workflow branch ini.
 2. Jika aplikasi memiliki data lama di Termux, buat file backup INSAN dari sistem lama terlebih dahulu. Jangan menghapus atau mengubah database Termux.
-3. Di APK baru, buka Pencadangan & Pemulihan dan pulihkan file `.insanbackup` milik sistem lama. Jika memulai dari nol, buat akun admin pertama pada layar login.
+3. Pada layar login pertama, pulihkan file `.insanbackup` lama sebelum membuat akun baru. Ini mengembalikan akun admin, stok, transaksi, dan riwayat dari database operasional. Jika memulai dari nol, buat akun admin pertama pada layar login.
 4. Periksa stok, akun, riwayat, dan laporan sebelum menggunakan aplikasi untuk transaksi operasional.
 
 Database baru dimulai dengan seluruh stok nol agar angka contoh tidak disalahartikan sebagai persediaan nyata. Jika database Android lama masih berisi angka seed bawaan dan belum memiliki akun/transaksi, migrasi aman akan mengosongkan angka placeholder tersebut. Pulihkan backup operasional yang benar sebelum mencatat transaksi sebenarnya.
