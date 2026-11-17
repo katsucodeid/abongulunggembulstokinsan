@@ -22,11 +22,11 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
     private static final int DB_VERSION = 2;
 
     private static final String[][] ITEMS = {
-        {"box3", "Box isi 3", "3897"},
-        {"box5outer", "Box isi 5 luar (Slongsong)", "3463"},
-        {"box5inner", "Box isi 5 dalam (Tatakan Polos)", "3595"},
-        {"paper", "Kertas Minyak", "1722"},
-        {"mika", "Mika roti roll", "210"}
+        {"box3", "Box isi 3", "0"},
+        {"box5outer", "Box isi 5 luar (Slongsong)", "0"},
+        {"box5inner", "Box isi 5 dalam (Tatakan Polos)", "0"},
+        {"paper", "Kertas Minyak", "0"},
+        {"mika", "Mika roti roll", "0"}
     };
 
     private static String utcNow() {
@@ -55,7 +55,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             JSONObject stock = new JSONObject();
             for (String[] item : ITEMS) stock.put(item[0], Long.parseLong(item[2]));
             initial.put("stock", stock);
-            initial.put("stockStartDate", "2026-11-11");
+            initial.put("stockStartDate", JSONObject.NULL);
             initial.put("users", new JSONArray());
             initial.put("transactions", new JSONArray());
             initial.put("processed", new JSONArray());
