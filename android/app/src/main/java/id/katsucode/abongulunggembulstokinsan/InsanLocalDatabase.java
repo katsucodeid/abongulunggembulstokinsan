@@ -19,7 +19,7 @@ import org.json.JSONObject;
  */
 public final class InsanLocalDatabase extends SQLiteOpenHelper {
     private static final String DB_NAME = "insan-stock-local.db";
-    private static final int DB_VERSION = 2;
+    private static final int DB_VERSION = 3;
 
     private static final String[][] ITEMS = {
         {"box3", "Box isi 3", "0"},
@@ -137,6 +137,31 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
                 db.insertOrThrow("app_state", null, row);
             } catch (Exception e) {
                 throw new IllegalStateException("Cannot migrate existing local inventory safely", e);
+            }
+        }
+        if (oldVersion < 3) {
+            try (Cursor c = db.query("app_state", new String[]{"document_json"}, "singleton=1", null, null, null, null)) {
+                if (c.moveToFirst()) {
+                    JSONObject state = new JSONObject(c.getString(0));
+                    JSONObject stock = state.optJSONObject("stock");
+                    boolean pristine = state.optJSONArray("users") != null && state.optJSONArray("users").length() == 0
+                        && state.optJSONArray("transactions") != null && state.optJSONArray("transactions").length() == 0;
+                    String[] seedKeys = {"box3","box5outer","box5inner","paper","mika"};
+                    long[] seedValues = {3897,3463,3595,1722,210};
+                    if (stock != null && pristine) {
+                        for (int i=0;i<seedKeys.length;i++) if (stock.optLong(seedKeys[i],Long.MIN_VALUE) != seedValues[i]) pristine=false;
+                    } else pristine=false;
+                    if (pristine) {
+                        for (String key : seedKeys) stock.put(key,0);
+                        state.put("stockStartDate", JSONObject.NULL);
+                        ContentValues row = new ContentValues();
+                        row.put("singleton",1); row.put("document_json",state.toString()); row.put("updated_at",utcNow());
+                        db.insertWithOnConflict("app_state",null,row,SQLiteDatabase.CONFLICT_REPLACE);
+                        syncProjectionTables(db,state);
+                    }
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException("Cannot safely migrate initial placeholder stock values",e);
             }
         }
     }
