@@ -29,6 +29,7 @@ public class MainActivity extends Activity {
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private InsanLocalDatabase localDatabase;
+    private LocalApiServer localApiServer;
     private ValueCallback<Uri[]> filePathCallback;
 
     private String sha256(String value) throws Exception {
@@ -235,6 +236,11 @@ public class MainActivity extends Activity {
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         localDatabase = new InsanLocalDatabase(this);
+        try {
+            localApiServer = new LocalApiServer(this, localDatabase);
+        } catch (Exception e) {
+            Toast.makeText(this, "Layanan lokal gagal dijalankan: " + e.getMessage(), Toast.LENGTH_LONG).show();
+        }
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -274,13 +280,13 @@ public class MainActivity extends Activity {
                 super.onReceivedError(view, request, error);
                 if (request.isForMainFrame()) {
                     Toast.makeText(MainActivity.this,
-                        "Server belum berjalan. Buka Termux dan jalankan start-termux.sh.",
+                        "Layanan lokal aplikasi tidak dapat dibuka. Tutup dan buka kembali aplikasi.",
                         Toast.LENGTH_LONG).show();
                 }
             }
         });
         setContentView(webView);
-        webView.loadUrl(APP_URL);
+        webView.loadUrl(APP_URL + "/");
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
@@ -309,6 +315,10 @@ public class MainActivity extends Activity {
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
+        }
+        if (localApiServer != null) {
+            localApiServer.stop();
+            localApiServer = null;
         }
         if (webView != null) {
             webView.stopLoading();
