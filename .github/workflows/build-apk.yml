@@ -104,10 +104,10 @@ jobs:
           arch: x86_64
           profile: pixel_2
           script: |
-            gradle -p android --no-daemon connectedDebugAndroidTest
+            gradle -p android --no-daemon assembleDebug assembleDebugAndroidTest
             adb shell settings put global airplane_mode_on 1
             adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
-            gradle -p android --no-daemon connectedDebugAndroidTest --rerun-tasks
+            gradle -p android --no-daemon --offline connectedDebugAndroidTest
             adb shell settings put global airplane_mode_on 0
             adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false
 
