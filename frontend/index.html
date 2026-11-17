@@ -1,6 +1,6 @@
 <!doctype html>
 <html lang="id"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="theme-color" content="#a94716"><meta name="description" content="Aplikasi operasional Abon Gulung Gembul untuk manajemen stok kemasan, target produksi, laporan harian otomatis, riwayat transaksi, dan database lokal."><title>Abon Gulung Gembul - Stok Kertas</title><link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#17120f"><meta name="description" content="Aplikasi operasional Abon Gulung Gembul untuk manajemen stok kemasan, target produksi, laporan harian otomatis, riwayat transaksi, dan database lokal."><title>Abon Gulung Gembul Wasmida - Stok Kertas</title><link rel="manifest" href="manifest.json">
 <style>
 :root{font-family:system-ui,Arial;color-scheme:dark;--bg:#24130e;--panel:#3a2118;--text:#fff3dc;--muted:#d0b69c;--line:#67402c;--accent:#f59a18;--danger:#df5544}
 :root.light{color-scheme:light;--bg:#fff5e6;--panel:#fffdf8;--text:#3b2117;--muted:#80634e;--line:#ead4b9;--accent:#d97908;--danger:#c93636}
@@ -403,6 +403,110 @@ main{padding-top:0!important}
 .developer-profile p{margin:5px 0 0}
 .nav-logout{margin-top:auto!important;color:var(--danger)!important;border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line))!important;background:color-mix(in srgb,var(--danger) 8%,transparent)!important}
 @media(max-width:420px){.developer-profile img{width:72px;height:72px;flex-basis:72px}}
+
+/* WASMIDA visual system · warm charcoal, roasted cocoa and golden amber */
+:root:not(.light){
+ color-scheme:dark;
+ --bg:#17120f;
+ --panel:#211a16;
+ --text:#f8efe5;
+ --muted:#c5ad98;
+ --line:#49372b;
+ --accent:#f2a93b;
+ --danger:#f07868;
+ --surface-soft:#2c221b;
+ --brand-orange:#d66b2c;
+ --brand-gold:#f2a93b;
+}
+:root:not(.light) body{
+ background:radial-gradient(ellipse at 50% -18%,rgba(242,169,59,.14),transparent 43%),#17120f!important;
+ color:var(--text);
+}
+:root:not(.light) header,
+:root:not(.light) .tabs{
+ background:rgba(33,26,22,.97)!important;
+ border-color:#49372b!important;
+}
+:root:not(.light) .panel,
+:root:not(.light) .tab.panel,
+:root:not(.light) .history-card,
+:root:not(.light) .variant-card,
+:root:not(.light) .outlet-target-card,
+:root:not(.light) #alarm .alarm-box,
+:root:not(.light) #alarm .alarm-stat,
+:root:not(.light) #alarm .tone-row{
+ background:#211a16!important;
+ border-color:#49372b!important;
+ color:#f8efe5!important;
+ box-shadow:0 9px 26px rgba(0,0,0,.24)!important;
+}
+:root:not(.light) .hint,
+:root:not(.light) .variant-card,
+:root:not(.light) .outlet-target-card,
+:root:not(.light) #productionPreview{
+ background:#2c221b!important;
+ border-color:#594333!important;
+ color:#ead9c8!important;
+}
+:root:not(.light) input,
+:root:not(.light) select,
+:root:not(.light) textarea{
+ background:#17120f!important;
+ color:#fff4e8!important;
+ border-color:#594333!important;
+}
+:root:not(.light) input::placeholder,
+:root:not(.light) textarea::placeholder{color:#a88e78!important}
+:root:not(.light) button:not(.secondary):not(.danger),
+:root:not(.light) .tabs button.nav-active,
+:root:not(.light) .tabs .nav-group-items .nav-link.nav-active{
+ background:linear-gradient(135deg,#ffc45c,#e99a2c)!important;
+ border-color:#e99a2c!important;
+ color:#29180d!important;
+ box-shadow:0 5px 15px rgba(233,154,44,.18)!important;
+}
+:root:not(.light) button.secondary,
+:root:not(.light) .secondary,
+:root:not(.light) .menu-toggle,
+:root:not(.light) .tabs .nav-group-toggle{
+ background:#30241c!important;
+ border-color:#594333!important;
+ color:#f4e6d8!important;
+}
+:root:not(.light) button.danger,
+:root:not(.light) .danger{background:#a83f35!important;color:#fff!important}
+:root:not(.light) #stockGrid>.panel{
+ background:linear-gradient(145deg,#302219,#211a16)!important;
+ border-color:#70502f!important;
+}
+:root:not(.light) .brand-copy b,
+:root:not(.light) .tab h2,
+:root:not(.light) .tab h3,
+:root:not(.light) .qty,
+:root:not(.light) .production-total strong,
+:root:not(.light) .outlet-target-heading strong{color:#ffc45c!important}
+:root:not(.light) .brand-copy .muted,
+:root:not(.light) .eyebrow,
+:root:not(.light) label,
+:root:not(.light) small{color:#c5ad98!important}
+:root:not(.light) #connection,
+:root:not(.light) .clock-chip{
+ background:#211a16!important;
+ border-color:#49372b!important;
+ color:#f8efe5!important;
+}
+:root:not(.light) .nav-backdrop.visible{background:rgba(8,5,3,.72)!important}
+:root:not(.light) .app-footer{border-color:#49372b!important;color:#c5ad98!important}
+:root:not(.light) .footer-brand{color:#ffc45c!important}
+:root:not(.light) .ok{color:#70d6a0!important}
+:root:not(.light) .low{color:#ff8879!important}
+:root:not(.light) a{color:#ffc45c}
+:root:not(.light) input:focus,
+:root:not(.light) select:focus,
+:root:not(.light) textarea:focus{border-color:#f2a93b!important;box-shadow:0 0 0 3px rgba(242,169,59,.2)!important}
+:root:not(.light) .brand-logo,
+:root:not(.light) .footer-logo{background:#2c221b!important}
+
 </style></head><body>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false" onclick="toggleTheme()">🌙 Tema Gelap</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
@@ -494,7 +598,7 @@ main{padding-top:0!important}
 </section>
 </div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Aplikasi operasional untuk memantau persediaan kemasan, mencatat barang masuk dan target produksi, mengelola pengurangan stok, serta membuat arsip laporan harian.</p></div><span id="aboutVersion" class="badge">Versi 2.3.0</span></div>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul Wasmida · Stok Kertas</h2><p class="muted" style="margin-top:0">Aplikasi operasional untuk memantau persediaan kemasan, mencatat barang masuk dan target produksi, mengelola pengurangan stok, serta membuat arsip laporan harian.</p></div><span id="aboutVersion" class="badge">Versi 2.3.0</span></div>
 <section class="history-card developer-profile"><img src="/img/BackgroundEraser_20261016_074306739.png" alt="Foto pengembang aplikasi"><div><b>Pengembang</b><p class="muted">Dirancang dan dikembangkan oleh KatsuCode bersama Insan untuk mendukung operasional Abon Gulung Gembul.</p></div></section>
 <h3>Fitur aplikasi</h3>
 <div class="grid">
