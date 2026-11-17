@@ -316,6 +316,7 @@ public final class InsanLocalDatabase extends SQLiteOpenHelper {
             row.put("document_json", state.toString());
             row.put("updated_at", utcNow());
             db.insertWithOnConflict("app_state", null, row, SQLiteDatabase.CONFLICT_REPLACE);
+            syncProjectionTables(db, state);
             db.setTransactionSuccessful();
             return true;
         } catch (Exception e) {
