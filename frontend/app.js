@@ -29,21 +29,28 @@ function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)
 function showTab(id){const target=$(id);if(!target)return;document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();}
 async function blobToBase64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(",")[1]||"");r.onerror=reject;r.readAsDataURL(blob);});}
 async function downloadBackup(){
-  const status=$("backupStatus"),button=$("createBackupButton");
-  if(!token||!navigator.onLine){if(status)status.textContent="Hubungkan perangkat ke server untuk membuat cadangan.";return;}
-  try{
-    if(button)button.disabled=true;
-    if(status)status.textContent="Menyiapkan file cadangan…";
-    const response=await fetch(API+"/api/admin/backup",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
-    if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error||"Gagal membuat cadangan.");}
-    const blob=await response.blob();
-    const disposition=response.headers.get("Content-Disposition")||"";
-    const match=disposition.match(/filename="([^"]+)"/);
-    const filename=match?.[1]||("insan-backup-"+new Date().toISOString().slice(0,10)+".insanbackup");
-    if(window.InsanNative?.saveBackup){const saved=window.InsanNative.saveBackup(await blobToBase64(blob),filename);if(!saved||saved.startsWith("ERROR:"))throw new Error(saved||"Penyimpanan gagal.");if(status)status.textContent="Cadangan tersimpan di Download/Insan Stok/"+filename;}
-    else{const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);if(status)status.textContent="Unduhan dimulai: "+filename+". Simpan ke folder Download/Insan Stok.";}
-  }catch(e){if(status)status.textContent="Gagal membuat cadangan: "+e.message;}
-  finally{if(button)button.disabled=false;}
+ const status=$("backupStatus"),button=$("createBackupButton");
+ try{
+  if(button)button.disabled=true;
+  if(status)status.textContent="Menyiapkan cadangan database…";
+  if(window.InsanNative?.createLocalBackup&&window.InsanNative?.saveBackup){
+   const encoded=window.InsanNative.createLocalBackup();
+   if(!encoded||encoded.startsWith("ERROR:"))throw new Error(String(encoded||"Gagal membaca database lokal."));
+   const filename="insan-backup-"+new Date().toISOString().replace(/[:.]/g,"-")+".insanbackup";
+   const saved=window.InsanNative.saveBackup(encoded,filename);
+   if(!saved||saved.startsWith("ERROR:"))throw new Error(saved||"Penyimpanan cadangan gagal.");
+   if(status)status.textContent="Cadangan database lokal tersimpan: "+saved+". Tidak memerlukan internet.";
+   return;
+  }
+  if(!token||!navigator.onLine)throw new Error("Fitur cadangan lokal memerlukan APK terbaru. Server tidak tersedia.");
+  const response=await fetch(API+"/api/admin/backup",{headers:{Authorization:"Bearer "+token},cache:"no-store"});
+  if(!response.ok){let data={};try{data=await response.json();}catch{}throw new Error(data.error||"Gagal membuat cadangan.");}
+  const blob=await response.blob(),disposition=response.headers.get("Content-Disposition")||"",match=disposition.match(/filename="([^"]+)"/);
+  const filename=match?.[1]||("insan-backup-"+new Date().toISOString().slice(0,10)+".insanbackup");
+  if(window.InsanNative?.saveBackup){const saved=window.InsanNative.saveBackup(await blobToBase64(blob),filename);if(!saved||saved.startsWith("ERROR:"))throw new Error(saved||"Penyimpanan gagal.");if(status)status.textContent="Cadangan tersimpan: "+saved;}
+  else{const url=URL.createObjectURL(blob),link=document.createElement("a");link.href=url;link.download=filename;document.body.appendChild(link);link.click();link.remove();setTimeout(()=>URL.revokeObjectURL(url),30000);if(status)status.textContent="Unduhan dimulai: "+filename;}
+ }catch(e){if(status)status.textContent="Gagal membuat cadangan: "+e.message;}
+ finally{if(button)button.disabled=false;}
 }
 async function restoreBackupFile(){
   const input=$("backupFileInput"),status=$("backupStatus"),button=$("restoreBackupButton");
@@ -52,7 +59,6 @@ async function restoreBackupFile(){
   if(!file){if(status)status.textContent="Pilih file .insanbackup terlebih dahulu.";return;}
   if(!file.name.toLowerCase().endsWith(".insanbackup")){if(status)status.textContent="Ekstensi file harus .insanbackup.";return;}
   if(file.size>25*1024*1024){if(status)status.textContent="Ukuran file melebihi batas 25 MB.";return;}
-  if(!token||!navigator.onLine){if(status)status.textContent="Pemulihan membutuhkan koneksi ke server.";return;}
   let backup;
   try{
     backup=JSON.parse(await file.text());
@@ -63,8 +69,16 @@ async function restoreBackupFile(){
   try{
     if(button)button.disabled=true;
     if(status)status.textContent="Memeriksa file dan memulihkan database…";
-    const result=await api("/admin/restore",{method:"POST",body:JSON.stringify(backup)});
-    if(status)status.textContent="Pemulihan berhasil. Silakan login kembali. Pengguna: "+result.summary.users+" · Transaksi: "+result.summary.transactions;
+    if(window.InsanNative?.restoreLocalBackup){
+      const restored=window.InsanNative.restoreLocalBackup(await blobToBase64(file));
+      if(!restored||!restored.startsWith("OK:"))throw new Error(String(restored||"Pemulihan lokal gagal."));
+      const summary=JSON.parse(restored.slice(3));
+      if(status)status.textContent="Pemulihan lokal berhasil. Pengguna: "+summary.users+" · Transaksi: "+summary.transactions+". Cadangan sebelum pemulihan juga disimpan di penyimpanan internal aplikasi.";
+    }else{
+      if(!token||!navigator.onLine)throw new Error("Pemulihan lokal memerlukan APK terbaru; server tidak tersedia.");
+      const result=await api("/admin/restore",{method:"POST",body:JSON.stringify(backup)});
+      if(status)status.textContent="Pemulihan server berhasil. Pengguna: "+result.summary.users+" · Transaksi: "+result.summary.transactions;
+    }
     localStorage.removeItem("insan_token");
     token=null;
     setTimeout(()=>location.reload(),1200);
