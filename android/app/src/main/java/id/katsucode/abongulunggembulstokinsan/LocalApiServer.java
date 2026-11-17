@@ -148,7 +148,7 @@ public final class LocalApiServer extends NanoHTTPD {
                 return newFixedLengthResponse(Response.Status.OK,"text/csv; charset=utf-8",csv.toString());
             }
             if(path.equals("/api/update/check")||path.equals("/api/update/commits")||path.equals("/api/update/history")){Response x=requireUser(s,u);if(x!=null)return x;return json(503,error("Pembaruan GitHub tidak tersedia dalam mode offline. Data dan transaksi lokal tetap dapat digunakan."));}
-            if(path.equals("/api/update/apply"))return json(503,error("Pembaruan aplikasi dilakukan dengan memasang APK versi baru. Data SQLite lokal tetap dipertahankan."));
+            if(path.equals("/api/update/apply")){Response x=requireUser(s,u);if(x!=null)return x;if((x=admin(u))!=null)return x;return json(503,error("Pembaruan aplikasi dilakukan dengan memasang APK versi baru. Data SQLite lokal tetap dipertahankan."));}
             if(path.startsWith("/api/transactions/")&&path.endsWith("/corrections")&&Method.POST.equals(s.getMethod()))return correction(s,u,path);
             if(path.startsWith("/api/transactions/")&&Method.PUT.equals(s.getMethod()))return editTransaction(s,u,path.substring("/api/transactions/".length()));
             if(path.startsWith("/api/transactions/")&&Method.DELETE.equals(s.getMethod()))return deleteTransaction(s,u,path.substring("/api/transactions/".length()));
@@ -164,7 +164,49 @@ public final class LocalApiServer extends NanoHTTPD {
     private Response deleteTransaction(IHTTPSession s,JSONObject u,String txid)throws Exception{
         Response x=requireUser(s,u);if(x!=null)return x;if((x=admin(u))!=null)return x;JSONObject d=read();JSONArray a=d.getJSONArray("transactions");int ix=-1;JSONObject tx=null;for(int i=0;i<a.length();i++)if(txid.equals(a.getJSONObject(i).optString("id"))){ix=i;tx=a.getJSONObject(i);break;}if(tx==null)return json(404,error("Transaksi tidak ditemukan."));JSONObject changes=tx.optJSONObject("changes"),stock=d.getJSONObject("stock");if("stock-out".equals(tx.optString("type"))){for(int ci=0;ci<a.length();ci++){JSONObject corr=a.optJSONObject(ci),cl=corr==null?null:corr.optJSONObject("lines");if(corr!=null&&"stock-correction".equals(corr.optString("type"))&&cl!=null&&txid.equals(cl.optString("targetTransactionId")))return json(400,error("Transaksi pengurangan ini sudah memiliki koreksi. Selesaikan catatan koreksinya terlebih dahulu."));}}if(changes!=null)for(int ci=0;ci<keys(changes).length();ci++){String k=keys(changes).getString(ci);long next=stock.optLong(k)-changes.optLong(k);if(next<0)throw new Exception("Pembatalan transaksi tidak aman.");stock.put(k,next);}a.remove(ix);JSONArray processed=d.getJSONArray("processed");for(int i=processed.length()-1;i>=0;i--)if(txid.equals(processed.optString(i)))processed.remove(i);audit(d,u,"transaction.delete",new JSONObject().put("id",txid));save(d);return json(200,new JSONObject().put("ok",true).put("state",snapshot(d,u)));
     }
-    private Response correction(IHTTPSession s,JSONObject u,String path)throws Exception{
-        Response x=requireUser(s,u);if(x!=null)return x;JSONObject p=body(s),d=read();String target=path.substring("/api/transactions/".length(),path.length()-"/corrections".length()),cid=p.optString("correctionId"),action=p.optString("action"),reason=p.optString("reason").trim();if(cid.isEmpty()||reason.length()<3||!Arrays.asList("revise","return","reverse").contains(action))throw new Exception("Data koreksi tidak valid.");JSONArray a=d.getJSONArray("transactions");for(int di=0;di<a.length();di++)if(cid.equals(a.getJSONObject(di).optString("id")))return json(409,error("ID koreksi sudah digunakan."));JSONObject orig=null;for(int i=0;i<a.length();i++)if(target.equals(a.getJSONObject(i).optString("id")))orig=a.getJSONObject(i);if(orig==null||!"stock-out".equals(orig.optString("type")))throw new Exception("Transaksi pengurangan manual tidak ditemukan.");if(!"admin".equals(u.optString("role"))&&!u.optString("username").equals(orig.optString("createdBy")))return json(403,error("Anda hanya dapat mengoreksi pengurangan sendiri."));JSONObject lines=orig.optJSONObject("lines");String item=lines.optString("item");long original=lines.optLong("quantity"),returned=0;for(int i=0;i<a.length();i++){JSONObject t=a.getJSONObject(i);JSONObject l=t.optJSONObject("lines");if("stock-correction".equals(t.optString("type"))&&l!=null&&target.equals(l.optString("targetTransactionId")))returned+=l.optLong("returnedDelta");}long current=original-returned,desired;if("revise".equals(action))desired=number(p,"quantity",0);else if("return".equals(action)){long q=number(p,"quantity",0);if(q<=0||q>current)throw new Exception("Jumlah pengembalian melebihi sisa pengurangan.");desired=current-q;}else desired=0;if(desired<0||desired>original)throw new Exception("Jumlah koreksi tidak valid.");long delta=(original-desired)-returned;d.getJSONObject("stock").put(item,Math.addExact(d.getJSONObject("stock").optLong(item),delta));JSONObject l=new JSONObject().put("targetTransactionId",target).put("item",item).put("originalQuantity",original).put("previousReturnedQuantity",returned).put("returnedDelta",delta).put("returnedTotal",original-desired).put("correctedQuantity",desired).put("requestQuantity",p.opt("quantity")).put("action",action).put("reason",reason);a.put(new JSONObject().put("id",cid).put("type","stock-correction").put("date",java.time.LocalDate.now().toString()).put("location","").put("note",reason).put("lines",l).put("changes",new JSONObject().put(item,delta)).put("createdBy",u.optString("username")).put("createdAt",now()));audit(d,u,"stock.manual_correction",new JSONObject().put("transactionId",target).put("correctionId",cid));save(d);return json(200,new JSONObject().put("ok",true).put("duplicate",false).put("state",snapshot(d,u)));
+    private Response correction(IHTTPSession s,JSONObject u,String path)throws Exception {
+        Response authResponse=requireUser(s,u);if(authResponse!=null)return authResponse;
+        JSONObject p=body(s),d=read();
+        String target=path.substring("/api/transactions/".length(),path.length()-"/corrections".length());
+        String cid=p.optString("correctionId"),action=p.optString("action"),reason=p.optString("reason").trim();
+        if(cid.isEmpty()||cid.length()>100||reason.length()<3||!Arrays.asList("revise","return","reverse").contains(action))throw new Exception("Data koreksi tidak valid.");
+        JSONArray txs=d.getJSONArray("transactions");
+        for(int i=0;i<txs.length();i++){
+            JSONObject existing=txs.getJSONObject(i);
+            if(cid.equals(existing.optString("id"))){
+                JSONObject l=existing.optJSONObject("lines");
+                boolean same="stock-correction".equals(existing.optString("type"))&&l!=null&&target.equals(l.optString("targetTransactionId"))&&action.equals(l.optString("action"))&&reason.equals(l.optString("reason"))&&
+                    ((p.opt("quantity")==null&&l.opt("requestQuantity")==null)||(p.opt("quantity")!=null&&String.valueOf(p.opt("quantity")).equals(String.valueOf(l.opt("requestQuantity")))));
+                if(!same)return json(409,error("ID koreksi sudah digunakan oleh transaksi lain."));
+                return json(200,new JSONObject().put("ok",true).put("duplicate",true).put("state",snapshot(d,u)));
+            }
+        }
+        JSONObject originalTx=null;
+        for(int i=0;i<txs.length();i++)if(target.equals(txs.getJSONObject(i).optString("id")))originalTx=txs.getJSONObject(i);
+        if(originalTx==null||!"stock-out".equals(originalTx.optString("type")))throw new Exception("Transaksi pengurangan manual tidak ditemukan.");
+        if(!"admin".equals(u.optString("role"))&&!u.optString("username").equals(originalTx.optString("createdBy")))return json(403,error("Anda hanya dapat mengoreksi pengurangan sendiri."));
+        JSONObject originalLines=originalTx.optJSONObject("lines");
+        if(originalLines==null)throw new Exception("Data transaksi awal tidak valid.");
+        String item=originalLines.optString("item");long originalQuantity=originalLines.optLong("quantity");
+        if(!Arrays.asList(KEYS).contains(item)||originalQuantity<=0)throw new Exception("Data transaksi awal tidak valid.");
+        long alreadyReturned=0;
+        for(int i=0;i<txs.length();i++){JSONObject t=txs.getJSONObject(i),l=t.optJSONObject("lines");if("stock-correction".equals(t.optString("type"))&&l!=null&&target.equals(l.optString("targetTransactionId")))alreadyReturned=Math.addExact(alreadyReturned,l.optLong("returnedDelta"));}
+        long currentReduction=originalQuantity-alreadyReturned;
+        if(currentReduction<0||currentReduction>originalQuantity)throw new Exception("Riwayat koreksi transaksi tidak konsisten.");
+        long desiredReduction;
+        if("revise".equals(action)){desiredReduction=number(p,"quantity",0);if(desiredReduction>originalQuantity)throw new Exception("Jumlah pengurangan yang benar tidak boleh melebihi "+originalQuantity+".");}
+        else if("return".equals(action)){long q=number(p,"quantity",0);if(q<=0||q>currentReduction)throw new Exception("Jumlah pengembalian melebihi sisa pengurangan "+currentReduction+" pcs.");desiredReduction=currentReduction-q;}
+        else desiredReduction=0;
+        long desiredReturned=originalQuantity-desiredReduction,returnedDelta=desiredReturned-alreadyReturned;
+        if(returnedDelta==0)throw new Exception("Tidak ada perubahan jumlah yang perlu disimpan.");
+        JSONObject stock=d.getJSONObject("stock");long nextStock=Math.addExact(stock.optLong(item),returnedDelta);
+        if(nextStock<0)throw new Exception("Koreksi ditolak karena akan membuat stok "+item+" negatif.");
+        stock.put(item,nextStock);
+        JSONObject correctionLines=new JSONObject().put("targetTransactionId",target).put("item",item).put("originalQuantity",originalQuantity).put("previousReturnedQuantity",alreadyReturned).put("returnedDelta",returnedDelta).put("returnedTotal",desiredReturned).put("correctedQuantity",desiredReduction).put("requestQuantity",p.has("quantity")?p.get("quantity"):JSONObject.NULL).put("action",action).put("reason",reason);
+        txs.put(new JSONObject().put("id",cid).put("type","stock-correction").put("date",java.time.LocalDate.now().toString()).put("location","").put("note",reason).put("lines",correctionLines).put("changes",new JSONObject().put(item,returnedDelta)).put("createdBy",u.optString("username")).put("createdAt",now()));
+        audit(d,u,"stock.manual_correction",new JSONObject().put("transactionId",target).put("correctionId",cid).put("item",item).put("returnedDelta",returnedDelta).put("reason",reason));
+        save(d);
+        return json(200,new JSONObject().put("ok",true).put("duplicate",false).put("state",snapshot(d,u)));
     }
+
 }
