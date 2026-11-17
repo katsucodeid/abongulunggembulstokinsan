@@ -99,7 +99,13 @@ jobs:
           target: google_apis
           arch: x86_64
           profile: pixel_2
-          script: gradle -p android --no-daemon connectedDebugAndroidTest
+          script: |
+            gradle -p android --no-daemon connectedDebugAndroidTest
+            adb shell settings put global airplane_mode_on 1
+            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state true
+            gradle -p android --no-daemon connectedDebugAndroidTest --rerun-tasks
+            adb shell settings put global airplane_mode_on 0
+            adb shell am broadcast -a android.intent.action.AIRPLANE_MODE --ez state false
 
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
