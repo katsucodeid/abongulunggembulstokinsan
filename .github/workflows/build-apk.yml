@@ -123,7 +123,7 @@ jobs:
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           ls -lh "$APK"
 
-      - name: Build and verify Wasmida-signed release APK
+      - name: Build and verify Wasmida-signed release APK 3.1.0
         if: github.ref == 'refs/heads/cobaapkmandiri' && github.event_name != 'pull_request'
         env:
           WASMIDA_KEYSTORE_BASE64: ${{ secrets.WASMIDA_KEYSTORE_BASE64 }}
@@ -175,7 +175,7 @@ jobs:
         if: github.ref == 'refs/heads/cobaapkmandiri' && github.event_name != 'pull_request'
         uses: actions/upload-artifact@v4
         with:
-          name: Abon-Gulung-Gembul-Stok-Kertas-APK-Wasmida-3.0.1
+          name: Abon-Gulung-Gembul-Wasmida-Stok-Kertas-3.1.0
           path: android/app/build/outputs/apk/release/app-release.apk
           if-no-files-found: error
           retention-days: 30
