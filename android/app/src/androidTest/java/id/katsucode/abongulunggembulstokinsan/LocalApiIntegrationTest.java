@@ -68,6 +68,10 @@ public class LocalApiIntegrationTest {
             Reply duplicateCorrection=request("POST","/api/transactions/out-1/corrections",correction,token);
             assertStatus(duplicateCorrection,200);assertTrue(duplicateCorrection.json.getBoolean("duplicate"));
             assertEquals(9,state(token).getJSONObject("stock").getInt("mika"));
+            JSONObject impossible=payload("stock-out","out-too-large",new JSONObject().put("item","mika").put("quantity",999999).put("note","Uji stok tidak cukup"));
+            Reply rejected=request("POST","/api/sync",new JSONObject().put("operations",new JSONArray().put(impossible)),token);assertStatus(rejected,200);assertEquals(1,rejected.json.getJSONArray("rejected").length());assertEquals(9,rejected.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
+            JSONObject invalidCorrection=new JSONObject().put("correctionId","corr-invalid").put("action","revise").put("quantity",3).put("reason","Uji melebihi jumlah awal");
+            assertStatus(request("POST","/api/transactions/out-1/corrections",invalidCorrection,token),400);assertEquals(9,state(token).getJSONObject("stock").getInt("mika"));
 
             JSONArray supplies=new JSONArray();for(String item:new String[]{"box3","box5outer","box5inner","paper"})supplies.put(payload("stock-in","supply-"+item,new JSONObject().put("item",item).put("packs",1).put("perPack",10).put("extra",0)));assertStatus(request("POST","/api/sync",new JSONObject().put("operations",supplies),token),200);
             JSONObject production=payload("production","prod-1",new JSONObject().put("date","2026-11-17").put("location","Grand Wisata").put("ori",1).put("beef",0).put("spicy",0).put("cheese",0));
