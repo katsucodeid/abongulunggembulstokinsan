@@ -54,28 +54,29 @@ public class LocalApiIntegrationTest {
 
             JSONObject stockIn=payload("stock-in","stockin-1",new JSONObject().put("item","mika").put("packs",1).put("perPack",10).put("extra",0));
             Reply first=request("POST","/api/sync",new JSONObject().put("operations",new JSONArray().put(stockIn)),token);
-            assertStatus(first,200);assertEquals(220,first.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
+            assertStatus(first,200);assertEquals(10,first.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
             Reply retry=request("POST","/api/sync",new JSONObject().put("operations",new JSONArray().put(stockIn)),token);
             assertStatus(retry,200);assertTrue(retry.json.getJSONArray("accepted").getJSONObject(0).getBoolean("duplicate"));
-            assertEquals(220,retry.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
+            assertEquals(10,retry.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
 
             JSONObject out=payload("stock-out","out-1",new JSONObject().put("item","mika").put("quantity",2).put("note","Uji koreksi"));
             assertStatus(request("POST","/api/sync",new JSONObject().put("operations",new JSONArray().put(out)),token),200);
-            assertEquals(218,state(token).getJSONObject("stock").getInt("mika"));
+            assertEquals(8,state(token).getJSONObject("stock").getInt("mika"));
             JSONObject correction=new JSONObject().put("correctionId","corr-1").put("action","return").put("quantity",1).put("reason","Satu pcs dikembalikan");
             Reply corrected=request("POST","/api/transactions/out-1/corrections",correction,token);
-            assertStatus(corrected,200);assertEquals(219,corrected.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
+            assertStatus(corrected,200);assertEquals(9,corrected.json.getJSONObject("state").getJSONObject("stock").getInt("mika"));
             Reply duplicateCorrection=request("POST","/api/transactions/out-1/corrections",correction,token);
             assertStatus(duplicateCorrection,200);assertTrue(duplicateCorrection.json.getBoolean("duplicate"));
-            assertEquals(219,state(token).getJSONObject("stock").getInt("mika"));
+            assertEquals(9,state(token).getJSONObject("stock").getInt("mika"));
 
+            JSONArray supplies=new JSONArray();for(String item:new String[]{"box3","box5outer","box5inner","paper"})supplies.put(payload("stock-in","supply-"+item,new JSONObject().put("item",item).put("packs",1).put("perPack",10).put("extra",0)));assertStatus(request("POST","/api/sync",new JSONObject().put("operations",supplies),token),200);
             JSONObject production=payload("production","prod-1",new JSONObject().put("date","2026-11-17").put("location","Grand Wisata").put("ori",1).put("beef",0).put("spicy",0).put("cheese",0));
             assertStatus(request("POST","/api/sync",new JSONObject().put("operations",new JSONArray().put(production)),token),200);
-            assertEquals(3895,state(token).getJSONObject("stock").getInt("box3"));
+            assertEquals(8,state(token).getJSONObject("stock").getInt("box3"));
             Reply edited=request("PUT","/api/transactions/prod-1",new JSONObject().put("date","2026-11-17").put("location","Grand Wisata").put("ori",2).put("beef",0).put("spicy",0).put("cheese",0),token);
-            assertStatus(edited,200);assertEquals(3893,edited.json.getJSONObject("state").getJSONObject("stock").getInt("box3"));
+            assertStatus(edited,200);assertEquals(6,edited.json.getJSONObject("state").getJSONObject("stock").getInt("box3"));
             Reply deleted=request("DELETE","/api/transactions/prod-1",null,token);
-            assertStatus(deleted,200);assertEquals(3897,deleted.json.getJSONObject("state").getJSONObject("stock").getInt("box3"));
+            assertStatus(deleted,200);assertEquals(10,deleted.json.getJSONObject("state").getJSONObject("stock").getInt("box3"));
 
             JSONObject min=new JSONObject().put("box3",100).put("box5outer",null).put("box5inner",null).put("paper",null).put("mika",5);
             assertStatus(request("PUT","/api/admin/settings/min-stock",new JSONObject().put("minStock",min),token),200);
@@ -93,7 +94,7 @@ public class LocalApiIntegrationTest {
             JSONObject before=state(token).getJSONObject("stock");
             server.stop();db.close();
             InsanLocalDatabase reopened=new InsanLocalDatabase(context);
-            try{JSONObject persisted=reopened.readDatabase();assertEquals(before.getInt("mika"),persisted.getJSONObject("stock").getInt("mika"));assertEquals(1,persisted.getJSONArray("users").length());assertTrue(persisted.getJSONArray("transactions").length()>=3);}
+            try{JSONObject persisted=reopened.readDatabase();assertEquals(9,persisted.getJSONObject("stock").getInt("mika"));assertEquals(1,persisted.getJSONArray("users").length());assertTrue(persisted.getJSONArray("transactions").length()>=7);}
             finally{reopened.close();}
         }finally{
             try{server.stop();}catch(Exception ignored){}
