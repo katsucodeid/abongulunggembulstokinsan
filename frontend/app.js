@@ -404,7 +404,7 @@ async function loadReport(){
  if(!state)return;
  const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");
  let manualRows=(state.history||[]).filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdAt:tx.createdAt,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:(state.history||[]).filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
- if(token&&navigator.onLine){
+ if(token){
   try{const report=await api("/report");if(Array.isArray(report.manualStockOuts))manualRows=report.manualStockOuts;}catch(e){/* use cached history while offline/server is unavailable */}
  }
  const stockText=`*INSAN*:
