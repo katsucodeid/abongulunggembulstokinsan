@@ -19,7 +19,7 @@ APK tidak lagi bergantung pada Termux atau server Node.js eksternal.
 3. Di APK baru, buka Pencadangan & Pemulihan dan pulihkan file `.insanbackup` milik sistem lama. Jika memulai dari nol, buat akun admin pertama pada layar login.
 4. Periksa stok, akun, riwayat, dan laporan sebelum menggunakan aplikasi untuk transaksi operasional.
 
-Database baru memakai nilai awal bawaan proyek; nilai tersebut bukan pengganti database operasional. Pulihkan backup yang benar sebelum mencatat transaksi sebenarnya.
+Database baru dimulai dengan seluruh stok nol agar angka contoh tidak disalahartikan sebagai persediaan nyata. Jika database Android lama masih berisi angka seed bawaan dan belum memiliki akun/transaksi, migrasi aman akan mengosongkan angka placeholder tersebut. Pulihkan backup operasional yang benar sebelum mencatat transaksi sebenarnya.
 
 ## Verifikasi otomatis
 
