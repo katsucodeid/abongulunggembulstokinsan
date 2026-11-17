@@ -110,7 +110,7 @@ jobs:
             adb install -r android/app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk
             adb shell svc wifi disable
             adb shell svc data disable
-            adb shell am instrument -w -r id.katsucode.abongulunggembulstokinsan.test/androidx.test.runner.AndroidJUnitRunner
+            adb shell am instrument -w -r id.katsucode.abongulunggembulstokinsan.mandiri.test/androidx.test.runner.AndroidJUnitRunner
             adb shell svc wifi enable
 
       - name: Build debug APK
