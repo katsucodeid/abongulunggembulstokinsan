@@ -1,5 +1,5 @@
-const CACHE = "gembul-stok-v36";
-const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json"];
+const CACHE = "gembul-stok-v37";
+const CORE = ["./", "./index.html", "./app.js", "./config.js", "./manifest.json", "./img/BackgroundEraser_20261016_074306739.png"];
 self.addEventListener("install", event => {
   event.waitUntil(caches.open(CACHE).then(cache => cache.addAll(CORE)).then(() => self.skipWaiting()));
 });
