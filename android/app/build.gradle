@@ -30,7 +30,7 @@ android {
 
     signingConfigs {
         if (wasmidaSigningEnabled) {
-            wasmidaRelease {
+            create("wasmidaRelease") {
                 storeFile file(wasmidaKeystorePath)
                 storePassword wasmidaStorePassword
                 keyAlias wasmidaKeyAlias
@@ -42,7 +42,7 @@ android {
     buildTypes {
         release {
             if (wasmidaSigningEnabled) {
-                signingConfig signingConfigs.wasmidaRelease
+                signingConfig signingConfigs.getByName("wasmidaRelease")
             }
         }
     }
