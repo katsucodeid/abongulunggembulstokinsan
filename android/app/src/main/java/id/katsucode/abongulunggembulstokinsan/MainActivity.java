@@ -72,37 +72,51 @@ public class MainActivity extends Activity {
                 byte[] bytes = Base64.decode(base64, Base64.DEFAULT);
                 Uri collection = MediaStore.Downloads.getContentUri(MediaStore.VOLUME_EXTERNAL_PRIMARY);
                 String folder = "Download/Abon Gulung Gembul/Laporan";
-                // Normalize RELATIVE_PATH so trailing-slash differences do not create duplicate files.
                 String wantedPath = folder.replaceAll("/+$", "");
+
+                // Cari berdasarkan nama di seluruh koleksi Downloads terlebih dahulu.
+                // Ini juga menemukan laporan lama yang tersimpan di folder legacy.
                 try (android.database.Cursor cursor = getContentResolver().query(
                         collection,
-                        new String[] { MediaStore.Downloads._ID, MediaStore.Downloads.RELATIVE_PATH,
-                                MediaStore.Downloads.DATE_MODIFIED },
+                        new String[] { MediaStore.Downloads._ID, MediaStore.Downloads.RELATIVE_PATH },
                         MediaStore.Downloads.DISPLAY_NAME + "=?",
                         new String[] { filename },
                         MediaStore.Downloads.DATE_MODIFIED + " DESC")) {
                     if (cursor != null) {
+                        Uri fallback = null;
                         while (cursor.moveToNext()) {
-                            String relativePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Downloads.RELATIVE_PATH));
-                            if (relativePath == null || !relativePath.replaceAll("/+$", "").equals(wantedPath)) continue;
                             long id = cursor.getLong(cursor.getColumnIndexOrThrow(MediaStore.Downloads._ID));
-                            item = Uri.withAppendedPath(collection, String.valueOf(id));
-                            ContentValues pending = new ContentValues();
-                            pending.put(MediaStore.Downloads.IS_PENDING, 1);
-                            if (getContentResolver().update(item, pending, null, null) > 0) break;
-                            item = null;
+                            Uri candidate = Uri.withAppendedPath(collection, String.valueOf(id));
+                            String relativePath = cursor.getString(cursor.getColumnIndexOrThrow(MediaStore.Downloads.RELATIVE_PATH));
+                            String normalized = relativePath == null ? "" : relativePath.replaceAll("/+$", "");
+                            if (normalized.equals(wantedPath)) {
+                                item = candidate;
+                                break;
+                            }
+                            if (fallback == null) fallback = candidate;
                         }
+                        if (item == null) item = fallback;
+                    }
+                }
+
+                ContentValues pending = new ContentValues();
+                pending.put(MediaStore.Downloads.IS_PENDING, 1);
+                pending.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
+                pending.put(MediaStore.Downloads.RELATIVE_PATH, folder + "/");
+
+                if (item != null) {
+                    // Pertahankan entri lama: pindahkan ke folder baku bila perlu, lalu timpa isinya.
+                    if (getContentResolver().update(item, pending, null, null) <= 0) {
+                        item = null;
                     }
                 }
                 if (item == null) {
-                    ContentValues values = new ContentValues();
+                    ContentValues values = new ContentValues(pending);
                     values.put(MediaStore.Downloads.DISPLAY_NAME, filename);
-                    values.put(MediaStore.Downloads.MIME_TYPE, "text/plain");
-                    values.put(MediaStore.Downloads.RELATIVE_PATH, folder + "/");
-                    values.put(MediaStore.Downloads.IS_PENDING, 1);
                     item = getContentResolver().insert(collection, values);
                 }
-                if (item == null) return "ERROR:Gagal membuat file laporan.";
+                if (item == null) return "ERROR:Gagal menemukan atau membuat file laporan.";
+
                 try (OutputStream out = getContentResolver().openOutputStream(item, "wt")) {
                     if (out == null) throw new IllegalStateException("Tidak dapat membuka file laporan.");
                     out.write(bytes);
