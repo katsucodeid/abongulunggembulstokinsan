@@ -150,6 +150,19 @@ jobs:
           chmod 600 "$KEYSTORE_PATH"
           test -s "$KEYSTORE_PATH"
 
+          # Validate the decoded keystore, alias, and private-key password before Gradle.
+          # Passwords are passed through environment variables and never printed.
+          keytool -list -keystore "$KEYSTORE_PATH" \
+            -storepass:env WASMIDA_STORE_PASSWORD \
+            -alias "$WASMIDA_KEY_ALIAS" >/dev/null
+          CSR_PATH="$RUNNER_TEMP/wasmida-key-check.csr"
+          keytool -certreq -keystore "$KEYSTORE_PATH" \
+            -storepass:env WASMIDA_STORE_PASSWORD \
+            -keypass:env WASMIDA_KEY_PASSWORD \
+            -alias "$WASMIDA_KEY_ALIAS" -file "$CSR_PATH" >/dev/null
+          rm -f "$CSR_PATH"
+          echo "Keystore, alias, and private-key password validated."
+
           export WASMIDA_KEYSTORE_PATH="$KEYSTORE_PATH"
           gradle -p android --no-daemon assembleRelease
 
@@ -167,11 +180,12 @@ jobs:
           ls -lh "$APK"
 
       - name: Upload debug APK
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: Abon-Gulung-Gembul-Stok-Kertas-APK-Debug
           path: android/app/build/outputs/apk/debug/app-debug.apk
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 30
 
       - name: Upload Wasmida release APK
