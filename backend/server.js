@@ -198,19 +198,28 @@ app.post("/api/sync", auth, async (req, res) => {
   const operations = Array.isArray(req.body?.operations) ? req.body.operations : [];
   if (!operations.length || operations.length > 100) return res.status(400).json({ error: "Kirim 1 sampai 100 transaksi per sinkronisasi." });
   const result = await locked(async () => {
-    const accepted = [], rejected = [];
-    for (const op of operations) {
-      try { accepted.push(await applyOperation(op, req.user.username)); }
-      catch (e) { rejected.push({ id: op?.id || null, error: e.message }); }
+    const previousDb = JSON.parse(JSON.stringify(db));
+    try {
+      const accepted = [], rejected = [];
+      for (const op of operations) {
+        try { accepted.push(await applyOperation(op, req.user.username)); }
+        catch (e) { rejected.push({ id: op?.id || null, error: e.message }); }
+      }
+      await persist();
+      return { accepted, rejected, state: snapshot(req.user) };
+    } catch (error) {
+      // Keep memory and disk consistent when the atomic database write fails.
+      db = previousDb;
+      throw error;
     }
-    await persist();
-    return { accepted, rejected, state: snapshot(req.user) };
   });
   res.json(result);
 });
 app.put("/api/transactions/:id", auth, async (req, res) => {
   try {
     const result = await locked(async () => {
+      const previousDb = JSON.parse(JSON.stringify(db));
+      try {
       const index = db.transactions.findIndex(x => x.id === req.params.id);
       if (index < 0) throw new Error("Target produksi tidak ditemukan.");
       const oldTx = db.transactions[index];
@@ -231,6 +240,10 @@ app.put("/api/transactions/:id", auth, async (req, res) => {
       recordAudit(req.user, "transaction.update", { id: oldTx.id, type: oldTx.type });
       await persist();
       return { ok: true, state: snapshot(req.user) };
+      } catch (error) {
+        db = previousDb;
+        throw error;
+      }
     });
     res.json(result);
   } catch (e) { res.status(400).json({ error: e.message }); }
@@ -238,6 +251,8 @@ app.put("/api/transactions/:id", auth, async (req, res) => {
 app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
   try {
     const result = await locked(async () => {
+      const previousDb = JSON.parse(JSON.stringify(db));
+      try {
       const index = db.transactions.findIndex(x => x.id === req.params.id);
       if (index < 0) throw new Error("Transaksi tidak ditemukan atau sudah dihapus.");
       const tx = db.transactions[index];
@@ -251,6 +266,10 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
       db.processed = db.processed.filter(id => id !== tx.id);
       await persist();
       return { ok: true, state: snapshot(req.user) };
+      } catch (error) {
+        db = previousDb;
+        throw error;
+      }
     });
     res.json(result);
   } catch (e) { res.status(400).json({ error: e.message }); }
