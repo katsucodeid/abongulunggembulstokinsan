@@ -1,16 +1,29 @@
 # Abon Gulung Gembul - Stok Kertas
 
+**INSAN Stock Manager · Versi 2.2.0**
+
 Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjalan secara lokal di Android melalui Termux dengan Node.js/Express, database JSON persisten, dan frontend PWA.
 
 ## Fitur
-- Dashboard dan pengelolaan stok.
-- Barang masuk, target produksi, laporan, riwayat, dan pengaturan.
-- Akun admin/staff dan pencatatan aktivitas.
-- Operasi offline melalui cache PWA dan antrean sinkronisasi IndexedDB.
-- Backup dan pemulihan database.
-- Aplikasi Android WebView sebagai antarmuka ke backend Termux.
-- Akses multi-perangkat melalui satu server pusat yang tetap berjalan di Termux.
-- Nada alarm Pulang Kerja yang dapat disimpan dan diputar offline setelah aset audio dipasang.
+- Dashboard stok lima jenis kemasan dengan pengaturan batas minimum.
+- Pencatatan barang masuk berbasis pack, isi per pack, dan tambahan pcs.
+- Target produksi per outlet (Grand Wisata, Bektim, Harapan Indah) dan varian Ori, Beef, Spicy, Cheese.
+- Pengaturan kebutuhan Box isi 3/Box isi 5 per varian serta edit target dengan penyesuaian selisih stok.
+- Pengurangan stok manual dengan alasan wajib; revisi, pengembalian sebagian, dan pembatalan yang tercatat di audit.
+- Laporan produksi harian, stock opname, riwayat transaksi, dan ekspor CSV.
+- Analitik pemakaian stok dan kalender target produksi.
+- Akun admin/staff, pembatasan login, dan pencatatan aktivitas.
+- Mode offline melalui cache PWA, penyimpanan lokal, dan antrean sinkronisasi IndexedDB.
+- Backup database ber-checksum SHA-256 dan pemulihan tervalidasi dengan salinan pra-pemulihan.
+- Aplikasi Android WebView, penyimpanan laporan ke folder Download, dan alarm native Pulang Kerja.
+- Multi-perangkat melalui satu server pusat di Termux.
+- Pemeriksaan dan penerapan pembaruan branch main langsung dari aplikasi oleh admin.
+
+## Catatan versi 2.2.0
+
+- Menyamakan nomor versi backend, tampilan Tentang, PWA, dan APK Android.
+- Memperbarui deskripsi fitur agar mencakup koreksi stok, audit, backup-pemulihan, multi-perangkat, analitik, kalender produksi, ekspor, alarm, dan update dari aplikasi.
+- Memperbarui identitas cache PWA agar aset versi baru tidak tertahan cache lama.
 
 ## Instalasi Termux
 
