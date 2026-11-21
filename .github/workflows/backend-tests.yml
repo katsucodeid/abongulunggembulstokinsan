@@ -29,8 +29,12 @@ jobs:
       - name: Install backend dependencies
         working-directory: backend
         run: npm install --no-audit --no-fund
-      - name: Check frontend JavaScript syntax
-        run: node --check frontend/app.js
+      - name: Check JavaScript syntax
+        run: |
+          node --check backend/server.js
+          node --check backend/management.js
+          node --check backend/stock-corrections.js
+          node --check frontend/app.js
       - name: Run backend tests
         working-directory: backend
         run: npm test
