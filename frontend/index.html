@@ -402,7 +402,7 @@ main{padding-top:0!important}
 /* Tema gelap monokrom: hanya hitam dan putih, tanpa gradasi/warna aksen. */
 :root:not(.light){color-scheme:dark;--bg:#000;--panel:#000;--text:#fff;--muted:#fff;--line:#fff;--accent:#fff;--danger:#fff}
 :root:not(.light) *{background-image:none!important;box-shadow:none!important;border-color:#fff}
-:root:not(.light) body,:root:not(.light) header,:root:not(.light) main,:root:not(.light) footer,:root:not(.light) .tabs,:root:not(.light) .panel,:root:not(.light) .history-card,:root:not(.light) .variant-card,:root:not(.light) .outlet-target-card,:root:not(.light) .alarm-box,:root:not(.light) .alarm-stat,:root:not(.light) .tone-row,:root:not(.light) .nav-drawer-head{background-color:#000!important;color:#fff!important}
+:root:not(.light) body,:root:not(.light) header,:root:not(.light) main,:root:not(.light) footer,:root:not(.light) .tabs,:root:not(.light) .panel,:root:not(.light) .history-card,:root:not(.light) .variant-card,:root:not(.light) .outlet-target-card,:root:not(.light) .music-card,:root:not(.light) .music-stat,:root:not(.light) .music-row,:root:not(.light) .nav-drawer-head{background-color:#000!important;color:#fff!important}
 :root:not(.light) header{backdrop-filter:none!important}
 :root:not(.light) #stockGrid>.panel,:root:not(.light) #productionPreview,:root:not(.light) .secondary,:root:not(.light) .menu-toggle,:root:not(.light) .nav-close,:root:not(.light) .tabs button{background-color:#000!important;color:#fff!important;border:1px solid #fff!important}
 :root:not(.light) button:not(.secondary){background-color:#fff!important;color:#000!important;border:1px solid #fff!important}
@@ -577,7 +577,7 @@ main{padding-top:0!important}
 <div id="userList"></div>
 </div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Sistem pencatatan persediaan kemasan dan operasional produksi Abon Gulung Gembul. Mendukung akun bertingkat, transaksi stok, laporan, pencadangan, serta penggunaan offline dengan sinkronisasi ke server.</p></div><span id="aboutVersion" class="badge">Versi 2.3.0</span></div>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Sistem pencatatan persediaan kemasan dan operasional produksi Abon Gulung Gembul. Mendukung akun bertingkat, transaksi stok, laporan, pencadangan, serta penggunaan offline dengan sinkronisasi ke server.</p></div><span id="aboutVersion" class="badge">Versi 2.4.0</span></div>
 <section class="history-card developer-profile"><img src="/img/BackgroundEraser_20261016_074306739.png" alt="Foto pengembang aplikasi"><div><b>Pengembang</b><p class="muted">Dirancang dan dikembangkan oleh KatsuCode bersama Insan untuk mendukung operasional Abon Gulung Gembul.</p></div></section>
 <h3>Fitur aplikasi</h3>
 <div class="grid">
@@ -594,7 +594,7 @@ main{padding-top:0!important}
 <article class="history-card"><b>📡 Multi-perangkat &amp; offline-first</b><p class="muted">Satu HP menjalankan server pusat; perangkat lain mengakses lewat jaringan lokal. Catatan offline masuk antrean dan dikirim saat koneksi pulih.</p></article>
 <article class="history-card"><b>📈 Analitik & kalender produksi</b><p class="muted">Sediakan ringkasan pemakaian stok berdasarkan periode dan kalender target produksi bulanan.</p></article>
 <article class="history-card"><b>📤 Ekspor transaksi</b><p class="muted">Unduh riwayat transaksi dalam format CSV untuk pengolahan dan arsip lebih lanjut.</p></article>
-<article class="history-card"><b>⏰ Alarm Pulang Kerja</b><p class="muted">Kelola nada alarm dan jadwal pengingat; dukungan alarm native Android dapat berjalan melalui layanan sistem.</p></article>
+<article class="history-card"><b>♫ Pemutar musik lokal</b><p class="muted">Tambahkan musik dari perangkat, buat atau hapus daftar putar, putar satu lagu secara langsung, lanjutkan atau jeda, dan pindah ke lagu sebelum maupun berikutnya. Menghapus musik dari aplikasi tidak menghapus file asli di ponsel.</p></article>
 </div>
 <h3>Keunggulan</h3>
 <ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang serta tema gelap monokrom hitam-putih dan navigasi yang ramah perangkat seluler.</li>
