@@ -22,17 +22,26 @@ function isAdmin(){return currentRole()==="admin";}
 function roleLabel(role){return role==="admin"?"Admin":role==="staff"?"Karyawan":role||"Offline";}
 function hideBootLoading(){const splash=$("bootLoading");if(splash)splash.classList.add("hidden");}
 async function loadUsers(){
- const list=$("userList"),status=$("userListStatus");if(!list||!isAdmin())return;
+ const list=$("userList"),status=$("userListStatus"),selector=$("selectedUser");if(!list||!isAdmin())return;
  try{
-  const data=await api("/users");list.replaceChildren();
-  (data.users||[]).forEach(user=>{
+  const data=await api("/users"),users=data.users||[],previous=selector?.value||"";
+  list.replaceChildren();
+  if(selector){
+   selector.replaceChildren();
+   const placeholder=document.createElement("option");placeholder.value="";placeholder.textContent=users.length?"Pilih akun yang akan diubah":"Belum ada akun";selector.appendChild(placeholder);
+   users.forEach(user=>{const option=document.createElement("option");option.value=user.username;option.textContent=user.username+" · "+roleLabel(user.role);selector.appendChild(option);});
+   if(users.some(user=>user.username===previous))selector.value=previous;
+  }
+  users.forEach(user=>{
    const card=document.createElement("article");card.className="history-card";
    const name=document.createElement("b");name.textContent=user.username;
    const role=document.createElement("p");role.className="muted";role.textContent="Tingkat akun: "+roleLabel(user.role);
-   card.append(name,role);list.appendChild(card);
+   const choose=document.createElement("button");choose.type="button";choose.className="secondary";choose.textContent="Pilih untuk ubah password";
+   choose.addEventListener("click",()=>{if(selector)selector.value=user.username;const input=$("resetUserPassword");if(input)input.focus();});
+   card.append(name,role,choose);list.appendChild(card);
   });
-  if(status)status.textContent=(data.users||[]).length+" akun terdaftar.";
-  if(!data.users?.length&&status)status.textContent="Belum ada akun yang terdaftar.";
+  if(status)status.textContent=users.length+" akun terdaftar.";
+  if(!users.length&&status)status.textContent="Belum ada akun yang terdaftar.";
  }catch(e){if(status)status.textContent="Gagal memuat daftar akun: "+e.message;}
 }
 async function createUser(){
@@ -46,6 +55,18 @@ async function createUser(){
   if(status)status.textContent="Akun "+result.username+" berhasil dibuat dengan tingkat "+roleLabel(result.role)+".";
   await loadUsers();
  }catch(e){if(status)status.textContent="Akun gagal dibuat: "+e.message;}
+}
+async function resetUserPassword(){
+ const selector=$("selectedUser"),password=$("resetUserPassword"),status=$("userPasswordStatus");
+ const username=String(selector?.value||"").trim(),secret=String(password?.value||"");
+ if(!username){if(status)status.textContent="Pilih akun yang akan diubah terlebih dahulu.";selector?.focus();return;}
+ if(secret.length<10||secret.length>128){if(status)status.textContent="Password baru harus 10–128 karakter.";password?.focus();return;}
+ if(!confirm("Ubah password akun "+username+"?"))return;
+ try{
+  const result=await api("/users/"+encodeURIComponent(username)+"/password",{method:"PUT",body:JSON.stringify({password:secret})});
+  if(password)password.value="";
+  if(status)status.textContent=result.message||"Password akun berhasil diperbarui.";
+ }catch(e){if(status)status.textContent="Password gagal diperbarui: "+e.message;}
 }
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
