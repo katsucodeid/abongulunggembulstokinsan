@@ -371,15 +371,29 @@ Mika roti roll : ${fmt(s.mika)}pcs`;
 });
 app.get("/api/users", auth, adminOnly, (req, res) => res.json({ users: db.users.map(({ username, role }) => ({ username, role })) }));
 app.post("/api/users", auth, adminOnly, async (req, res) => {
-  const { username, password, role = "staff" } = req.body || {};
-  if (!username || !password || password.length < 10 || !["admin", "staff"].includes(role)) return res.status(400).json({ error: "Username, password minimal 10 karakter, dan role valid wajib diisi." });
-  const result = await locked(async () => {
-    if (db.users.some(x => x.username === username)) throw new Error("Username sudah digunakan.");
-    db.users.push({ id: require("crypto").randomUUID(), username, passwordHash: await bcrypt.hash(password, 12), role });
-    recordAudit(req.user, "user.create", { username, role });
-    await persist();
-  });
-  res.json({ ok: true, username, role });
+  const username = String(req.body?.username || "").trim().toLowerCase();
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  const role = req.body?.role || "staff";
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) {
+    return res.status(400).json({ error: "Username harus 3–32 karakter dan hanya boleh berisi huruf, angka, titik, garis bawah, atau tanda hubung." });
+  }
+  if (password.length < 10 || password.length > 128) {
+    return res.status(400).json({ error: "Password harus terdiri dari 10–128 karakter." });
+  }
+  if (!["admin", "staff"].includes(role)) {
+    return res.status(400).json({ error: "Tingkat akun harus Admin atau Karyawan." });
+  }
+  try {
+    await locked(async () => {
+      if (db.users.some(x => String(x.username).toLowerCase() === username)) throw new Error("Username sudah digunakan.");
+      db.users.push({ id: require("crypto").randomUUID(), username, passwordHash: await bcrypt.hash(password, 12), role });
+      recordAudit(req.user, "user.create", { username, role });
+      await persist();
+    });
+    res.status(201).json({ ok: true, username, role });
+  } catch (e) {
+    res.status(409).json({ error: e.message || "Akun gagal dibuat." });
+  }
 });
 
 require("./management")(app, { auth, adminOnly, locked, persist, getDb: () => db, setDb: value => { db = value; }, itemDefs });
