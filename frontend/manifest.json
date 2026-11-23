@@ -2,12 +2,12 @@
   "id": "./",
   "name": "Abon Gulung Gembul - Stok Kertas",
   "short_name": "Gembul Stok",
-  "description": "INSAN Stock Manager 2.2.0: kelola stok kemasan, barang masuk, target produksi per outlet dan varian, koreksi stok, laporan, backup-pemulihan, serta sinkronisasi multi-perangkat offline-first.",
+  "description": "INSAN Stock Manager 2.3.0: manajemen stok, akun Admin dan Karyawan, target produksi, estimasi kapasitas, laporan, backup-pemulihan, serta sinkronisasi offline-first.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
-  "background_color": "#fff8ef",
-  "theme_color": "#bd4e1c",
+  "background_color": "#000000",
+  "theme_color": "#000000",
   "orientation": "portrait",
   "icons": [
     {
