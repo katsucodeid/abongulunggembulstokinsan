@@ -11,7 +11,7 @@ async function queueAdd(op){const d=await openDB();return new Promise((resolve,r
 async function queueRemove(ids){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite"),s=t.objectStore(QUEUE);ids.forEach(id=>s.delete(id));t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
 function newId(){return (crypto.randomUUID?crypto.randomUUID():"tx-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
 function setStatus(text,kind="muted"){$("connection").textContent=text;$("connection").className=kind;}
-function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#171b22");}
+function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#000000");}
 function themeInit(){let saved="dark";try{saved=localStorage.getItem("insan_theme")||"dark";}catch{}applyTheme(saved);}
 function toggleTheme(){applyTheme(document.documentElement.classList.contains("light")?"dark":"light");}
 async function api(path,opts={}){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),8000);try{const r=await fetch(API+"/api"+path,{...opts,signal:opts.signal||controller.signal,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json();}catch{}if(!r.ok){const e=new Error(d.error||"Permintaan gagal");e.status=r.status;throw e;}return d;}finally{clearTimeout(timeout);}}
@@ -526,15 +526,21 @@ setInterval(checkForUpdates,300000);
   if(message)message.textContent="Server terhubung · memuat data…";
   if(token||cachedUser)await refresh();else{showLogin();setStatus("Server terhubung · silakan login","ok");}
  }catch(error){
-  cachedUser=await kvGet("user");
-  state=await kvGet("state");
-  if(state&&cachedUser){
-   showApp();await renderAll();setStatus("Server belum terhubung · mode offline aktif","low");
-  }else{
-   showLogin();$("loginMsg").textContent="Server belum terhubung. Login pertama membutuhkan koneksi ke server.";
-   setStatus("Server belum terhubung","low");
+  try{
+   cachedUser=await kvGet("user");
+   state=await kvGet("state");
+   if(state&&cachedUser){
+    showApp();await renderAll();setStatus("Server belum terhubung · mode offline aktif","low");
+   }else{
+    showLogin();$("loginMsg").textContent="Server belum terhubung. Login pertama membutuhkan koneksi ke server.";
+    setStatus("Server belum terhubung","low");
+   }
+  }catch(storageError){
+   showLogin();$("loginMsg").textContent="Server tidak terhubung dan data lokal tidak dapat dibaca.";
+   setStatus("Koneksi dan penyimpanan lokal tidak tersedia","low");
   }
+ }finally{
+  if(!navigator.onLine)setStatus("Offline · data lokal akan digunakan jika tersedia","low");
+  hideBootLoading();
  }
- if(!navigator.onLine)setStatus("Offline · data lokal akan digunakan jika tersedia","low");
- hideBootLoading();
 })();
