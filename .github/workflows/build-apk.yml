@@ -87,7 +87,8 @@ jobs:
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          ls -lh "$APK"
+          cp "$APK" android/app/build/outputs/apk/debug/Gembul-Stok-Kertas-Terpisah-2.3.0.apk
+          ls -lh android/app/build/outputs/apk/debug/Gembul-Stok-Kertas-Terpisah-2.3.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
