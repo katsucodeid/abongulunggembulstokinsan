@@ -1,4 +1,4 @@
-name: Build APK Gembul Stok Kertas Terpisah
+name: Build APK Abon Gulung Gembul Laporan Semi Final
 
 on:
   pull_request:
@@ -87,13 +87,13 @@ jobs:
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          cp "$APK" android/app/build/outputs/apk/debug/Gembul-Stok-Kertas-Terpisah-2.4.1.apk
-          ls -lh android/app/build/outputs/apk/debug/Gembul-Stok-Kertas-Terpisah-2.4.1.apk
+          cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
+          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Gembul-Stok-Kertas-Terpisah-2.4.1-APK
-          path: android/app/build/outputs/apk/debug/Gembul-Stok-Kertas-Terpisah-2.4.1.apk
+          name: Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2-APK
+          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
           if-no-files-found: error
           retention-days: 30
