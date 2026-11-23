@@ -1,4 +1,4 @@
-name: Build Abon Gulung Gembul APK
+name: Build APK Gembul Stok Kertas Terpisah
 
 on:
   pull_request:
