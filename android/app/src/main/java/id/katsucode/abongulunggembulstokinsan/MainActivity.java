@@ -177,6 +177,10 @@ public class MainActivity extends Activity {
         @JavascriptInterface public void pauseMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_PAUSE)); }
         @JavascriptInterface public void resumeMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_RESUME)); }
         @JavascriptInterface public void stopMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_STOP)); }
+        @JavascriptInterface public void releaseMusicUri(String uri) {
+            try { getContentResolver().releasePersistableUriPermission(Uri.parse(uri), Intent.FLAG_GRANT_READ_URI_PERMISSION); }
+            catch (Exception ignored) { }
+        }
 
         @JavascriptInterface
         public long getMusicDuration(String uri) {
