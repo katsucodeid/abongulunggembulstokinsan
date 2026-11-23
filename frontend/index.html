@@ -327,8 +327,6 @@ button.danger{background:#b9382d;color:#fff}
 .footer-brand{color:#8f3514;letter-spacing:.14em}
 .footer-logo{width:82px;height:82px;background:#fff;border-radius:22px;padding:5px}
 .nav-backdrop.visible{background:rgba(54,27,13,.42)}
-#alarm .alarm-box,#alarm .alarm-stat,#alarm .tone-row{background:#fff;border-color:#efddca}
-#alarm .tone-current{background:#fff2e5;border-color:#bd4e1c}
 @media(max-width:640px){
  header{min-height:72px;padding:10px 12px}
  .brand-logo{width:49px;height:49px;border-radius:14px}
@@ -354,7 +352,6 @@ button.danger{background:#b9382d;color:#fff}
 :root.light{color-scheme:light;--bg:#fff7ec;--panel:#fffdf9;--text:#352116;--muted:#806b59;--line:#ead8c5;--accent:#bd4e1c;--danger:#bd3c32;--surface-soft:#f5e8d8}
 :root:not(.light){color-scheme:dark;--bg:#171b22;--panel:#222832;--text:#f3eee7;--muted:#b4b0aa;--line:#39424e;--accent:#f0a33b;--danger:#ff7770;--surface-soft:#2b333e}
 body{background:var(--bg);color:var(--text)}
-.panel,.history-card,.variant-card,.outlet-target-card,#alarm .alarm-box,#alarm .alarm-stat{background:var(--panel);border-color:var(--line);box-shadow:0 5px 18px rgba(20,18,15,.07)}
 #stockGrid>.panel{background:var(--panel);border-color:var(--line)}
 input,select,textarea{background:var(--surface-soft);color:var(--text);border-color:var(--line)}
 .secondary,.menu-toggle{background:var(--surface-soft);color:var(--text);border:1px solid var(--line)}
@@ -366,7 +363,6 @@ button{background:var(--accent);color:#fff;box-shadow:none}
 #connection{background:var(--panel);color:var(--text)}
 .app-footer{border-color:var(--line)}
 :root:not(.light) .panel,:root:not(.light) .tab.panel{background:var(--panel)!important;border-color:var(--line)!important;box-shadow:0 8px 22px rgba(0,0,0,.16)!important}
-:root:not(.light) .hint,:root:not(.light) .history-card,:root:not(.light) .outlet-target-card,:root:not(.light) .variant-card,:root:not(.light) #alarm .alarm-box,:root:not(.light) #alarm .alarm-stat,:root:not(.light) #alarm .tone-row{background:var(--surface-soft)!important;border-color:#3b5063!important;color:var(--text)}
 :root:not(.light) input,:root:not(.light) select,:root:not(.light) textarea{background:#121f2d!important;border-color:#405468!important;color:var(--text)!important}
 :root:not(.light) .tabs{background:#172536!important;border-color:var(--line)!important}
 :root:not(.light) .tabs button{color:#d5dfeb!important}
@@ -406,7 +402,7 @@ main{padding-top:0!important}
 /* Tema gelap monokrom: hanya hitam dan putih, tanpa gradasi/warna aksen. */
 :root:not(.light){color-scheme:dark;--bg:#000;--panel:#000;--text:#fff;--muted:#fff;--line:#fff;--accent:#fff;--danger:#fff}
 :root:not(.light) *{background-image:none!important;box-shadow:none!important;border-color:#fff}
-:root:not(.light) body,:root:not(.light) header,:root:not(.light) main,:root:not(.light) footer,:root:not(.light) .tabs,:root:not(.light) .panel,:root:not(.light) .history-card,:root:not(.light) .variant-card,:root:not(.light) .outlet-target-card,:root:not(.light) .alarm-box,:root:not(.light) .alarm-stat,:root:not(.light) .tone-row,:root:not(.light) .nav-drawer-head{background-color:#000!important;color:#fff!important}
+:root:not(.light) body,:root:not(.light) header,:root:not(.light) main,:root:not(.light) footer,:root:not(.light) .tabs,:root:not(.light) .panel,:root:not(.light) .history-card,:root:not(.light) .variant-card,:root:not(.light) .outlet-target-card,:root:not(.light) .music-card,:root:not(.light) .music-stat,:root:not(.light) .music-row,:root:not(.light) .nav-drawer-head{background-color:#000!important;color:#fff!important}
 :root:not(.light) header{backdrop-filter:none!important}
 :root:not(.light) #stockGrid>.panel,:root:not(.light) #productionPreview,:root:not(.light) .secondary,:root:not(.light) .menu-toggle,:root:not(.light) .nav-close,:root:not(.light) .tabs button{background-color:#000!important;color:#fff!important;border:1px solid #fff!important}
 :root:not(.light) button:not(.secondary){background-color:#fff!important;color:#000!important;border:1px solid #fff!important}
@@ -460,57 +456,80 @@ main{padding-top:0!important}
 <div class="nav-group">
 <button class="nav-group-toggle" type="button" aria-expanded="false" aria-controls="navSystem" onclick="toggleNavGroup('navSystem')"><span>▸ &nbsp; PENGATURAN &amp; SISTEM</span><span class="nav-chevron">⌄</span></button>
 <div class="nav-group-items" id="navSystem">
-<button class="nav-link" onclick="showTab('alarm')">⏰ &nbsp; Alarm kerja</button>
+<button class="nav-link" onclick="showTab('music')">♫ &nbsp; Pemutar musik</button>
 <button class="nav-link" onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button>
 <button class="nav-link" id="accountsNavLink" onclick="showTab('accounts')" hidden>👥 &nbsp; Pengguna &amp; akun</button>
 <button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; pembaruan</button>
 </div></div><button class="nav-link nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></nav>
-<div id="alarm" class="tab panel hidden">
+<div id="music" class="tab panel hidden">
 <style>
-#alarm .alarm-hero{display:grid;grid-template-columns:minmax(0,1.2fr) minmax(220px,.8fr);gap:14px;margin:12px 0}
-#alarm .alarm-box{min-width:0;border:1px solid var(--line);border-radius:15px;padding:14px;background:color-mix(in srgb,var(--bg) 55%,var(--panel))}
-#alarm .alarm-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin:12px 0}
-#alarm .alarm-stat{min-width:0;padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
-#alarm .alarm-stat strong{display:block;font-size:clamp(16px,3vw,21px);font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
-#alarm .alarm-stat span{display:block;color:var(--muted);font-size:11px;line-height:1.4}
-#alarm .tone-tools{display:grid;grid-template-columns:minmax(0,1fr) minmax(125px,.45fr);gap:8px;align-items:center;margin:12px 0}
-#alarm .tone-list{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,270px),1fr));gap:8px}
-#alarm .tone-row{display:flex;align-items:center;justify-content:space-between;gap:8px;min-width:0;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
-#alarm .tone-name{min-width:0;flex:1;overflow-wrap:anywhere;font-size:13px;font-weight:650}
-#alarm .tone-sub{display:block;color:var(--muted);font-size:10px;font-weight:450;line-height:1.45}
-#alarm .tone-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
-#alarm .tone-actions button{width:34px;min-width:34px;height:34px;min-height:34px;padding:0;margin:0;border-radius:50%;font-size:14px;line-height:1;box-shadow:none}
-#alarm .tone-actions button[aria-pressed=true]{background:var(--accent);color:white}
-#alarm .tone-current{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 9%,var(--bg))}
-#alarm .alarm-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
-#alarm .alarm-section-head h3{font-size:14px;margin:0}
-#alarm .alarm-note{font-size:12px;color:var(--muted);line-height:1.55}
-#alarm button,#alarm input,#alarm select{max-width:100%}
-@media(max-width:560px){#alarm .alarm-hero{grid-template-columns:1fr}#alarm .tone-tools{grid-template-columns:1fr}#alarm .tone-list{grid-template-columns:1fr}#alarm .alarm-box{padding:12px}}
-@media(max-width:350px){#alarm .alarm-stats{grid-template-columns:1fr}#alarm .tone-actions button{width:32px;min-width:32px;height:32px;min-height:32px}}
+#music .music-hero{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(220px,.9fr);gap:14px;margin:14px 0}
+#music .music-card{min-width:0;padding:16px;border:1px solid var(--line);border-radius:18px;background:var(--panel);box-shadow:0 8px 24px rgba(0,0,0,.06)}
+#music .music-now{display:flex;align-items:center;gap:14px;min-width:0}
+#music .music-art{width:92px;height:92px;flex:0 0 92px;display:grid;place-items:center;border-radius:20px;background:linear-gradient(145deg,var(--surface-soft),var(--panel));border:1px solid var(--line);font-size:38px}
+#music .music-meta{min-width:0}
+#music .music-meta strong{display:block;font-size:17px;overflow-wrap:anywhere}
+#music .music-meta span{display:block;margin-top:5px;color:var(--muted);font-size:12px;overflow-wrap:anywhere}
+#music .music-progress{display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:8px;align-items:center;margin:16px 0 8px;font-size:11px;color:var(--muted);font-variant-numeric:tabular-nums}
+#music input[type=range]{width:100%;accent-color:var(--text)}
+#music .music-controls{display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap}
+#music .music-controls button{min-width:44px;width:44px;height:44px;border-radius:50%;padding:0;font-size:17px}
+#music .music-controls .music-main{width:56px;height:56px;font-size:22px}
+#music .music-tools{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+#music .music-tools>*{flex:1 1 140px;min-width:0}
+#music .music-list{display:grid;gap:8px;margin-top:12px}
+#music .music-row{display:flex;align-items:center;gap:10px;min-width:0;padding:11px;border:1px solid var(--line);border-radius:13px;background:var(--bg)}
+#music .music-row.active{border-color:var(--text);background:var(--surface-soft)}
+#music .music-row-info{min-width:0;flex:1}
+#music .music-row-info strong{display:block;font-size:13px;overflow-wrap:anywhere}
+#music .music-row-info small{display:block;margin-top:3px;color:var(--muted);font-size:11px}
+#music .music-row-actions{display:flex;align-items:center;gap:5px;flex:0 0 auto}
+#music .music-row-actions button{min-width:36px;width:36px;height:36px;padding:0;border-radius:11px;font-size:13px}
+#music .music-section-head{display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap;margin:18px 0 8px}
+#music .music-section-head h3{margin:0;font-size:15px}
+#music .music-note{font-size:12px;color:var(--muted);line-height:1.55}
+#music .music-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;margin-top:12px}
+#music .music-stat{padding:10px;border:1px solid var(--line);border-radius:12px;background:var(--bg)}
+#music .music-stat b{display:block;font-size:19px}
+#music .music-stat span{display:block;color:var(--muted);font-size:11px}
+#music .music-empty{padding:18px;text-align:center;border:1px dashed var(--line);border-radius:13px;color:var(--muted);font-size:12px}
+#music .music-status{min-height:20px;margin-top:10px;font-size:12px;color:var(--muted)}
+@media(max-width:620px){#music .music-hero{grid-template-columns:1fr}#music .music-card{padding:13px}#music .music-art{width:76px;height:76px;flex-basis:76px;border-radius:16px}#music .music-row{align-items:flex-start;flex-wrap:wrap}#music .music-row-actions{margin-left:auto}}
 </style>
-<h2>⏰ Alarm Kerja</h2><p class="hint">Atur jam mulai kerja. Waktu alarm pulang dihitung otomatis setelah 10 jam.</p>
-<div class="alarm-hero">
-<section class="alarm-box"><label for="workStartTime">Jam mulai kerja</label><input id="workStartTime" type="time" value="07:00"><div class="muted">Perkiraan waktu pulang</div><div class="qty" id="workEndTime">17:00 WIB</div><div class="alarm-note">Durasi kerja terjadwal: 10 jam</div><div class="row"><button id="workAlarmToggle" onclick="toggleWorkAlarm()">Aktifkan alarm</button><button class="secondary" id="workAlarmStop" onclick="stopWorkAlarm()" disabled>Matikan</button></div><p class="alarm-note" id="workAlarmStatus" aria-live="polite">Alarm belum diaktifkan.</p></section>
-<section class="alarm-box"><strong>Ringkasan pustaka</strong><div class="alarm-stats"><div class="alarm-stat"><strong id="toneTotalCount">9</strong><span>Total nada</span></div><div class="alarm-stat"><strong id="toneDownloadedCount">0</strong><span>Tersimpan</span></div><div class="alarm-stat"><strong id="toneAvailableCount">9</strong><span>Belum diunduh</span></div></div><div class="alarm-note" id="alarmCurrentTone">Nada alarm aktif: Lonceng Lembut</div><p class="alarm-note" id="alarmToneStatus" aria-live="polite">Nada tersedia untuk disimpan ke perangkat.</p></section>
+<span class="eyebrow">MUSIC PLAYER · OFFLINE</span>
+<h2>♫ Pemutar Musik</h2>
+<p class="hint">Putar koleksi musik dari perangkat, susun daftar putar sendiri, atau putar satu lagu secara langsung tanpa memasukkannya ke daftar putar.</p>
+<div class="music-hero">
+<section class="music-card">
+<div class="music-now"><div class="music-art" aria-hidden="true">♫</div><div class="music-meta"><span id="musicPlaybackLabel">SIAP DIPUTAR</span><strong id="musicNowTitle">Belum ada musik diputar</strong><span id="musicNowSubtitle">Tambahkan musik dari perangkat untuk memulai</span></div></div>
+<div class="music-progress"><span id="musicElapsed">00:00</span><input id="musicSeek" type="range" min="0" max="1000" value="0" aria-label="Posisi pemutaran"><span id="musicDuration">00:00</span></div>
+<div class="music-controls"><button class="secondary" type="button" onclick="previousMusic()" aria-label="Musik sebelumnya" title="Musik sebelumnya">⏮</button><button class="secondary music-main" id="musicPlayPause" type="button" onclick="toggleMusicPlayback()" aria-label="Putar musik" title="Putar / jeda">▶</button><button class="secondary" type="button" onclick="nextMusic()" aria-label="Musik berikutnya" title="Musik berikutnya">⏭</button><button class="secondary" type="button" onclick="stopMusicPlayback()" aria-label="Hentikan musik" title="Hentikan">■</button></div>
+<div class="music-status" id="musicPlayerStatus" aria-live="polite">Pemutar siap. Pilih lagu atau daftar putar.</div>
+<audio id="musicAudio" preload="metadata" hidden></audio>
+</section>
+<section class="music-card">
+<div class="music-section-head"><h3>Perpustakaan musik</h3><span class="music-note" id="musicLibraryCount">0 lagu</span></div>
+<p class="music-note">Pilih file audio dari penyimpanan perangkat. File asli tetap berada di lokasi semula; aplikasi hanya menyimpan akses dan data pemutaran.</p>
+<button type="button" onclick="chooseMusicFiles()">＋ Tambahkan musik dari perangkat</button>
+<input id="musicFileInput" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac,.flac" multiple hidden>
+<div class="music-stats"><div class="music-stat"><b id="musicTotalCount">0</b><span>Total lagu</span></div><div class="music-stat"><b id="musicPlaylistCount">0</b><span>Daftar putar</span></div><div class="music-stat"><b id="musicQueueCount">0</b><span>Antrean aktif</span></div></div>
+<p class="music-note" id="musicLibraryStatus">Musik yang ditambahkan hanya tersimpan di aplikasi ini.</p>
+</section>
 </div>
-<div class="alarm-section-head"><h3>🎵 Semua nada</h3><span class="alarm-note">Pilih nama untuk melihat kontrol</span></div>
-<div class="tone-tools"><input id="alarmToneSearch" type="search" placeholder="Cari nada dering…" aria-label="Cari nada dering"><select id="alarmToneFilter" aria-label="Filter nada"><option value="all">Semua nada</option><option value="downloaded">Sudah diunduh</option><option value="available">Belum diunduh</option></select></div>
-<div id="alarmToneLibrary" class="tone-list"></div>
-<div class="alarm-section-head"><h3>🎭 Nada lucu dari Pixabay</h3><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Buka Pixabay ↗</a></div>
-<p class="alarm-note">Pilih suara di Pixabay lalu tekan Free Download. Setelah file tersimpan, impor melalui pemilih file di bawah untuk menggunakannya sebagai nada alarm.</p>
-<div class="tone-list">
-<article class="tone-row"><div class="tone-name">Funny Alarm <span class="tone-sub">Alarm kartun lucu · Efecto Fundador</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-funny-alarm-75649/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Alarm &amp; Notification <span class="tone-sub">Efek notifikasi singkat</span></div><a href="https://pixabay.com/sound-effects/film-special-effects-notification-20-270145/" target="_blank" rel="noopener">Unduh ↗</a></article>
-<article class="tone-row"><div class="tone-name">Koleksi alarm lucu lainnya</div><a href="https://pixabay.com/id/sound-effects/search/alarm%20lucu/" target="_blank" rel="noopener">Lihat daftar ↗</a></article>
+<div class="music-section-head"><h3>Daftar putar</h3><span class="music-note">Buat koleksi sesuai suasana</span></div>
+<div class="music-card">
+<div class="music-tools"><input id="newPlaylistName" type="text" maxlength="40" placeholder="Nama daftar putar baru"><button class="secondary" type="button" onclick="createMusicPlaylist()">＋ Buat daftar putar</button></div>
+<div class="music-tools" style="margin-top:10px"><select id="musicPlaylistSelect" aria-label="Pilih daftar putar"><option value="">Belum ada daftar putar</option></select><button type="button" onclick="playSelectedPlaylist()">▶ Putar daftar putar</button><button class="danger" type="button" onclick="deleteSelectedPlaylist()">Hapus daftar putar</button></div>
+<div class="music-section-head"><h3 id="selectedPlaylistTitle">Pilih daftar putar</h3><span class="music-note" id="selectedPlaylistCount">0 lagu</span></div>
+<p class="music-note">Gunakan tombol “＋” pada koleksi musik untuk menambahkan lagu ke daftar putar yang dipilih.</p>
+<div id="musicPlaylistTracks" class="music-list"><div class="music-empty">Belum ada daftar putar yang dipilih.</div></div>
 </div>
-<label for="customAlarmToneFile">Impor nada dari perangkat (MP3/WAV/OGG/M4A/AAC)</label><input id="customAlarmToneFile" type="file" accept="audio/*,.mp3,.wav,.ogg,.m4a,.aac">
-<div class="alarm-section-head"><h3>⬇ Nada tersimpan di perangkat</h3><span class="alarm-note" id="downloadedToneSummary">0 nada</span></div>
-<p class="alarm-note">Nada tersimpan pada penyimpanan browser perangkat ini. Hindari menghapus data situs agar nada tetap tersedia.</p><div id="downloadedAlarmTones" class="tone-list"></div>
-<div class="alarm-section-head"><h3>🧪 Uji alarm</h3></div><p class="alarm-note">Tes bunyi dalam 1, 2, atau 3 menit tanpa mengubah jadwal kerja.</p>
-<div class="row"><button class="secondary" onclick="scheduleAlarmTest(1)">Tes 1 menit</button><button class="secondary" onclick="scheduleAlarmTest(2)">Tes 2 menit</button><button class="secondary" onclick="scheduleAlarmTest(3)">Tes 3 menit</button></div>
-<div class="row"><button class="danger" onclick="cancelAlarmTest()">Batalkan tes</button><button class="secondary" onclick="stopAlarmSound()">Hentikan bunyi</button></div><p class="alarm-note" id="alarmDebugStatus" aria-live="polite">Mode percobaan tidak aktif.</p>
-<p class="hint">Catatan: alarm browser tidak dijamin berbunyi jika browser ditutup atau Android menghentikan proses. Alarm Android yang andal memerlukan integrasi native.</p>
+<div class="music-section-head"><h3>Semua musik</h3><span class="music-note">Putar langsung atau susun ke daftar putar</span></div>
+<div class="music-card">
+<div class="music-tools"><input id="musicSearch" type="search" placeholder="Cari judul musik…" aria-label="Cari musik"><span class="music-note" id="musicSearchInfo">Koleksi musik perangkat ini</span></div>
+<div id="musicLibraryList" class="music-list"><div class="music-empty">Belum ada musik. Tekan “Tambahkan musik dari perangkat”.</div></div>
+</div>
+<p class="music-note">Catatan privasi: tombol “Hapus dari aplikasi” hanya menghapus entri dan salinan cache aplikasi. Berkas musik asli di ponsel tidak disentuh.</p>
 </div><div id="dashboard" class="tab panel"><span class="eyebrow">PUSAT KENDALI</span><h2>Ringkasan persediaan</h2><p class="hint">Pantau stok yang tersedia. Status Aman berarti stok masih di atas batas minimum. Jika di bawah minimum, segera rencanakan pengadaan.</p><h2>Stok tersimpan</h2><div id="stockGrid" class="grid"></div><section id="productionCapacity" class="hint" aria-live="polite"><span class="muted">Estimasi kapasitas produksi akan dihitung dari stok kemasan saat ini.</span></section><button class="secondary" onclick="refresh()">↻ Perbarui / sinkronkan</button></div>
 <div id="incoming" class="tab panel hidden"><h2>Catat barang masuk</h2><p class="hint">Total barang dihitung otomatis: (jumlah pack × isi per pack) + tambahan pcs. Contoh: 2 pack × 100 pcs + 5 pcs = 205 pcs.</p><label>Barang</label><select id="inItem"><option value="box3">Box isi 3</option><option value="box5outer">Box isi 5 luar / Slongsong</option><option value="box5inner">Box isi 5 dalam / Tatakan polos</option><option value="paper">Kertas Minyak</option><option value="mika">Mika roti roll</option></select><div class="row"><div><label>Jumlah pack</label><input id="packs" type="number" min="0" value="0"></div><div><label>Isi per pack (pcs)</label><input id="perPack" type="number" min="0" value="0"></div><div><label>Tambahan pcs</label><input id="extra" type="number" min="0" value="0"></div></div><label>Catatan</label><input id="inNote" placeholder="Contoh: Paket datang pagi"><button onclick="stockIn()">Simpan barang datang</button><p id="inMsg" class="muted"></p></div>
 <div id="production" class="tab panel hidden"><h2>Catat target produksi</h2><p class="hint">Pilih outlet, lalu isi jumlah setiap varian. Total seluruh loyang dihitung otomatis dan ditampilkan sebelum target disimpan.</p><div class="row"><div><label>Tanggal</label><input id="prodDate" type="date"></div><div><label>Outlet / Toko</label><select id="location"><option value="">Pilih outlet</option><option value="Grand Wisata">Grand Wisata</option><option value="Bektim">Bektim</option><option value="Harapan Indah">Harapan Indah</option></select></div></div><h3 style="font-size:14px;margin:14px 0 6px">Ambil target yang sudah tersimpan (opsional)</h3><div class="row"><div><label>Target sumber</label><select id="targetSource"><option value="">Pilih target tanggal ini</option></select></div><div><button class="secondary" type="button" onclick="loadTargetForRequest()">Ambil & edit target</button></div></div><p id="editTargetMsg" class="muted">Pilih target untuk mengubah request tanpa membuat transaksi ganda.</p><h3 style="font-size:14px;margin:14px 0 6px">Jumlah loyang per varian</h3><div class="variant-grid"><div class="variant-card"><label for="ori">Ori</label><input id="ori" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="beef">Beef</label><input id="beef" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="spicy">Spicy</label><input id="spicy" type="number" min="0" step="1" value="0" inputmode="numeric"></div><div class="variant-card"><label for="cheese">Cheese</label><input id="cheese" type="number" min="0" step="1" value="0" inputmode="numeric"></div></div><h3 style="font-size:14px;margin:14px 0 6px">Pengaturan kemasan per varian</h3><p class="hint">Centang hanya varian yang kemasannya ingin diatur khusus. Varian yang tidak dicentang tetap memakai hitungan normal.</p><div class="variant-grid"><div class="variant-card"><label><input id="packCustomOri" type="checkbox" style="width:auto"> Kemasan khusus Ori</label><div id="packFieldsOri" class="hidden"><label>Box isi 5</label><input id="packBox5Ori" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Ori" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomBeef" type="checkbox" style="width:auto"> Kemasan khusus Beef</label><div id="packFieldsBeef" class="hidden"><label>Box isi 5</label><input id="packBox5Beef" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Beef" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomSpicy" type="checkbox" style="width:auto"> Kemasan khusus Spicy</label><div id="packFieldsSpicy" class="hidden"><label>Box isi 5</label><input id="packBox5Spicy" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Spicy" type="number" min="0" step="1" value="0"></div></div><div class="variant-card"><label><input id="packCustomCheese" type="checkbox" style="width:auto"> Kemasan khusus Cheese</label><div id="packFieldsCheese" class="hidden"><label>Box isi 5</label><input id="packBox5Cheese" type="number" min="0" step="1" value="0"><label>Box isi 3</label><input id="packBox3Cheese" type="number" min="0" step="1" value="0"></div></div></div><small>Setiap varian memiliki jumlah kemasan sendiri. Kertas minyak dan kedua jenis Box isi 5 otomatis mengikuti jumlah Box isi 5.</small><div id="requestNoteWrap"><label>Catatan request kemasan (opsional)</label><textarea id="requestNote" rows="2" placeholder="Contoh: Beef memakai kemasan campuran, Ori normal"></textarea></div><label>Catatan tambahan (opsional)</label><input id="prodNote" placeholder="Contoh: nomor pesanan pelanggan"><div id="productionPreview" class="hint">Isi jumlah loyang untuk melihat perkiraan pengurangan stok.</div><button id="prodSubmit" onclick="production()">Tambah target outlet</button><p id="prodMsg" class="muted"></p><h2 style="margin-top:18px">Rekap target harian</h2><p class="hint">Setiap outlet menampilkan jumlah per varian sekaligus total seluruh loyang dari semua input pada tanggal tersebut.</p><div id="targetDailyReport" class="history-card">Belum ada target untuk tanggal ini.</div></div>
@@ -558,7 +577,7 @@ main{padding-top:0!important}
 <div id="userList"></div>
 </div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Sistem pencatatan persediaan kemasan dan operasional produksi Abon Gulung Gembul. Mendukung akun bertingkat, transaksi stok, laporan, pencadangan, serta penggunaan offline dengan sinkronisasi ke server.</p></div><span id="aboutVersion" class="badge">Versi 2.3.0</span></div>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Sistem pencatatan persediaan kemasan dan operasional produksi Abon Gulung Gembul. Mendukung akun bertingkat, transaksi stok, laporan, pencadangan, serta penggunaan offline dengan sinkronisasi ke server.</p></div><span id="aboutVersion" class="badge">Versi 2.4.0</span></div>
 <section class="history-card developer-profile"><img src="/img/BackgroundEraser_20261016_074306739.png" alt="Foto pengembang aplikasi"><div><b>Pengembang</b><p class="muted">Dirancang dan dikembangkan oleh KatsuCode bersama Insan untuk mendukung operasional Abon Gulung Gembul.</p></div></section>
 <h3>Fitur aplikasi</h3>
 <div class="grid">
@@ -575,7 +594,7 @@ main{padding-top:0!important}
 <article class="history-card"><b>📡 Multi-perangkat &amp; offline-first</b><p class="muted">Satu HP menjalankan server pusat; perangkat lain mengakses lewat jaringan lokal. Catatan offline masuk antrean dan dikirim saat koneksi pulih.</p></article>
 <article class="history-card"><b>📈 Analitik & kalender produksi</b><p class="muted">Sediakan ringkasan pemakaian stok berdasarkan periode dan kalender target produksi bulanan.</p></article>
 <article class="history-card"><b>📤 Ekspor transaksi</b><p class="muted">Unduh riwayat transaksi dalam format CSV untuk pengolahan dan arsip lebih lanjut.</p></article>
-<article class="history-card"><b>⏰ Alarm Pulang Kerja</b><p class="muted">Kelola nada alarm dan jadwal pengingat; dukungan alarm native Android dapat berjalan melalui layanan sistem.</p></article>
+<article class="history-card"><b>♫ Pemutar musik lokal</b><p class="muted">Tambahkan musik dari perangkat, buat atau hapus daftar putar, putar satu lagu secara langsung, lanjutkan atau jeda, dan pindah ke lagu sebelum maupun berikutnya. Menghapus musik dari aplikasi tidak menghapus file asli di ponsel.</p></article>
 </div>
 <h3>Keunggulan</h3>
 <ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang serta tema gelap monokrom hitam-putih dan navigasi yang ramah perangkat seluler.</li>

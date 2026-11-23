@@ -1,6 +1,6 @@
 # Abon Gulung Gembul - Stok Kertas
 
-**INSAN Stock Manager · Versi 2.3.0**
+**INSAN Stock Manager · Versi 2.4.0**
 
 Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjalan secara lokal di Android melalui Termux dengan Node.js/Express, database JSON persisten, dan frontend PWA.
 
@@ -15,11 +15,11 @@ Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjal
 - Akun admin/staff, pembatasan login, dan pencatatan aktivitas.
 - Mode offline melalui cache PWA, penyimpanan lokal, dan antrean sinkronisasi IndexedDB.
 - Backup database ber-checksum SHA-256 dan pemulihan tervalidasi dengan salinan pra-pemulihan.
-- Aplikasi Android WebView, penyimpanan laporan ke folder Download, dan alarm native Pulang Kerja.
+- Aplikasi Android WebView, penyimpanan laporan ke folder Download, dan pemutar musik lokal dengan daftar putar dan kontrol pemutaran.
 - Multi-perangkat melalui satu server pusat di Termux.
 - Pemeriksaan dan penerapan pembaruan branch main langsung dari aplikasi oleh admin.
 
-## Catatan versi 2.3.0
+## Catatan versi 2.4.0
 
 - Menambahkan halaman Pengguna & Akun yang hanya dapat diakses Admin.
 - Admin dapat membuat akun dengan username, password, dan tingkat Admin atau Karyawan; password disimpan sebagai hash bcrypt.
@@ -27,7 +27,11 @@ Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjal
 - Memperbarui identitas versi dan deskripsi aplikasi pada backend, PWA, dan halaman Tentang & Pembaruan.
 - Merapikan tema gelap menjadi monokrom hitam-putih dengan kontras yang konsisten.
 - Menambahkan animasi pembuka untuk pemeriksaan koneksi server, dengan fallback ke data lokal saat server tidak tersedia.
-- Memperbarui cache service worker agar aset versi baru dimuat.
+- Menghapus seluruh fitur alarm kerja dan menggantinya dengan pemutar musik lokal.
+- Menambahkan impor musik dari perangkat, pembuatan dan penghapusan daftar putar, serta pemutaran langsung tanpa daftar putar.
+- Menambahkan kontrol lagu sebelumnya/berikutnya, jeda, lanjutkan, dan hentikan pemutaran.
+- Menghapus lagu hanya dari perpustakaan aplikasi tanpa menghapus file asli pada perangkat.
+- Menambahkan layanan pemutaran Android di latar belakang dengan notifikasi kontrol.
 
 ## Instalasi Termux
 
@@ -70,21 +74,15 @@ bash scripts/show-lan-url.sh
 
 Buka alamat IP yang ditampilkan dari browser perangkat lain, misalnya `http://192.168.1.20:8787`. Semua perangkat akan memakai database pusat yang sama pada HP server. Perangkat klien tidak perlu menjalankan Termux atau database kedua.
 
-**Batasan keamanan dan instalasi:** alamat LAN HTTP cocok untuk uji coba pada Wi-Fi tepercaya. Browser Android umumnya tidak mengizinkan pemasangan PWA penuh atau service worker pada alamat IP HTTP biasa karena bukan secure context. Untuk memasang PWA dan akses dari luar rumah/kantor, siapkan HTTPS melalui reverse proxy/tunnel atau gunakan aplikasi Android WebView yang dikonfigurasi untuk alamat server. Jangan membuka port Termux langsung ke internet. Lihat panduan jaringan dan keamanan di `docs/MULTI_DEVICE_AND_ALARM.md`.
+**Batasan keamanan dan instalasi:** alamat LAN HTTP cocok untuk uji coba pada Wi-Fi tepercaya. Browser Android umumnya tidak mengizinkan pemasangan PWA penuh atau service worker pada alamat IP HTTP biasa karena bukan secure context. Untuk memasang PWA dan akses dari luar rumah/kantor, siapkan HTTPS melalui reverse proxy/tunnel atau gunakan aplikasi Android WebView yang dikonfigurasi untuk alamat server. Jangan membuka port Termux langsung ke internet. Lihat panduan jaringan dan keamanan di `docs/MULTI_DEVICE_AND_MUSIC.md`.
 
-Lihat [panduan multi-perangkat dan alarm](docs/MULTI_DEVICE_AND_ALARM.md).
+Lihat [panduan multi-perangkat dan pemutar musik](docs/MULTI_DEVICE_AND_MUSIC.md).
 
-## Nada alarm Pulang Kerja
+## Pemutar musik lokal
 
-Paket pembaruan yang menyertakan file MP3 harus diekstrak ke root repository sehingga file tersedia di `frontend/audio/nada-pulang-abon-gulung.mp3`. Setelah aplikasi dimuat ulang, nada akan muncul sebagai **Pulang Kerja · Abon Gulung Gembul** dan disimpan lokal untuk pemutaran offline.
+Pilih file musik melalui menu **Pemutar Musik**. Android menggunakan pemilih dokumen sistem dan layanan pemutaran latar belakang dengan notifikasi kontrol. Pada browser/PWA, file disimpan di IndexedDB aplikasi untuk pemutaran offline.
 
-Untuk menyalin file ke folder nada alarm sistem Android:
-
-```bash
-bash scripts/install-alarm-tone.sh
-```
-
-Lalu pilih file tersebut melalui aplikasi Jam/Clock Android → Alarm → Suara alarm. Pemilihan nada sistem memerlukan tindakan manual satu kali. Alarm PWA sendiri tidak dijamin berbunyi jika browser ditutup atau Android menghentikan proses.
+Daftar putar dan metadata disimpan pada aplikasi. Menghapus lagu dari aplikasi hanya menghapus referensi dan cache lokal aplikasi; file asli pada perangkat tidak dihapus atau dipindahkan. Jika file sumber dipindahkan atau dihapus manual, tambahkan ulang musik tersebut.
 
 ## Database dan migrasi
 

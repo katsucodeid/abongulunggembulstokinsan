@@ -1,4 +1,4 @@
-# Panduan multi-perangkat, jaringan, dan alarm
+# Panduan multi-perangkat, jaringan, dan pemutar musik
 
 ## Arsitektur
 
@@ -39,6 +39,11 @@ Jangan melakukan port-forwarding langsung ke port 8787. Untuk akses jarak jauh, 
 - Buat backup database secara berkala dari menu admin.
 - Jangan pernah mengunggah `backend/.env`, `backend/data/data.json`, atau file backup ke repository publik.
 
-## Alarm Pulang Kerja
+## Pemutar musik lokal
 
-Alarm berbasis browser/PWA tidak dijamin berbunyi jika browser ditutup atau Android menghentikan proses. Untuk alarm yang harus berbunyi tepat waktu, gunakan alarm sistem Android dan pilih file nada yang sudah disalin ke folder Alarms.
+- Musik Android dipilih melalui Storage Access Framework, tanpa menyalin atau memindahkan file asli.
+- Izin baca URI disimpan agar file yang dipilih dapat diputar kembali.
+- Pemutaran Android berjalan melalui foreground media playback service dan menyediakan notifikasi jeda/lanjutkan/hentikan.
+- Daftar putar dan metadata disimpan secara lokal pada aplikasi. Menghapus lagu dari aplikasi tidak menghapus file sumber di perangkat.
+- Pada browser/PWA, file audio disimpan dalam IndexedDB aplikasi untuk pemutaran offline. Penghapusan hanya menghapus salinan cache aplikasi.
+- Jika file sumber dipindahkan atau dihapus manual, aplikasi dapat gagal memutarnya; pilih ulang file tersebut.
