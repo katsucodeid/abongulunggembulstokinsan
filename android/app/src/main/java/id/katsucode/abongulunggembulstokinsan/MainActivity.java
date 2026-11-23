@@ -32,9 +32,18 @@ public class MainActivity extends Activity {
     private ValueCallback<Uri[]> filePathCallback;
     private final BroadcastReceiver musicReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
-            if (webView != null) webView.post(() -> webView.evaluateJavascript("window.onNativeMusicEnded && window.onNativeMusicEnded();", null));
+            if (webView == null) return;
+            if (MusicPlaybackService.ACTION_COMPLETED.equals(intent.getAction())) {
+                webView.post(() -> webView.evaluateJavascript("window.onNativeMusicEnded && window.onNativeMusicEnded();", null));
+            } else {
+                boolean playing = intent.getBooleanExtra("playing", false);
+                webView.post(() -> webView.evaluateJavascript("window.onNativeMusicState && window.onNativeMusicState(" + playing + ");", null));
+            }
         }
     };
+
+    /* legacy receiver replaced */
+    private final BroadcastReceiver unusedMusicReceiver = new BroadcastReceiver() {
 
     private class GembulBridge {
         @JavascriptInterface
@@ -186,7 +195,9 @@ public class MainActivity extends Activity {
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        IntentFilter musicFilter = new IntentFilter(MusicPlaybackService.ACTION_COMPLETED);
+        IntentFilter musicFilter = new IntentFilter();
+        musicFilter.addAction(MusicPlaybackService.ACTION_COMPLETED);
+        musicFilter.addAction(MusicPlaybackService.ACTION_STATE_CHANGED);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(musicReceiver, musicFilter, Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(musicReceiver, musicFilter);
         webView = new WebView(this);
