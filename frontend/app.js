@@ -21,7 +21,26 @@ async function login(){try{const d=await api("/auth/login",{method:"POST",body:J
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
 async function renderAll(){if(!state)return;const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=(cachedUser?.role||state.user?.role)!=="admin";syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+(cachedUser?.role||state.user?.role||"offline");renderStock();renderHistory();renderDailyTargets();await loadReport();await maybeAutoDailyReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
-function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");}
+function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();}
+function renderProductionCapacity(){
+ const panel=$("productionCapacity");if(!panel||!state?.stock)return;
+ const items=["box3","box5outer","box5inner","paper"];
+ const defs=state.itemDefs||{};
+ const rows=items.map(key=>({key,label:defs[key]?.label||key,stock:Number(state.stock[key])}));
+ if(rows.some(row=>!Number.isSafeInteger(row.stock)||row.stock<0)){
+  panel.textContent="Estimasi belum tersedia karena data stok kemasan belum lengkap.";return;
+ }
+ const capacities=rows.map(row=>({...row,capacity:Math.floor(row.stock/2)}));
+ const capacity=Math.min(...capacities.map(row=>row.capacity));
+ const limits=capacities.filter(row=>row.capacity===capacity);
+ panel.replaceChildren();
+ const title=document.createElement("strong");title.textContent="Estimasi kapasitas produksi normal";
+ const value=document.createElement("div");value.className="qty";value.textContent=capacity.toLocaleString("id-ID")+" loyang";
+ const detail=document.createElement("p");detail.className="muted";
+ detail.textContent="Pembatas: "+limits.map(row=>row.label).join(", ")+" ("+limits.map(row=>row.stock.toLocaleString("id-ID")+" pcs").join(" / ")+").";
+ const note=document.createElement("p");note.className="muted";note.textContent="Simulasi memakai pola normal 2 pcs untuk setiap jenis kemasan per loyang. Mika tidak dihitung; kemasan khusus dapat mengubah hasil.";
+ panel.append(title,value,detail,note);
+}
 function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;const open=!nav.classList.contains("open");nav.classList.toggle("open",open);backdrop.classList.toggle("visible",open);btn.setAttribute("aria-expanded",String(open));btn.setAttribute("aria-label",open?"Tutup navigasi":"Buka navigasi");document.body.classList.toggle("nav-open",open);}
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
 function toggleNavGroup(id){const panel=$(id),toggle=document.querySelector('.nav-group-toggle[aria-controls="'+id+'"]');if(!panel||!toggle)return;const expanded=toggle.getAttribute("aria-expanded")==="true";toggle.setAttribute("aria-expanded",String(!expanded));panel.classList.toggle("expanded",!expanded);}
