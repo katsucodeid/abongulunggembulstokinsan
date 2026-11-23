@@ -43,6 +43,7 @@ public class MusicPlaybackService extends Service {
         String action = intent == null ? ACTION_STOP : intent.getAction();
         if (ACTION_STOP.equals(action)) {
             releasePlayer();
+            sendState(false);
             stopForeground(true);
             stopSelf();
             return START_NOT_STICKY;
