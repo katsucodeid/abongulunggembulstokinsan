@@ -1,18 +1,18 @@
 package id.katsucode.abongulunggembulstokinsan;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.PendingIntent;
 import android.content.ContentValues;
 import android.content.Intent;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
-import android.os.Build;
-import android.media.RingtoneManager;
-import android.provider.Settings;
-import java.io.File;
-import java.io.FileOutputStream;
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.IntentFilter;
+import android.media.MediaMetadataRetriever;
+import android.provider.OpenableColumns;
+import org.json.JSONArray;
+import org.json.JSONObject;
 import android.provider.MediaStore;
 import android.util.Base64;
 import android.webkit.JavascriptInterface;
@@ -30,6 +30,11 @@ public class MainActivity extends Activity {
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
+    private final BroadcastReceiver musicReceiver = new BroadcastReceiver() {
+        @Override public void onReceive(Context context, Intent intent) {
+            if (webView != null) webView.post(() -> webView.evaluateJavascript("window.onNativeMusicEnded && window.onNativeMusicEnded();", null));
+        }
+    };
 
     private class GembulBridge {
         @JavascriptInterface
@@ -139,38 +144,51 @@ public class MainActivity extends Activity {
         }
 
         @JavascriptInterface
-        public String scheduleWorkAlarm(long fireAtMillis, String dataUrl) {
-            try {
-                if (dataUrl == null || !dataUrl.contains(",")) return "ERROR:Nada alarm tidak valid.";
-                byte[] audio = Base64.decode(dataUrl.substring(dataUrl.indexOf(",") + 1), Base64.DEFAULT);
-                if (audio.length == 0 || audio.length > 8 * 1024 * 1024) return "ERROR:Ukuran audio maksimal 8 MB.";
-                try (FileOutputStream out = new FileOutputStream(new File(getFilesDir(), "work-alarm-tone"))) { out.write(audio); }
-                AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-                Intent intent = new Intent(MainActivity.this, WorkAlarmReceiver.class);
-                PendingIntent pending = PendingIntent.getBroadcast(MainActivity.this, 4104, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-                manager.cancel(pending);
-                if (Build.VERSION.SDK_INT >= 23) {
-                    try { manager.setExactAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, fireAtMillis, pending); }
-                    catch (SecurityException denied) { manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, fireAtMillis, pending); }
-                } else manager.setExact(AlarmManager.RTC_WAKEUP, fireAtMillis, pending);
-                return "OK";
-            } catch (Exception e) { return "ERROR:" + (e.getMessage() == null ? "Gagal menjadwalkan alarm." : e.getMessage()); }
+        public void pickMusicFiles() {
+            runOnUiThread(() -> {
+                Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
+                intent.addCategory(Intent.CATEGORY_OPENABLE);
+                intent.setType("audio/*");
+                intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
+                try { startActivityForResult(intent, 4105); }
+                catch (Exception e) { Toast.makeText(MainActivity.this, "Pemilih musik tidak dapat dibuka.", Toast.LENGTH_LONG).show(); }
+            });
         }
 
         @JavascriptInterface
-        public void cancelWorkAlarm() {
+        public String playMusic(String uri, String title) {
             try {
-                AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
-                Intent intent = new Intent(MainActivity.this, WorkAlarmReceiver.class);
-                PendingIntent pending = PendingIntent.getBroadcast(MainActivity.this, 4104, intent, PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
-                manager.cancel(pending);
-                startService(new Intent(MainActivity.this, WorkAlarmService.class).setAction(WorkAlarmService.ACTION_STOP));
-            } catch (Exception ignored) { }
+                Intent intent = new Intent(MainActivity.this, MusicPlaybackService.class)
+                    .setAction(MusicPlaybackService.ACTION_PLAY)
+                    .putExtra(MusicPlaybackService.EXTRA_URI, uri)
+                    .putExtra(MusicPlaybackService.EXTRA_TITLE, title);
+                if (Build.VERSION.SDK_INT >= 26) startForegroundService(intent); else startService(intent);
+                return "OK";
+            } catch (Exception e) { return "ERROR:" + (e.getMessage() == null ? "Gagal memulai pemutar musik." : e.getMessage()); }
+        }
+
+        @JavascriptInterface public void pauseMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_PAUSE)); }
+        @JavascriptInterface public void resumeMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_RESUME)); }
+        @JavascriptInterface public void stopMusic() { startService(new Intent(MainActivity.this, MusicPlaybackService.class).setAction(MusicPlaybackService.ACTION_STOP)); }
+
+        @JavascriptInterface
+        public long getMusicDuration(String uri) {
+            MediaMetadataRetriever retriever = new MediaMetadataRetriever();
+            try {
+                retriever.setDataSource(MainActivity.this, Uri.parse(uri));
+                String duration = retriever.extractMetadata(MediaMetadataRetriever.METADATA_KEY_DURATION);
+                return duration == null ? 0 : Long.parseLong(duration);
+            } catch (Exception e) { return 0; }
+            finally { try { retriever.release(); } catch (Exception ignored) { } }
         }
     }
 
     @Override protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        IntentFilter musicFilter = new IntentFilter(MusicPlaybackService.ACTION_COMPLETED);
+        if (Build.VERSION.SDK_INT >= 33) registerReceiver(musicReceiver, musicFilter, Context.RECEIVER_NOT_EXPORTED);
+        else registerReceiver(musicReceiver, musicFilter);
         webView = new WebView(this);
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
@@ -219,8 +237,40 @@ public class MainActivity extends Activity {
         webView.loadUrl(APP_URL);
     }
 
+    private void addMusicUri(JSONArray output, Uri uri) {
+        if (uri == null) return;
+        try {
+            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+        } catch (Exception ignored) { }
+        String name = "Musik tanpa judul", mime = getContentResolver().getType(uri);
+        try (android.database.Cursor cursor = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+            if (cursor != null && cursor.moveToFirst()) {
+                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (index >= 0 && cursor.getString(index) != null) name = cursor.getString(index);
+            }
+        } catch (Exception ignored) { }
+        JSONObject item = new JSONObject();
+        try { item.put("uri", uri.toString()); item.put("name", name); item.put("mime", mime == null ? "audio/*" : mime); output.put(item); }
+        catch (Exception ignored) { }
+    }
+
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == 4105) {
+            if (resultCode == Activity.RESULT_OK && data != null) {
+                JSONArray selected = new JSONArray();
+                try {
+                    if (data.getClipData() != null) {
+                        android.content.ClipData clips = data.getClipData();
+                        for (int i = 0; i < clips.getItemCount(); i++) addMusicUri(selected, clips.getItemAt(i).getUri());
+                    } else if (data.getData() != null) addMusicUri(selected, data.getData());
+                } catch (Exception e) {
+                    Toast.makeText(this, "Sebagian file musik tidak dapat dibaca.", Toast.LENGTH_LONG).show();
+                }
+                if (webView != null) webView.evaluateJavascript("window.onNativeMusicPicked && window.onNativeMusicPicked(" + selected.toString() + ");", null);
+            }
+            return;
+        }
         if (requestCode == FILE_CHOOSER_REQUEST && filePathCallback != null) {
             Uri[] results = null;
             if (resultCode == Activity.RESULT_OK && data != null && data.getData() != null) {
@@ -242,6 +292,7 @@ public class MainActivity extends Activity {
     }
 
     @Override protected void onDestroy() {
+        try { unregisterReceiver(musicReceiver); } catch (Exception ignored) { }
         if (filePathCallback != null) {
             filePathCallback.onReceiveValue(null);
             filePathCallback = null;
