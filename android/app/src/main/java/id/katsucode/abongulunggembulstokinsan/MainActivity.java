@@ -28,6 +28,7 @@ import java.io.OutputStream;
 public class MainActivity extends Activity {
     private static final String APP_URL = "http://127.0.0.1:8787";
     private static final int FILE_CHOOSER_REQUEST = 4102;
+    private static final int MUSIC_PICKER_REQUEST = 4105;
     private WebView webView;
     private ValueCallback<Uri[]> filePathCallback;
     private final BroadcastReceiver musicReceiver = new BroadcastReceiver() {
@@ -157,8 +158,13 @@ public class MainActivity extends Activity {
                 intent.setType("audio/*");
                 intent.putExtra(Intent.EXTRA_ALLOW_MULTIPLE, true);
                 intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION);
-                try { startActivityForResult(intent, 4105); }
-                catch (Exception e) { Toast.makeText(MainActivity.this, "Pemilih musik tidak dapat dibuka.", Toast.LENGTH_LONG).show(); }
+                try {
+                    startActivityForResult(intent, MUSIC_PICKER_REQUEST);
+                } catch (Exception e) {
+                    String message = e.getMessage() == null ? "Pemilih musik tidak dapat dibuka." : e.getMessage();
+                    Toast.makeText(MainActivity.this, message, Toast.LENGTH_LONG).show();
+                    notifyMusicPicker("[]", "Pemilih musik gagal dibuka: " + message);
+                }
             });
         }
 
@@ -249,37 +255,70 @@ public class MainActivity extends Activity {
         webView.loadUrl(APP_URL);
     }
 
-    private void addMusicUri(JSONArray output, Uri uri) {
+    private void addMusicUri(JSONArray output, Uri uri, int grantedFlags) {
         if (uri == null) return;
         try {
-            getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            int persistableFlags = grantedFlags & (Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_GRANT_WRITE_URI_PERMISSION);
+            if ((grantedFlags & Intent.FLAG_GRANT_PERSISTABLE_URI_PERMISSION) != 0
+                    && (persistableFlags & Intent.FLAG_GRANT_READ_URI_PERMISSION) != 0) {
+                getContentResolver().takePersistableUriPermission(uri, Intent.FLAG_GRANT_READ_URI_PERMISSION);
+            }
         } catch (Exception ignored) { }
         String name = "Musik tanpa judul", mime = getContentResolver().getType(uri);
-        try (android.database.Cursor cursor = getContentResolver().query(uri, new String[]{OpenableColumns.DISPLAY_NAME}, null, null, null)) {
+        long size = 0;
+        try (android.database.Cursor cursor = getContentResolver().query(uri,
+                new String[]{OpenableColumns.DISPLAY_NAME, OpenableColumns.SIZE}, null, null, null)) {
             if (cursor != null && cursor.moveToFirst()) {
-                int index = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
-                if (index >= 0 && cursor.getString(index) != null) name = cursor.getString(index);
+                int nameIndex = cursor.getColumnIndex(OpenableColumns.DISPLAY_NAME);
+                if (nameIndex >= 0 && cursor.getString(nameIndex) != null) name = cursor.getString(nameIndex);
+                int sizeIndex = cursor.getColumnIndex(OpenableColumns.SIZE);
+                if (sizeIndex >= 0 && !cursor.isNull(sizeIndex)) size = cursor.getLong(sizeIndex);
             }
         } catch (Exception ignored) { }
         JSONObject item = new JSONObject();
-        try { item.put("uri", uri.toString()); item.put("name", name); item.put("mime", mime == null ? "audio/*" : mime); output.put(item); }
-        catch (Exception ignored) { }
+        try {
+            item.put("uri", uri.toString());
+            item.put("name", name);
+            item.put("mime", mime == null ? "audio/*" : mime);
+            item.put("size", size);
+            output.put(item);
+        } catch (Exception ignored) { }
+    }
+
+    private void notifyMusicPicker(String payload, String message) {
+        if (webView == null) return;
+        String safeMessage = JSONObject.quote(message);
+        webView.post(() -> webView.evaluateJavascript(
+            "if(window.onNativeMusicPicked){window.onNativeMusicPicked(" + payload + ");}" +
+            "if(window.onNativeMusicPickerMessage){window.onNativeMusicPickerMessage(" + safeMessage + ");}", null
+        ));
     }
 
     @Override protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        if (requestCode == 4105) {
+        if (requestCode == MUSIC_PICKER_REQUEST) {
+            JSONArray selected = new JSONArray();
             if (resultCode == Activity.RESULT_OK && data != null) {
-                JSONArray selected = new JSONArray();
+                int grantedFlags = data.getFlags();
                 try {
-                    if (data.getClipData() != null) {
-                        android.content.ClipData clips = data.getClipData();
-                        for (int i = 0; i < clips.getItemCount(); i++) addMusicUri(selected, clips.getItemAt(i).getUri());
-                    } else if (data.getData() != null) addMusicUri(selected, data.getData());
+                    android.content.ClipData clips = data.getClipData();
+                    if (clips != null && clips.getItemCount() > 0) {
+                        for (int i = 0; i < clips.getItemCount(); i++) {
+                            addMusicUri(selected, clips.getItemAt(i).getUri(), grantedFlags);
+                        }
+                    } else if (data.getData() != null) {
+                        addMusicUri(selected, data.getData(), grantedFlags);
+                    }
                 } catch (Exception e) {
-                    Toast.makeText(this, "Sebagian file musik tidak dapat dibaca.", Toast.LENGTH_LONG).show();
+                    Toast.makeText(this, "Sebagian file musik tidak dapat dibaca: " + e.getMessage(), Toast.LENGTH_LONG).show();
                 }
-                if (webView != null) webView.evaluateJavascript("window.onNativeMusicPicked && window.onNativeMusicPicked(" + selected.toString() + ");", null);
+            }
+            String message = selected.length() > 0
+                ? selected.length() + " file musik berhasil diterima Android."
+                : "Tidak ada file musik yang diterima. Pilih file audio lalu tekan Buka.";
+            notifyMusicPicker(selected.toString(), message);
+            if (selected.length() == 0 && resultCode == Activity.RESULT_OK) {
+                Toast.makeText(this, message, Toast.LENGTH_LONG).show();
             }
             return;
         }
