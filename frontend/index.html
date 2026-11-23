@@ -403,7 +403,33 @@ main{padding-top:0!important}
 .developer-profile p{margin:5px 0 0}
 .nav-logout{margin-top:auto!important;color:var(--danger)!important;border:1px solid color-mix(in srgb,var(--danger) 45%,var(--line))!important;background:color-mix(in srgb,var(--danger) 8%,transparent)!important}
 @media(max-width:420px){.developer-profile img{width:72px;height:72px;flex-basis:72px}}
+/* Tema gelap monokrom: hanya hitam dan putih, tanpa gradasi/warna aksen. */
+:root:not(.light){color-scheme:dark;--bg:#000;--panel:#000;--text:#fff;--muted:#fff;--line:#fff;--accent:#fff;--danger:#fff}
+:root:not(.light) *{background-image:none!important;box-shadow:none!important;border-color:#fff}
+:root:not(.light) body,:root:not(.light) header,:root:not(.light) main,:root:not(.light) footer,:root:not(.light) .tabs,:root:not(.light) .panel,:root:not(.light) .history-card,:root:not(.light) .variant-card,:root:not(.light) .outlet-target-card,:root:not(.light) .alarm-box,:root:not(.light) .alarm-stat,:root:not(.light) .tone-row,:root:not(.light) .nav-drawer-head{background-color:#000!important;color:#fff!important}
+:root:not(.light) header{backdrop-filter:none!important}
+:root:not(.light) #stockGrid>.panel,:root:not(.light) #productionPreview,:root:not(.light) .secondary,:root:not(.light) .menu-toggle,:root:not(.light) .nav-close,:root:not(.light) .tabs button{background-color:#000!important;color:#fff!important;border:1px solid #fff!important}
+:root:not(.light) button:not(.secondary){background-color:#fff!important;color:#000!important;border:1px solid #fff!important}
+:root:not(.light) button:hover{filter:none!important}
+:root:not(.light) input,:root:not(.light) select,:root:not(.light) textarea{background-color:#000!important;color:#fff!important;border:1px solid #fff!important}
+:root:not(.light) input::placeholder,:root:not(.light) textarea::placeholder{color:#fff!important;opacity:.7}
+:root:not(.light) .muted,:root:not(.light) small,:root:not(.light) label,:root:not(.light) .ok,:root:not(.light) .low,:root:not(.light) .danger,:root:not(.light) .production-total strong,:root:not(.light) .outlet-target-heading strong{color:#fff!important}
+:root:not(.light) .danger{background-color:#fff!important;color:#000!important}
+:root:not(.light) #connection,:root:not(.light) .hint,:root:not(.light) .app-footer{background-color:#000!important;color:#fff!important;border-color:#fff!important}
+:root:not(.light) .nav-backdrop{background-color:#000!important;backdrop-filter:none!important;opacity:0;visibility:hidden}
+:root:not(.light) .nav-backdrop.visible{opacity:.82;visibility:visible}
+:root:not(.light) .tabs button.nav-active,:root:not(.light) #app:has(#dashboard:not(.hidden)) .tabs button:nth-child(2),:root:not(.light) #app:has(#incoming:not(.hidden)) .tabs button:nth-child(3),:root:not(.light) #app:has(#production:not(.hidden)) .tabs button:nth-child(4),:root:not(.light) #app:has(#report:not(.hidden)) .tabs button:nth-child(5),:root:not(.light) #app:has(#history:not(.hidden)) .tabs button:nth-child(6),:root:not(.light) #app:has(#manual:not(.hidden)) .tabs button:nth-child(7){background:#fff!important;color:#000!important;border-color:#fff!important}
+:root:not(.light) :focus-visible{outline:2px solid #fff!important;outline-offset:3px}
+:root:not(.light) .footer-credit span:first-child,:root:not(.light) .footer-x{color:#fff!important}
+#bootLoading{position:fixed;inset:0;z-index:1000;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;padding:24px;background:#000;color:#fff;text-align:center;transition:opacity .2s ease,visibility .2s ease}
+#bootLoading.hidden{display:none}
+.boot-spinner{width:42px;height:42px;border:3px solid #fff;border-right-color:transparent;border-radius:50%;animation:boot-spin .8s linear infinite}
+#bootLoading p{margin:0;font-size:14px}
+#bootLoading small{opacity:.8}
+@keyframes boot-spin{to{transform:rotate(360deg)}}
+@media(prefers-reduced-motion:reduce){.boot-spinner{animation:none}#bootLoading{transition:none}}
 </style></head><body>
+<div id="bootLoading" role="status" aria-live="polite"><div class="boot-spinner" aria-hidden="true"></div><b>ABON GULUNG GEMBUL</b><p id="bootLoadingMessage">Memeriksa koneksi server…</p><small>Menyiapkan data aplikasi</small></div>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false" onclick="toggleTheme()">🌙 Tema Gelap</button></div></header>
 <button class="nav-backdrop" id="navBackdrop" aria-label="Tutup navigasi" onclick="closeMenu()"></button>
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
@@ -427,6 +453,7 @@ main{padding-top:0!important}
 <div class="nav-group-items" id="navSystem">
 <button class="nav-link" onclick="showTab('alarm')">⏰ &nbsp; Alarm kerja</button>
 <button class="nav-link" onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button>
+<button class="nav-link" id="accountsNavLink" onclick="showTab('accounts')" hidden>👥 &nbsp; Pengguna &amp; akun</button>
 <button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; pembaruan</button>
 </div></div><button class="nav-link nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></nav>
 <div id="alarm" class="tab panel hidden">
@@ -493,8 +520,26 @@ main{padding-top:0!important}
 <p id="backupStatus" class="muted" aria-live="polite">Fitur ini hanya tersedia untuk admin saat terhubung ke server.</p>
 </section>
 </div>
+<div id="accounts" class="tab panel hidden">
+<h2>Pengguna &amp; akun</h2>
+<p class="muted">Buat akun baru dan tentukan tingkat akses. Hanya Admin yang dapat membuka halaman ini dan membuat akun.</p>
+<section class="history-card">
+<h3>Buat akun baru</h3>
+<label for="newUsername">Username</label>
+<input id="newUsername" autocomplete="off" autocapitalize="none" maxlength="32" placeholder="contoh: insan.staff">
+<label for="newPassword">Password</label>
+<input id="newPassword" type="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Minimal 10 karakter">
+<label for="newUserRole">Tingkat akun</label>
+<select id="newUserRole"><option value="staff">Karyawan</option><option value="admin">Admin</option></select>
+<button type="button" onclick="createUser()">Buat akun</button>
+<p id="userCreateStatus" class="muted" aria-live="polite"></p>
+</section>
+<h3>Daftar akun</h3>
+<p id="userListStatus" class="muted">Memuat daftar pengguna…</p>
+<div id="userList"></div>
+</div>
 <div id="about" class="tab panel hidden">
-<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Aplikasi operasional untuk memantau persediaan kemasan, mencatat barang masuk dan target produksi, mengelola pengurangan stok, serta membuat arsip laporan harian.</p></div><span id="aboutVersion" class="badge">Versi 2.2.0</span></div>
+<div class="row" style="align-items:center"><div><h2 style="margin-bottom:4px">Abon Gulung Gembul · INSAN Stock Manager</h2><p class="muted" style="margin-top:0">Sistem pencatatan persediaan kemasan dan operasional produksi Abon Gulung Gembul. Mendukung akun bertingkat, transaksi stok, laporan, pencadangan, serta penggunaan offline dengan sinkronisasi ke server.</p></div><span id="aboutVersion" class="badge">Versi 2.3.0</span></div>
 <section class="history-card developer-profile"><img src="/img/BackgroundEraser_20261016_074306739.png" alt="Foto pengembang aplikasi"><div><b>Pengembang</b><p class="muted">Dirancang dan dikembangkan oleh KatsuCode bersama Insan untuk mendukung operasional Abon Gulung Gembul.</p></div></section>
 <h3>Fitur aplikasi</h3>
 <div class="grid">
@@ -504,7 +549,8 @@ main{padding-top:0!important}
 <article class="history-card"><b>📊 Laporan harian otomatis</b><p class="muted">Susun target per outlet, varian, stok sebelumnya, pemakaian, stok akhir, dan pengurangan di luar target. Laporan dibuat setelah pukul 18.00 WIB saat aplikasi aktif atau dibuka kembali, lalu disimpan sebagai TXT.</p></article>
 <article class="history-card"><b>🧾 Riwayat & koreksi transaksi</b><p class="muted">Telusuri transaksi, revisi jumlah pengurangan, kembalikan sebagian stok, atau batalkan pengurangan dengan alasan dan jejak audit.</p></article>
 <article class="history-card"><b>✍️ Pengurangan stok manual</b><p class="muted">Catat barang rusak, hilang, atau pemakaian di luar produksi dengan alasan wajib dan kontrol hak akses.</p></article>
-<article class="history-card"><b>👥 Admin &amp; staff</b><p class="muted">Pemisahan akses pengguna berdasarkan peran akun.</p></article>
+<article class="history-card"><b>👥 Manajemen akun bertingkat</b><p class="muted">Admin dapat membuat akun dengan username, password, dan peran Admin atau Karyawan. Password disimpan dalam bentuk hash di server.</p></article>
+<article class="history-card"><b>🧮 Estimasi kapasitas produksi</b><p class="muted">Perkirakan jumlah loyang yang dapat diproduksi berdasarkan ketersediaan kemasan utama, tanpa mengubah stok.</p></article>
 <article class="history-card"><b>🔄 Update langsung dari aplikasi</b><p class="muted">Admin dapat memeriksa commit branch main dan menerapkan pembaruan tanpa mengetik perintah Git di Termux. Antrean transaksi harus disinkronkan terlebih dahulu.</p></article>
 <article class="history-card"><b>🛡️ Cadangkan &amp; pulihkan database</b><p class="muted">Buat file .insanbackup ber-checksum dan pulihkan database setelah validasi. Server membuat salinan kondisi sebelum pemulihan.</p></article>
 <article class="history-card"><b>📡 Multi-perangkat &amp; offline-first</b><p class="muted">Satu HP menjalankan server pusat; perangkat lain mengakses lewat jaringan lokal. Catatan offline masuk antrean dan dikirim saat koneksi pulih.</p></article>
@@ -513,7 +559,9 @@ main{padding-top:0!important}
 <article class="history-card"><b>⏰ Alarm Pulang Kerja</b><p class="muted">Kelola nada alarm dan jadwal pengingat; dukungan alarm native Android dapat berjalan melalui layanan sistem.</p></article>
 </div>
 <h3>Keunggulan</h3>
-<ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang/gelap dan navigasi yang ramah perangkat seluler.</li><li><b>Arsip laporan:</b> aplikasi Android menyimpan laporan di Download/Abon Gulung Gembul dengan nama tanggal-bulan-tahun; laporan tanggal sama diperbarui.</li><li><b>Kontrol data:</b> backup memiliki checksum SHA-256, pemulihan divalidasi, dan server menyimpan salinan sebelum restore.</li><li><b>Jejak audit:</b> aktivitas penting dan koreksi stok dicatat untuk membantu penelusuran.</li></ul>
+<ul><li><b>Offline-first:</b> tetap dapat melihat data tersimpan dan mencatat perubahan saat koneksi terputus.</li><li><b>Sinkronisasi otomatis:</b> antrean transaksi dikirim ke server saat perangkat kembali online.</li><li><b>Data lokal:</b> backend berjalan di Termux dan menyimpan database pada perangkat server.</li><li><b>Ringan:</b> menggunakan Node.js, Express, dan frontend web tanpa bergantung pada layanan cloud berbayar.</li><li><b>Tampilan adaptif:</b> mendukung tema terang serta tema gelap monokrom hitam-putih dan navigasi yang ramah perangkat seluler.</li>
+<li><b>Hak akses:</b> Admin mengelola akun dan pengaturan penting; Karyawan menggunakan fitur operasional sesuai izin server.</li>
+<li><b>Loading koneksi:</b> layar pembuka memeriksa server dan menampilkan status saat aplikasi beralih ke data lokal/offline.</li><li><b>Arsip laporan:</b> aplikasi Android menyimpan laporan di Download/Abon Gulung Gembul dengan nama tanggal-bulan-tahun; laporan tanggal sama diperbarui.</li><li><b>Kontrol data:</b> backup memiliki checksum SHA-256, pemulihan divalidasi, dan server menyimpan salinan sebelum restore.</li><li><b>Jejak audit:</b> aktivitas penting dan koreksi stok dicatat untuk membantu penelusuran.</li></ul>
 <h3>Commit terbaru dari GitHub</h3>
 <p class="hint">Lihat commit pada branch main. Admin dapat menerapkan pembaruan langsung dari aplikasi setelah antrean transaksi tersinkron. Termux cukup berjalan di latar belakang; tidak perlu membuka terminal atau mengetik perintah.</p>
 <p id="latestCommitStatus" class="muted">Memuat commit terbaru…</p>
