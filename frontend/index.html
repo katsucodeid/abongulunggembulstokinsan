@@ -531,7 +531,7 @@ main{padding-top:0!important}
 </div>
 <div id="accounts" class="tab panel hidden">
 <h2>Pengguna &amp; akun</h2>
-<p class="muted">Buat akun baru dan tentukan tingkat akses. Hanya Admin yang dapat membuka halaman ini dan membuat akun.</p>
+<p class="muted">Buat akun baru dan tentukan tingkat akses. Hanya Admin yang dapat membuka bagian ini, membuat akun, dan mengatur ulang kata sandi akun.</p>
 <section class="history-card">
 <h3>Buat akun baru</h3>
 <label for="newUsername">Username</label>
@@ -543,7 +543,17 @@ main{padding-top:0!important}
 <button type="button" onclick="createUser()">Buat akun</button>
 <p id="userCreateStatus" class="muted" aria-live="polite"></p>
 </section>
-<h3>Daftar akun</h3>
+<section class="history-card">
+<h3>Kelola kata sandi akun</h3>
+<p class="muted">Pilih akun dari daftar, lalu tetapkan password baru. Password minimal 10 karakter.</p>
+<label for="selectedUser">Pilih akun</label>
+<select id="selectedUser"><option value="">Memuat daftar akun…</option></select>
+<label for="resetUserPassword">Password baru</label>
+<input id="resetUserPassword" type="password" autocomplete="new-password" minlength="10" maxlength="128" placeholder="Masukkan password baru">
+<button type="button" onclick="resetUserPassword()">Simpan password baru</button>
+<p id="userPasswordStatus" class="muted" aria-live="polite"></p>
+</section>
+<h3>Daftar akun terdaftar</h3>
 <p id="userListStatus" class="muted">Memuat daftar pengguna…</p>
 <div id="userList"></div>
 </div>

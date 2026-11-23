@@ -396,6 +396,30 @@ app.post("/api/users", auth, adminOnly, async (req, res) => {
   }
 });
 
+app.put("/api/users/:username/password", auth, adminOnly, async (req, res) => {
+  const username = String(req.params.username || "").trim().toLowerCase();
+  const password = typeof req.body?.password === "string" ? req.body.password : "";
+  if (!/^[a-z0-9._-]{3,32}$/.test(username)) return res.status(400).json({ error: "Username akun tidak valid." });
+  if (password.length < 10 || password.length > 128) return res.status(400).json({ error: "Password baru harus terdiri dari 10–128 karakter." });
+  try {
+    await locked(async () => {
+      const target = db.users.find(user => String(user.username).toLowerCase() === username);
+      if (!target) {
+        const error = new Error("Akun yang dipilih tidak ditemukan.");
+        error.status = 404;
+        throw error;
+      }
+      target.passwordHash = await bcrypt.hash(password, 12);
+      recordAudit(req.user, "user.password.reset", { username });
+      await persist();
+    });
+    res.json({ ok: true, username, message: "Password akun berhasil diperbarui." });
+  } catch (e) {
+    res.status(e.status || 500).json({ error: e.message || "Password akun gagal diperbarui." });
+  }
+});
+
+
 require("./management")(app, { auth, adminOnly, locked, persist, getDb: () => db, setDb: value => { db = value; }, itemDefs });
 
 // Serve repository-level logo and image assets from /img/*.
