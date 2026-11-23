@@ -1,8 +1,8 @@
 {
   "name": "insan-stock-manager-local",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "private": true,
-  "description": "Offline-first stock, production and daily report manager for Abon Gulung Gembul",
+  "description": "Offline-first stock, production, daily report and local music manager for Abon Gulung Gembul",
   "scripts": {
     "start": "node server.js",
     "dev": "node --watch server.js",
