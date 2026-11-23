@@ -42,9 +42,6 @@ public class MainActivity extends Activity {
         }
     };
 
-    /* legacy receiver replaced */
-    private final BroadcastReceiver unusedMusicReceiver = new BroadcastReceiver() {
-
     private class GembulBridge {
         @JavascriptInterface
         public String saveBackup(String base64, String filename) {
