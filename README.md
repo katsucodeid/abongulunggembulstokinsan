@@ -76,7 +76,7 @@ Buka alamat IP yang ditampilkan dari browser perangkat lain, misalnya `http://19
 
 **Batasan keamanan dan instalasi:** alamat LAN HTTP cocok untuk uji coba pada Wi-Fi tepercaya. Browser Android umumnya tidak mengizinkan pemasangan PWA penuh atau service worker pada alamat IP HTTP biasa karena bukan secure context. Untuk memasang PWA dan akses dari luar rumah/kantor, siapkan HTTPS melalui reverse proxy/tunnel atau gunakan aplikasi Android WebView yang dikonfigurasi untuk alamat server. Jangan membuka port Termux langsung ke internet. Lihat panduan jaringan dan keamanan di `docs/MULTI_DEVICE_AND_MUSIC.md`.
 
-Lihat [panduan multi-perangkat dan alarm](docs/MULTI_DEVICE_AND_MUSIC.md).
+Lihat [panduan multi-perangkat dan pemutar musik](docs/MULTI_DEVICE_AND_MUSIC.md).
 
 ## Pemutar musik lokal
 
