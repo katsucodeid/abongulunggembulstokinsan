@@ -18,6 +18,7 @@ public class MusicPlaybackService extends Service {
     public static final String ACTION_RESUME = "id.katsucode.gembul.MUSIC_RESUME";
     public static final String ACTION_STOP = "id.katsucode.gembul.MUSIC_STOP";
     public static final String ACTION_COMPLETED = "id.katsucode.gembul.MUSIC_COMPLETED";
+    public static final String ACTION_STATE_CHANGED = "id.katsucode.gembul.MUSIC_STATE_CHANGED";
     public static final String EXTRA_URI = "music_uri";
     public static final String EXTRA_TITLE = "music_title";
     private static final String CHANNEL_ID = "gembul_music_playback";
@@ -49,11 +50,13 @@ public class MusicPlaybackService extends Service {
         if (ACTION_PAUSE.equals(action)) {
             if (player != null && prepared && player.isPlaying()) player.pause();
             updateNotification(false);
+            sendState(false);
             return START_NOT_STICKY;
         }
         if (ACTION_RESUME.equals(action)) {
             if (player != null && prepared && !player.isPlaying()) player.start();
             updateNotification(true);
+            sendState(true);
             return START_NOT_STICKY;
         }
         if (ACTION_PLAY.equals(action)) {
@@ -74,6 +77,7 @@ public class MusicPlaybackService extends Service {
                     prepared = true;
                     mp.start();
                     updateNotification(true);
+                    sendState(true);
                 });
                 player.setOnCompletionListener(mp -> {
                     sendBroadcast(new Intent(ACTION_COMPLETED).setPackage(getPackageName()));
@@ -91,6 +95,10 @@ public class MusicPlaybackService extends Service {
             }
         }
         return START_NOT_STICKY;
+    }
+
+    private void sendState(boolean playing) {
+        sendBroadcast(new Intent(ACTION_STATE_CHANGED).setPackage(getPackageName()).putExtra("playing", playing));
     }
 
     private Notification buildNotification(boolean playing) {
