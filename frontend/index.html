@@ -428,6 +428,15 @@ main{padding-top:0!important}
 #bootLoading small{opacity:.8}
 @keyframes boot-spin{to{transform:rotate(360deg)}}
 @media(prefers-reduced-motion:reduce){.boot-spinner{animation:none}#bootLoading{transition:none}}
+/* Penyeragaman elemen sisa agar tema gelap benar-benar dua warna. */
+:root:not(.light) h1,:root:not(.light) h2,:root:not(.light) h3,:root:not(.light) h4,:root:not(.light) b,:root:not(.light) strong,:root:not(.light) .qty,:root:not(.light) .brand-copy b,:root:not(.light) .tab h2,:root:not(.light) .tab h3,:root:not(.light) .eyebrow,:root:not(.light) .clock-chip strong{color:#fff!important}
+:root:not(.light) .badge,:root:not(.light) .nav-logout,:root:not(.light) .tabs .nav-group-items .nav-link.nav-active{background:#000!important;color:#fff!important;border:1px solid #fff!important}
+:root:not(.light) .tabs .nav-group-items .nav-link.nav-active{background:#fff!important;color:#000!important}
+:root:not(.light) .login-brand img,:root:not(.light) .brand-logo,:root:not(.light) .footer-logo{background:#000!important;border:1px solid #fff!important}
+:root:not(.light) .nav-backdrop.visible{opacity:1!important}
+:root:not(.light) #bootLoading small,:root:not(.light) input::placeholder,:root:not(.light) textarea::placeholder{opacity:1!important}
+:root:not(.light) .nav-logout{background:#000!important;color:#fff!important}
+:root:not(.light) .tone-current,:root:not(.light) #updateNotice,:root:not(.light) .nav-group{background:#000!important;color:#fff!important;border-color:#fff!important}
 </style></head><body>
 <div id="bootLoading" role="status" aria-live="polite"><div class="boot-spinner" aria-hidden="true"></div><b>ABON GULUNG GEMBUL</b><p id="bootLoadingMessage">Memeriksa koneksi server…</p><small>Menyiapkan data aplikasi</small></div>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false" onclick="toggleTheme()">🌙 Tema Gelap</button></div></header>
