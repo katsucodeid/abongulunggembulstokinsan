@@ -14,7 +14,7 @@ function setStatus(text,kind="muted"){$("connection").textContent=text;$("connec
 function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#000000");}
 function themeInit(){let saved="dark";try{saved=localStorage.getItem("insan_theme")||"dark";}catch{}applyTheme(saved);}
 function toggleTheme(){applyTheme(document.documentElement.classList.contains("light")?"dark":"light");}
-async function api(path,opts={}){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),8000);try{const r=await fetch(API+"/api"+path,{...opts,signal:opts.signal||controller.signal,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json();}catch{}if(!r.ok){const e=new Error(d.error||"Permintaan gagal");e.status=r.status;throw e;}return d;}finally{clearTimeout(timeout);}}
+async function api(path,opts={}){const controller=new AbortController();const timeout=setTimeout(()=>controller.abort(),opts.timeoutMs||8000);try{const r=await fetch(API+"/api"+path,{...opts,signal:opts.signal||controller.signal,headers:{"Content-Type":"application/json",...(token?{Authorization:"Bearer "+token}:{}),...(opts.headers||{})}});let d={};try{d=await r.json();}catch{}if(!r.ok){const e=new Error(d.error||"Permintaan gagal");e.status=r.status;throw e;}return d;}finally{clearTimeout(timeout);}}
 function showLogin(){ $("login").classList.remove("hidden");$("app").classList.add("hidden");}
 function showApp(){ $("login").classList.add("hidden");$("app").classList.remove("hidden");}
 function currentRole(){return cachedUser?.role||state?.user?.role||"";}
@@ -49,7 +49,7 @@ async function createUser(){
 }
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
-async function refresh(){try{state=await api("/state");await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
+async function refresh(){try{state=await api("/state");window.insanServerConnected=true;await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){window.insanServerConnected=false;if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
 async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderHistory();renderDailyTargets();await loadReport();await maybeAutoDailyReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();}
 function renderProductionCapacity(){
@@ -437,7 +437,7 @@ async function loadReport(){
  if(!state)return;
  const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");
  let manualRows=(state.history||[]).filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdAt:tx.createdAt,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:(state.history||[]).filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
- if(token&&navigator.onLine){
+ if(token&&navigator.onLine&&window.insanServerConnected!==false){
   try{const report=await api("/report");if(Array.isArray(report.manualStockOuts))manualRows=report.manualStockOuts;}catch(e){/* use cached history while offline/server is unavailable */}
  }
  const stockText=`*INSAN*:
@@ -520,12 +520,14 @@ setInterval(checkForUpdates,300000);
  if(splash)splash.classList.remove("hidden");
  try{
   if(message)message.textContent="Memeriksa koneksi server…";
-  const health=await api("/health");
+  const health=await api("/health",{timeoutMs:5000});
+  window.insanServerConnected=true;
   if(!health?.ok)throw new Error("Server belum siap.");
   cachedUser=await kvGet("user");
   if(message)message.textContent="Server terhubung · memuat data…";
   if(token||cachedUser)await refresh();else{showLogin();setStatus("Server terhubung · silakan login","ok");}
  }catch(error){
+  window.insanServerConnected=false;
   try{
    cachedUser=await kvGet("user");
    state=await kvGet("state");
