@@ -2,7 +2,7 @@
   "id": "./",
   "name": "Abon Gulung Gembul - Stok Kertas",
   "short_name": "Gembul Stok",
-  "description": "INSAN Stock Manager 2.3.0: manajemen stok, akun Admin dan Karyawan, target produksi, estimasi kapasitas, laporan, backup-pemulihan, serta sinkronisasi offline-first.",
+  "description": "INSAN Stock Manager 2.4.0: manajemen stok, akun, target produksi, laporan, backup-pemulihan, pemutar musik lokal, dan sinkronisasi offline-first.",
   "start_url": "./",
   "scope": "./",
   "display": "standalone",
