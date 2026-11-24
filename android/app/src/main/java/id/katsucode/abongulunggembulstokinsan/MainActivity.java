@@ -214,6 +214,10 @@ public class MainActivity extends Activity {
             catch (Exception ignored) { }
         }
 
+        @JavascriptInterface public int getMusicPosition() { return MusicPlaybackService.currentPosition(); }
+        @JavascriptInterface public int getCurrentMusicDuration() { return MusicPlaybackService.currentDuration(); }
+        @JavascriptInterface public void seekMusic(int positionMs) { MusicPlaybackService.seekCurrent(positionMs); }
+
         @JavascriptInterface
         public long getMusicDuration(String uri) {
             MediaMetadataRetriever retriever = new MediaMetadataRetriever();
