@@ -64,6 +64,10 @@ public class MainActivity extends Activity {
             if (webView == null) return;
             if (MusicPlaybackService.ACTION_COMPLETED.equals(intent.getAction())) {
                 webView.post(() -> webView.evaluateJavascript("window.onNativeMusicEnded && window.onNativeMusicEnded();", null));
+            } else if (MusicPlaybackService.ACTION_SKIP_PREVIOUS.equals(intent.getAction())) {
+                webView.post(() -> webView.evaluateJavascript("window.previousMusic && window.previousMusic();", null));
+            } else if (MusicPlaybackService.ACTION_SKIP_NEXT.equals(intent.getAction())) {
+                webView.post(() -> webView.evaluateJavascript("window.nextMusic && window.nextMusic();", null));
             } else {
                 boolean playing = intent.getBooleanExtra("playing", false);
                 webView.post(() -> webView.evaluateJavascript("window.onNativeMusicState && window.onNativeMusicState(" + playing + ");", null));
@@ -420,6 +424,8 @@ public class MainActivity extends Activity {
         IntentFilter musicFilter = new IntentFilter();
         musicFilter.addAction(MusicPlaybackService.ACTION_COMPLETED);
         musicFilter.addAction(MusicPlaybackService.ACTION_STATE_CHANGED);
+        musicFilter.addAction(MusicPlaybackService.ACTION_SKIP_PREVIOUS);
+        musicFilter.addAction(MusicPlaybackService.ACTION_SKIP_NEXT);
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(musicReceiver, musicFilter, Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(musicReceiver, musicFilter);
         webView = new WebView(this);
