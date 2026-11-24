@@ -748,4 +748,5 @@ function startTechTicker(){
  timer=window.setTimeout(tick,500);
  document.addEventListener("visibilitychange",()=>{if(document.hidden){window.clearTimeout(timer);}else if(!document.hidden){window.clearTimeout(timer);timer=window.setTimeout(tick,250);}});
 }
-\nstartTechTicker();\n
+
+startTechTicker();
