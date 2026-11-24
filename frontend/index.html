@@ -460,6 +460,13 @@ main{padding-top:0!important}
 .qr-full-item img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:8px}
 .qr-full-item figcaption{margin-top:8px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
 @media(max-width:420px){.qr-full-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qr-full-item{padding:7px}}
+/* Drawer scrolling: fixed header + independently scrollable menu content */
+#mainNav.tabs{height:100dvh!important;max-height:100dvh!important;overflow:hidden!important;display:flex!important;flex-direction:column!important;align-items:stretch!important;justify-content:flex-start!important;padding:22px 18px 0!important;gap:0!important;overscroll-behavior:none}
+#mainNav .nav-drawer-head{flex:0 0 auto!important;margin:0 0 12px!important;padding:2px 2px 14px!important}
+#navScrollArea{display:flex;flex:1 1 auto;flex-direction:column;align-items:stretch;gap:7px;min-height:0;width:100%;overflow-y:auto!important;overflow-x:hidden!important;padding:0 2px max(22px,env(safe-area-inset-bottom));overscroll-behavior-y:contain;-webkit-overflow-scrolling:touch;touch-action:pan-y;scrollbar-width:thin}
+#navScrollArea>.nav-group{flex:0 0 auto!important;min-height:max-content!important;overflow:visible!important;margin:3px 0 7px!important}
+#navScrollArea .nav-group-items{flex-shrink:0!important}
+#navScrollArea .nav-logout{flex:0 0 auto!important;margin:10px 0 8px!important}
 </style></head><body>
 <div id="bootLoading" role="status" aria-live="polite"><div class="boot-spinner" aria-hidden="true"></div><b>ABON GULUNG GEMBUL</b><p id="bootLoadingMessage">Memeriksa koneksi server…</p><small>Menyiapkan data aplikasi</small></div>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false" onclick="toggleTheme()">🌙 Tema Gelap</button></div></header>
@@ -470,6 +477,7 @@ main{padding-top:0!important}
 <div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div></div><p id="syncErrors" class="low"></p>
 <nav class="tabs" id="mainNav" aria-label="Navigasi utama">
 <div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div>
+<div id="navScrollArea" class="nav-scroll-area">
 <div class="nav-group">
 <button class="nav-group-toggle" type="button" aria-expanded="true" aria-controls="navOperations" onclick="toggleNavGroup('navOperations')"><span>▸ &nbsp; OPERASIONAL</span><span class="nav-chevron">⌄</span></button>
 <div class="nav-group-items expanded" id="navOperations">
@@ -488,7 +496,9 @@ main{padding-top:0!important}
 <button class="nav-link" onclick="showTab('backupqr')">▦ &nbsp; QR Cadangan</button>
 <button class="nav-link" id="accountsNavLink" onclick="showTab('accounts')" hidden>👥 &nbsp; Pengguna &amp; akun</button>
 <button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; pembaruan</button>
-</div></div><button class="nav-link nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></nav>
+</div></div>
+<button class="nav-link nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button>
+</div></nav>
 <div id="music" class="tab panel hidden">
 <style>
 #music{--music-accent:#1ed760}
@@ -584,15 +594,12 @@ main{padding-top:0!important}
 <p class="hint">Kelola file cadangan database INSAN di halaman tersendiri. File mencakup stok, akun pengguna, transaksi, pengaturan, dan riwayat. Simpan file di tempat aman.</p>
 <section class="history-card" id="backupPanel" hidden>
 <h3>🛡️ Cadangkan &amp; Pulihkan Data</h3>
-<p class="hint">Cadangan file server (.insanbackup) dan cadangan QR lokal. QR memuat snapshot stok, target, transaksi, riwayat, laporan, serta antrean lokal; data dipadatkan, dibagi otomatis, dan diverifikasi dengan SHA-256. Tidak memakai internet, server, atau cloud saat ekspor QR dan pemulihan QR.</p>
-<h3>Cadangan QR otomatis</h3>
-<p class="muted">Gambar QR di bawah selalu dibuat ulang setelah data operasional berubah. Jika data besar, cadangan terdiri dari beberapa bagian. Simpan seluruh bagian dan pindai semuanya pada aplikasi versi berikutnya.</p>
-<div id="qrPreview" class="qr-preview" aria-live="polite"><p class="muted">Menyiapkan QR terbaru…</p></div>
-<p id="qrBackupStatus" class="muted" aria-live="polite">QR akan diperbarui otomatis setelah data dimuat atau berubah.</p>
-<button type="button" onclick="saveQrBackupImages()">⬇ Simpan seluruh QR ke Galeri</button>
+<p class="hint">Cadangan QR offline tersedia pada halaman khusus QR Cadangan. QR tunggal memuat snapshot lengkap yang dikompresi dan diverifikasi dengan SHA-256, selama ukuran data masih berada dalam kapasitas standar QR.</p>
+<p id="qrBackupStatus" class="muted" aria-live="polite">QR tunggal diperbarui otomatis setelah data dimuat atau berubah.</p>
+<button type="button" onclick="showTab('backupqr')">▦ Buka QR Cadangan</button>
 <hr>
 <h3>Pulihkan dari QR</h3>
-<p class="muted">Pindai QR dengan kamera atau pilih beberapa gambar QR sekaligus dari Galeri. Untuk cadangan multi-bagian, seluruh bagian dengan ID cadangan yang sama harus dipindai. Pemulihan mengganti snapshot lokal pada perangkat ini.</p>
+<p class="muted">Pindai satu QR cadangan atau pilih gambar QR dari Galeri. Pemulihan mengganti snapshot lokal pada perangkat ini.</p>
 <div class="row"><button type="button" onclick="scanBackupQr()">▣ Pindai dengan kamera</button><button class="secondary" type="button" onclick="pickBackupQrImages()">▧ Pilih QR dari Galeri</button></div>
 <input id="qrImageInput" type="file" accept="image/*" multiple hidden>
 <p id="qrRestoreStatus" class="muted" aria-live="polite">Belum ada QR dipindai.</p>
@@ -608,9 +615,9 @@ main{padding-top:0!important}
 </div>
 <div id="backupqr" class="tab panel hidden">
 <h2>▦ QR Cadangan Lengkap</h2>
-<p class="hint">Halaman ini menampilkan seluruh bagian QR dari satu paket cadangan offline. Semua QR dengan ID paket yang sama wajib disimpan atau dipindai bersama agar seluruh data dapat dipulihkan. Isi mencakup snapshot stok, target, transaksi, riwayat, laporan, antrean perubahan offline, preferensi tema, serta metadata playlist musik.</p>
+<p class="hint">Halaman ini menampilkan satu kode QR yang berisi snapshot cadangan aplikasi terkompresi. Cukup simpan atau pindai satu gambar untuk memulihkan data yang tercakup. Isi mencakup snapshot stok, target, transaksi, riwayat, laporan, antrean perubahan offline, preferensi tema, serta metadata playlist musik.</p>
 <div class="history-card">
-<div class="row" style="align-items:center"><div><b>Seluruh bagian kode QR</b><p class="muted">QR diperbarui otomatis setelah data berubah. Jangan hanya menyimpan sebagian kode.</p></div><span class="badge" id="qrFullCount">Menunggu data</span></div>
+<div class="row" style="align-items:center"><div><b>Satu kode QR cadangan lengkap</b><p class="muted">QR diperbarui otomatis setelah data berubah. Satu gambar memuat seluruh snapshot yang berhasil dikompresi.</p></div><span class="badge" id="qrFullCount">Menunggu data</span></div>
 <p id="qrFullStatus" class="muted" aria-live="polite">Menyiapkan paket cadangan QR dari data terbaru…</p>
 <div id="qrFullPreview" class="qr-full-grid" aria-live="polite"><p class="muted">Kode QR akan muncul setelah data lokal selesai dimuat.</p></div>
 <button type="button" onclick="saveQrBackupImages()">⬇ Simpan seluruh QR ke Galeri</button>
