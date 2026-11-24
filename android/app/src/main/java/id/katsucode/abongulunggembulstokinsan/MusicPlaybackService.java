@@ -15,7 +15,6 @@ import android.os.Build;
 import android.os.Handler;
 import android.os.IBinder;
 import android.os.Looper;
-import android.support.v4.media.session.PlaybackStateCompat;
 
 public class MusicPlaybackService extends Service {
     public static final String ACTION_PLAY = "id.katsucode.gembul.MUSIC_PLAY";
