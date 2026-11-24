@@ -721,3 +721,31 @@ setInterval(checkForUpdates,300000);
   hideBootLoading();
  }
 })();
+
+
+// Typing/deleting technology ticker positioned under the signed-in user line.
+function startTechTicker(){
+ const target=$("techTickerText");if(!target||target.dataset.ready==="1")return;
+ target.dataset.ready="1";
+ const messages=[
+  "Sistem operasional Abon Gulung Gembul siap digunakan.",
+  "Memantau persediaan dan batas minimum stok...",
+  "Sinkronisasi data lokal dengan server aktif.",
+  "Produksi, outlet, dan riwayat tersimpan terorganisir.",
+  "INSAN × KatsuCode ID · technology for daily operations."
+ ];
+ let messageIndex=0,charIndex=0,deleting=false,timer=null;
+ const tick=()=>{
+  const message=messages[messageIndex];
+  charIndex+=deleting?-1:1;
+  target.textContent=message.slice(0,Math.max(0,charIndex));
+  let delay=deleting?34:58;
+  if(!deleting&&charIndex>=message.length){deleting=true;delay=1750;}
+  else if(deleting&&charIndex<=0){deleting=false;messageIndex=(messageIndex+1)%messages.length;delay=420;}
+  timer=window.setTimeout(tick,delay);
+ };
+ if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){target.textContent=messages[0];return;}
+ timer=window.setTimeout(tick,500);
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){window.clearTimeout(timer);}else if(!document.hidden){window.clearTimeout(timer);timer=window.setTimeout(tick,250);}});
+}
+\nstartTechTicker();\n
