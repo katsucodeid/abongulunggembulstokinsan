@@ -438,6 +438,28 @@ main{padding-top:0!important}
 .qr-preview-item img{display:block;width:128px;height:128px;object-fit:contain;background:#fff;border-radius:6px}
 .qr-preview-item figcaption{font-size:11px;color:var(--muted);margin-top:7px}
 @media(max-width:440px){.qr-preview-item{flex-basis:132px}.qr-preview-item img{width:112px;height:112px}}
+
+/* Fix drawer scrolling: keep every group and the bottom actions in the scroll area */
+#mainNav.tabs{
+  overflow-y:auto!important;
+  overflow-x:hidden!important;
+  overscroll-behavior-y:contain;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  scrollbar-gutter:stable;
+  justify-content:flex-start!important;
+}
+#mainNav.tabs>.nav-drawer-head,
+#mainNav.tabs>.nav-group,
+#mainNav.tabs>.nav-logout{flex:0 0 auto!important}
+#mainNav.tabs>.nav-group{min-height:max-content}
+#mainNav.tabs .nav-group-items{flex-shrink:0}
+#mainNav.tabs .nav-logout{margin-top:12px!important;margin-bottom:8px!important}
+.qr-full-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:12px;margin:14px 0}
+.qr-full-item{min-width:0;margin:0;padding:10px;border:1px solid var(--line);border-radius:14px;background:var(--bg);text-align:center}
+.qr-full-item img{display:block;width:100%;height:auto;aspect-ratio:1;object-fit:contain;background:#fff;border-radius:8px}
+.qr-full-item figcaption{margin-top:8px;font-size:12px;color:var(--muted);overflow-wrap:anywhere}
+@media(max-width:420px){.qr-full-grid{grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}.qr-full-item{padding:7px}}
 </style></head><body>
 <div id="bootLoading" role="status" aria-live="polite"><div class="boot-spinner" aria-hidden="true"></div><b>ABON GULUNG GEMBUL</b><p id="bootLoadingMessage">Memeriksa koneksi server…</p><small>Menyiapkan data aplikasi</small></div>
 <header><button class="secondary menu-toggle" id="menuToggle" type="button" aria-label="Buka navigasi" aria-expanded="false" onclick="toggleMenu()"><span></span><span></span><span></span></button><div class="brand-lockup"><img class="brand-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul oleh Bekasi"><div class="brand-copy"><b>ABON GULUNG GEMBUL</b><div class="muted">STOK KERTAS · PRODUKSI · OPERASIONAL</div></div></div><div class="header-actions"><div class="clock-chip" aria-label="Waktu sekarang"><strong id="liveClock">--:--:--</strong><small id="liveDate">Memuat tanggal…</small></div><button id="themeToggle" class="secondary theme-toggle" type="button" style="width:auto" aria-label="Ganti tema" aria-pressed="false" onclick="toggleTheme()">🌙 Tema Gelap</button></div></header>
@@ -463,6 +485,7 @@ main{padding-top:0!important}
 <div class="nav-group-items" id="navSystem">
 <button class="nav-link" onclick="showTab('music')">♫ &nbsp; Pemutar musik</button>
 <button class="nav-link" onclick="showTab('backup')">🛡️ &nbsp; Pencadangan</button>
+<button class="nav-link" onclick="showTab('backupqr')">▦ &nbsp; QR Cadangan</button>
 <button class="nav-link" id="accountsNavLink" onclick="showTab('accounts')" hidden>👥 &nbsp; Pengguna &amp; akun</button>
 <button class="nav-link" onclick="showTab('about')">ⓘ &nbsp; Tentang &amp; pembaruan</button>
 </div></div><button class="nav-link nav-logout" type="button" onclick="logout()">↪ &nbsp; Keluar dari akun</button></nav>
@@ -582,6 +605,18 @@ main{padding-top:0!important}
 <button class="danger" id="restoreBackupButton" onclick="restoreBackupFile()">Pulihkan database server</button>
 <p id="backupStatus" class="muted" aria-live="polite">File backup server tersedia saat terhubung.</p>
 </section>
+</div>
+<div id="backupqr" class="tab panel hidden">
+<h2>▦ QR Cadangan Lengkap</h2>
+<p class="hint">Halaman ini menampilkan seluruh bagian QR dari satu paket cadangan offline. Semua QR dengan ID paket yang sama wajib disimpan atau dipindai bersama agar seluruh data dapat dipulihkan. Isi mencakup snapshot stok, target, transaksi, riwayat, laporan, antrean perubahan offline, preferensi tema, serta metadata playlist musik.</p>
+<div class="history-card">
+<div class="row" style="align-items:center"><div><b>Seluruh bagian kode QR</b><p class="muted">QR diperbarui otomatis setelah data berubah. Jangan hanya menyimpan sebagian kode.</p></div><span class="badge" id="qrFullCount">Menunggu data</span></div>
+<p id="qrFullStatus" class="muted" aria-live="polite">Menyiapkan paket cadangan QR dari data terbaru…</p>
+<div id="qrFullPreview" class="qr-full-grid" aria-live="polite"><p class="muted">Kode QR akan muncul setelah data lokal selesai dimuat.</p></div>
+<button type="button" onclick="saveQrBackupImages()">⬇ Simpan seluruh QR ke Galeri</button>
+<button type="button" class="secondary" onclick="refreshQrBackupNow()">↻ Perbarui QR dari data terbaru</button>
+</div>
+<p class="muted">Catatan: QR ini adalah cadangan data aplikasi yang tersedia secara lokal. File audio asli tidak disertakan; playlist hanya menyimpan metadata dan daftar referensi musik. Cadangan database server tetap tersedia melalui menu Pencadangan.</p>
 </div>
 <div id="accounts" class="tab panel hidden">
 <h2>Pengguna &amp; akun</h2>
