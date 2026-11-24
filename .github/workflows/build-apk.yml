@@ -74,6 +74,15 @@ jobs:
             "platforms;android-35" \
             "build-tools;35.0.0"
 
+      - name: Bundle latest frontend and image assets into APK
+        run: |
+          mkdir -p android/app/src/main/assets/www android/app/src/main/assets/img
+          cp -R frontend/. android/app/src/main/assets/www/
+          cp -R img/. android/app/src/main/assets/img/
+          test -s android/app/src/main/assets/www/index.html
+          test -s android/app/src/main/assets/www/app.js
+          test -s android/app/src/main/assets/img/BackgroundEraser_20261016_074306739.png
+
       - name: Set up Gradle 8.9
         uses: gradle/actions/setup-gradle@v4
         with:
