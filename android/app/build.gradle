@@ -9,11 +9,11 @@ android {
     defaultConfig {
         // Keep this application ID isolated from the original app while preserving
         // the identity of the existing separate installation and its local data.
-        applicationId 'id.katsucode.abongulunggembulstokinsan.stokinsan2026'
+        applicationId 'id.katsucode.stockmate.gembul.inventory'
         minSdk 23
         targetSdk 35
-        versionCode 9
-        versionName '1.0.1'
+        versionCode 1
+        versionName '1.0.0'
     }
 
     compileOptions {
