@@ -626,20 +626,38 @@ async function buildLocalQrBackupPayload(){
   music:{library:Array.isArray(musicLibrary)?musicLibrary.map(item=>({name:item.name,mime:item.mime,size:item.size})):[],
    playlists:Array.isArray(musicPlaylists)?musicPlaylists.map(p=>({id:p.id,name:p.name,tracks:Array.isArray(p.tracks)?p.tracks:[]})):[]}};
 }
+let qrGalleryPage=0;
 function renderQrBackupGallery(){
  const images=Array.isArray(latestBackupQrImages)?latestBackupQrImages:[];
- const full=$("qrFullPreview");
- if(full){full.replaceChildren();if(images.length){const item=images[0],figure=document.createElement("figure");figure.className="qr-full-item";const image=document.createElement("img");image.alt="Satu QR cadangan lengkap";image.loading="lazy";image.decoding="async";image.src="data:image/png;base64,"+item.data;const caption=document.createElement("figcaption");caption.textContent="Satu QR · satu snapshot cadangan";figure.append(image,caption);full.appendChild(figure);}else{const empty=document.createElement("p");empty.className="muted";empty.textContent="QR belum tersedia.";full.appendChild(empty);}}
- if($("qrFullCount"))$("qrFullCount").textContent=images.length?"1 QR":"Belum tersedia";
- if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Satu kode QR berisi snapshot cadangan lengkap jika ukuran terkompresi masih dalam batas kapasitas QR.":"QR belum tersedia.";
- if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?"QR tunggal diperbarui otomatis · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
+ const full=$("qrFullPreview"),pageSize=8,totalPages=Math.max(1,Math.ceil(images.length/pageSize));
+ qrGalleryPage=Math.min(Math.max(0,qrGalleryPage),totalPages-1);
+ if(full){
+  full.replaceChildren();
+  if(images.length){
+   const from=qrGalleryPage*pageSize;
+   images.slice(from,from+pageSize).forEach((item,offset)=>{
+    const figure=document.createElement("figure");figure.className="qr-full-item";
+    const image=document.createElement("img");image.alt="QR cadangan bagian "+(from+offset+1)+" dari "+images.length;image.loading="lazy";image.decoding="async";image.src="data:image/png;base64,"+item.data;
+    const caption=document.createElement("figcaption");caption.textContent="Bagian "+(from+offset+1)+" / "+images.length;
+    figure.append(image,caption);full.appendChild(figure);
+   });
+  }else{const empty=document.createElement("p");empty.className="muted";empty.textContent="QR belum tersedia.";full.appendChild(empty);}
+ }
+ if($("qrFullCount"))$("qrFullCount").textContent=images.length?images.length.toLocaleString("id-ID")+" QR":"Belum tersedia";
+ if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Cadangan lengkap dibagi menjadi "+images.length.toLocaleString("id-ID")+" QR. Tampilkan halaman "+(qrGalleryPage+1)+" dari "+totalPages+". Pindai semua bagian, atau simpan seluruh gambar ke Galeri.":"QR belum tersedia.";
+ if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?images.length.toLocaleString("id-ID")+" QR · snapshot lengkap · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
+ const prev=$("qrPagePrev"),next=$("qrPageNext"),label=$("qrPageLabel");
+ if(prev)prev.disabled=!images.length||qrGalleryPage===0;
+ if(next)next.disabled=!images.length||qrGalleryPage>=totalPages-1;
+ if(label)label.textContent=images.length?"Halaman "+(qrGalleryPage+1)+" / "+totalPages:"—";
 }
+function changeQrGalleryPage(delta){qrGalleryPage+=delta;renderQrBackupGallery();}
 async function generateLatestQrBackup(){
  if(!window.InsanNative?.generateBackupQr)throw new Error("Pembuatan QR lengkap hanya tersedia di aplikasi Android.");
  const payload=await buildLocalQrBackupPayload();
  const result=window.InsanNative.generateBackupQr(JSON.stringify(payload));
  if(String(result).startsWith("ERROR:")){latestBackupQrImages=[];renderQrBackupGallery();throw new Error(String(result));}
- latestBackupQrImages=JSON.parse(result);
+ latestBackupQrImages=JSON.parse(result);qrGalleryPage=0;
  if(!Array.isArray(latestBackupQrImages)||!latestBackupQrImages.length)throw new Error("Tidak ada gambar QR yang berhasil dibuat.");
  renderQrBackupGallery();
  return latestBackupQrImages;
