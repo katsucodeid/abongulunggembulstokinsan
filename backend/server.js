@@ -53,10 +53,10 @@ function clearLoginFailures(req) {
 }
 
 const itemDefs = {
-  box3: { label: "Box isi 3", min: null },
-  box5outer: { label: "Box isi 5 luar (Slongsong)", min: null },
-  box5inner: { label: "Box isi 5 dalam (Tatakan Polos)", min: null },
-  paper: { label: "Kertas Minyak", min: null },
+  box3: { label: "Box isi 3", min: 500 },
+  box5outer: { label: "Box isi 5 luar (Slongsong)", min: 500 },
+  box5inner: { label: "Box isi 5 dalam (Tatakan Polos)", min: 500 },
+  paper: { label: "Kertas Minyak", min: 500 },
   mika: { label: "Mika roti roll", min: null }
 };
 const initialStock = { box3: 3897, box5outer: 3463, box5inner: 3595, paper: 1722, mika: 210 };
@@ -87,7 +87,25 @@ async function locked(fn) {
   return run;
 }
 function snapshot(user) {
-  return { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(), user: user ? { username: user.username, role: user.role } : null };
+  const production = (db.transactions || []).filter(tx => tx.type === "production");
+  const variants = { ori: 0, beef: 0, spicy: 0, cheese: 0 };
+  const outlets = {};
+  let totalProduced = 0;
+  for (const tx of production) {
+    const lines = tx.lines || {};
+    for (const key of Object.keys(variants)) {
+      const quantity = Number(lines[key] || 0);
+      if (Number.isSafeInteger(quantity) && quantity > 0) { variants[key] += quantity; totalProduced += quantity; }
+    }
+    const outlet = tx.location || "Outlet tidak diketahui";
+    outlets[outlet] = (outlets[outlet] || 0) + Number(lines.total || 0);
+  }
+  const ranked = Object.entries(variants).sort((a, b) => b[1] - a[1]);
+  return { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(),
+    stats: { totalProduced, productionEntries: production.length, variants, outlets,
+      topVariant: ranked[0]?.[1] > 0 ? ranked[0][0] : null,
+      lastProductionAt: production.at(-1)?.createdAt || null },
+    user: user ? { username: user.username, role: user.role } : null };
 }
 function auth(req, res, next) {
   try {
