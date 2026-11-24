@@ -1,4 +1,4 @@
-name: Build APK Abon Gulung Gembul Laporan Semi Final
+name: Build APK Abon Gulung Gembul Laporan v3
 
 on:
   pull_request:
@@ -79,6 +79,9 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Validate frontend JavaScript
+        run: node --check frontend/app.js
+
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
 
@@ -87,13 +90,13 @@ jobs:
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
-          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
+          cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
+          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2-APK
-          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
+          name: Abon-Gulung-Gembul-Laporan-3.0.0-APK
+          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
           if-no-files-found: error
           retention-days: 30

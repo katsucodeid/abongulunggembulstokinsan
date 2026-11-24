@@ -26,9 +26,11 @@ public class MusicPlaybackService extends Service {
     private MediaPlayer player;
     private String currentTitle = "Musik";
     private boolean prepared = false;
+    private static MusicPlaybackService activeService;
 
     @Override public void onCreate() {
         super.onCreate();
+        activeService = this;
         if (Build.VERSION.SDK_INT >= 26) {
             NotificationChannel channel = new NotificationChannel(
                 CHANNEL_ID, "Pemutar musik", NotificationManager.IMPORTANCE_LOW
@@ -98,6 +100,10 @@ public class MusicPlaybackService extends Service {
         return START_NOT_STICKY;
     }
 
+    public static int currentPosition() { try { return activeService != null && activeService.player != null && activeService.prepared ? activeService.player.getCurrentPosition() : 0; } catch (Exception e) { return 0; } }
+    public static int currentDuration() { try { return activeService != null && activeService.player != null && activeService.prepared ? activeService.player.getDuration() : 0; } catch (Exception e) { return 0; } }
+    public static void seekCurrent(int positionMs) { try { if (activeService != null && activeService.player != null && activeService.prepared) activeService.player.seekTo(Math.max(0, Math.min(positionMs, activeService.player.getDuration()))); } catch (Exception ignored) { } }
+
     private void sendState(boolean playing) {
         sendBroadcast(new Intent(ACTION_STATE_CHANGED).setPackage(getPackageName()).putExtra("playing", playing));
     }
@@ -141,6 +147,7 @@ public class MusicPlaybackService extends Service {
 
     @Override public void onDestroy() {
         releasePlayer();
+        if (activeService == this) activeService = null;
         super.onDestroy();
     }
 
