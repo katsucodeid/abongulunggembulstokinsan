@@ -644,15 +644,15 @@ main{padding-top:0!important}
 </div>
 <div id="backupqr" class="tab panel hidden">
 <h2>▦ QR Cadangan Lengkap</h2>
-<p class="hint">Halaman ini menampilkan satu kode QR yang berisi snapshot cadangan aplikasi terkompresi. Cukup simpan atau pindai satu gambar untuk memulihkan data yang tercakup. Isi mencakup snapshot stok, target, transaksi, riwayat, laporan, antrean perubahan offline, preferensi tema, serta metadata playlist musik.</p>
+<p class="hint">Halaman ini membagi snapshot cadangan terkompresi menjadi beberapa QR berurutan (hingga 8 MB data). Simpan semua gambar atau pindai seluruh bagian untuk memulihkan satu snapshot lengkap. Isi mencakup stok, target, transaksi, riwayat, laporan, antrean offline, preferensi tema, serta metadata playlist musik.</p>
 <div class="history-card">
-<div class="row" style="align-items:center"><div><b>Satu kode QR cadangan lengkap</b><p class="muted">QR diperbarui otomatis setelah data berubah. Satu gambar memuat seluruh snapshot yang berhasil dikompresi.</p></div><span class="badge" id="qrFullCount">Menunggu data</span></div>
+<div class="row" style="align-items:center"><div><b>QR cadangan lengkap · multi-bagian</b><p class="muted">Snapshot dibagi menjadi beberapa QR kecil. Semua bagian memiliki nomor dan checksum untuk memastikan urutan serta keutuhan data.</p></div><span class="badge" id="qrFullCount">Menunggu data</span></div>
 <p id="qrFullStatus" class="muted" aria-live="polite">Menyiapkan paket cadangan QR dari data terbaru…</p>
 <div id="qrFullPreview" class="qr-full-grid" aria-live="polite"><p class="muted">Kode QR akan muncul setelah data lokal selesai dimuat.</p></div>
-<button type="button" onclick="saveQrBackupImages()">⬇ Simpan satu QR ke Galeri</button>
+<div class="row" style="align-items:center;justify-content:space-between"><button type="button" class="secondary" id="qrPagePrev" onclick="changeQrGalleryPage(-1)" disabled>‹ Sebelumnya</button><span id="qrPageLabel" class="muted">—</span><button type="button" class="secondary" id="qrPageNext" onclick="changeQrGalleryPage(1)" disabled>Berikutnya ›</button></div>\n<button type="button" onclick="saveQrBackupImages()">⬇ Simpan semua QR ke Galeri</button>
 <button type="button" class="secondary" onclick="refreshQrBackupNow()">↻ Perbarui QR dari data terbaru</button>
 </div>
-<p class="muted">Catatan: QR ini adalah cadangan data aplikasi yang tersedia secara lokal. File audio asli tidak disertakan; playlist hanya menyimpan metadata dan daftar referensi musik. Cadangan database server tetap tersedia melalui menu Pencadangan.</p>
+<p class="muted">Catatan: QR ini adalah cadangan data aplikasi yang tersedia secara lokal, maksimal 8 MB sebelum kompresi. File audio asli tidak disertakan; playlist hanya menyimpan metadata dan daftar referensi musik. Pindai semua nomor QR sampai pemulihan menyatakan lengkap. Cadangan database server tetap tersedia melalui menu Pencadangan.</p>
 </div>
 <div id="accounts" class="tab panel hidden">
 <h2>Pengguna &amp; akun</h2>
