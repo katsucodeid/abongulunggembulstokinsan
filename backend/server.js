@@ -256,6 +256,14 @@ app.delete("/api/transactions/:id", auth, adminOnly, async (req, res) => {
       const index = db.transactions.findIndex(x => x.id === req.params.id);
       if (index < 0) throw new Error("Transaksi tidak ditemukan atau sudah dihapus.");
       const tx = db.transactions[index];
+      // The client must confirm the identity of the exact history card it selected.
+      // Reject stale cards rather than deleting a different transaction after a refresh.
+      const expected = req.body || {};
+      if (expected.type && expected.type !== tx.type) throw new Error("Jenis transaksi berubah. Tidak ada data yang dihapus; muat ulang riwayat.");
+      if (expected.date !== undefined && (expected.date || null) !== (tx.date || null)) throw new Error("Tanggal transaksi tidak cocok dengan pilihan. Muat ulang riwayat.");
+      if (expected.location !== undefined && (expected.location || null) !== (tx.location || null)) throw new Error("Outlet target tidak cocok dengan pilihan. Tidak ada data yang dihapus.");
+      if (expected.createdAt !== undefined && (expected.createdAt || null) !== (tx.createdAt || null)) throw new Error("Waktu pembuatan transaksi tidak cocok. Muat ulang riwayat.");
+      if (expected.createdBy !== undefined && (expected.createdBy || null) !== (tx.createdBy || null)) throw new Error("Pembuat transaksi tidak cocok. Muat ulang riwayat.");
       if (tx.type === "stock-out" && db.transactions.some(t => t.type === "stock-correction" && t.lines?.targetTransactionId === tx.id)) throw new Error("Transaksi pengurangan ini sudah memiliki koreksi. Hapus/selesaikan catatan koreksinya terlebih dahulu sebelum menghapus transaksi awal.");
       for (const [key, delta] of Object.entries(tx.changes || {})) {
         if (!Object.hasOwn(itemDefs, key) || !Number.isSafeInteger(delta) || !Number.isSafeInteger(db.stock[key] - delta) || db.stock[key] - delta < 0) throw new Error("Pembatalan transaksi tidak aman. Periksa stok terlebih dahulu.");
