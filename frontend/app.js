@@ -81,6 +81,7 @@ function renderAnalyticsHeader(){
  const produced=Number(stats.totalProduced)||0,top=stats.topVariant?names[stats.topVariant]||stats.topVariant:"Belum ada";
  const breakdown=Object.entries(names).map(([key,label])=>label+" "+(Number(variants[key])||0).toLocaleString("id-ID")).join(" · ");
  const outlets=Object.entries(stats.outlets||{}).map(([name,value])=>name+" "+Number(value||0).toLocaleString("id-ID")).join(" · ");
+ renderTechStatistics();
  el.replaceChildren();const main=document.createElement("div");main.className="header-analytics-main";
  const pulse=document.createElement("span");pulse.className="analytics-pulse";
  const label=document.createElement("span");label.textContent="REKAP PRODUKSI SEJAK AWAL";
@@ -741,30 +742,68 @@ setInterval(checkForUpdates,300000);
 })();
 
 
-// Typing/deleting technology ticker positioned under the signed-in user line.
+// Live operational statistics and typing/deleting system interface.
+function renderTechStatistics(){
+ if(!state)return;
+ const stats=state.stats||{},variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+ const fmt=value=>(Number(value)||0).toLocaleString("id-ID");
+ const stock=state.stock||{},stockTotal=Object.values(stock).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
+ const produced=Number(stats.totalProduced)||0;
+ const ranked=Object.entries(names).map(([key,label])=>({key,label,count:Number(variants[key])||0})).sort((a,b)=>b.count-a.count);
+ const top=ranked[0]&&ranked[0].count>0?ranked[0]:null;
+ const put=(id,value)=>{const node=$(id);if(node)node.textContent=value;};
+ put("techStockTotal",fmt(stockTotal)+" pcs");
+ put("techProductionTotal",fmt(produced)+" loyang");
+ put("techProductionEntries",fmt(stats.productionEntries));
+ put("techTopVariant",top?top.label:"Belum ada");
+ put("techTopVariantCount",top?fmt(top.count)+" loyang dibuat":"belum ada produksi");
+ const first=stats.firstProductionAt||stats.stockStartDate;
+ const last=stats.lastProductionAt;
+ const period=first?new Date(first).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"awal pencatatan";
+ put("techProductionPeriod",period+(last?" – "+new Date(last).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):""));
+ put("techVariantBreakdown",ranked.map(x=>x.label+" "+fmt(x.count)).join(" · "));
+ const outlets=Object.entries(stats.outlets||{}).sort((a,b)=>Number(b[1])-Number(a[1]));
+ put("techOutletBreakdown",outlets.length?outlets.map(([name,value])=>name+" "+fmt(value)).join(" · "):"Belum ada data outlet");
+ put("techCopyrightYear",String(new Date().getFullYear()));
+}
+function buildTechMessages(){
+ const stats=state?.stats||{},variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+ const fmt=value=>(Number(value)||0).toLocaleString("id-ID");
+ const stock=state?.stock||{},stockTotal=Object.values(stock).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
+ const produced=Number(stats.totalProduced)||0;
+ const ranked=Object.entries(names).map(([key,label])=>({label,count:Number(variants[key])||0})).sort((a,b)=>b.count-a.count);
+ const top=ranked[0]?.count?ranked[0]:null;
+ const first=stats.firstProductionAt||stats.stockStartDate;
+ const from=first?new Date(first).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):"awal pencatatan";
+ const outlets=Object.entries(stats.outlets||{}).sort((a,b)=>Number(b[1])-Number(a[1]));
+ return [
+  "KALKULASI STOK: "+fmt(stockTotal)+" pcs tersedia dari seluruh item.",
+  "REKAP PRODUKSI SEJAK "+from+": "+fmt(produced)+" loyang tercatat.",
+  "ANALISIS VARIAN: "+ranked.map(x=>x.label+" "+fmt(x.count)).join(" · ")+".",
+  "VARIAN TERBANYAK: "+(top?top.label+" dengan "+fmt(top.count)+" loyang.":"Belum ada data produksi."),
+  "TOTAL CATATAN PRODUKSI: "+fmt(stats.productionEntries)+" transaksi.",
+  "REKAP OUTLET: "+(outlets.length?outlets.map(([name,value])=>name+" "+fmt(value)).join(" · "):"belum tersedia")+".",
+  "ESTIMASI OPERASIONAL: angka dihitung langsung dari data tersimpan.",
+  "KatsuCode ID × Insan · sistem informasi operasional Abon Gulung Gembul."
+ ];
+}
 function startTechTicker(){
  const target=$("techTickerText");if(!target||target.dataset.ready==="1")return;
  target.dataset.ready="1";
- const messages=[
-  "Sistem operasional Abon Gulung Gembul siap digunakan.",
-  "Memantau persediaan dan batas minimum stok...",
-  "Sinkronisasi data lokal dengan server aktif.",
-  "Produksi, outlet, dan riwayat tersimpan terorganisir.",
-  "INSAN × KatsuCode ID · technology for daily operations."
- ];
- let messageIndex=0,charIndex=0,deleting=false,timer=null;
+ let messages=[],messageIndex=0,charIndex=0,deleting=false,timer=null,refreshAt=0;
  const tick=()=>{
-  const message=messages[messageIndex];
+  if(!state){timer=window.setTimeout(tick,1000);return;}
+  if(Date.now()-refreshAt>5000){messages=buildTechMessages();refreshAt=Date.now();messageIndex%=messages.length;}
+  const message=messages[messageIndex]||"INSAN SYSTEM INTERFACE · KatsuCode ID × Insan";
   charIndex+=deleting?-1:1;
   target.textContent=message.slice(0,Math.max(0,charIndex));
-  let delay=deleting?34:58;
-  if(!deleting&&charIndex>=message.length){deleting=true;delay=1750;}
-  else if(deleting&&charIndex<=0){deleting=false;messageIndex=(messageIndex+1)%messages.length;delay=420;}
+  let delay=deleting?22:34;
+  if(!deleting&&charIndex>=message.length){deleting=true;delay=2100;}
+  else if(deleting&&charIndex<=0){deleting=false;messageIndex=(messageIndex+1)%messages.length;delay=450;}
   timer=window.setTimeout(tick,delay);
  };
- if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){target.textContent=messages[0];return;}
+ if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){target.textContent="INSAN SYSTEM INTERFACE · KatsuCode ID × Insan";return;}
  timer=window.setTimeout(tick,500);
- document.addEventListener("visibilitychange",()=>{if(document.hidden){window.clearTimeout(timer);}else if(!document.hidden){window.clearTimeout(timer);timer=window.setTimeout(tick,250);}});
+ document.addEventListener("visibilitychange",()=>{if(document.hidden){window.clearTimeout(timer);}else{window.clearTimeout(timer);timer=window.setTimeout(tick,250);}});
 }
-
 startTechTicker();
