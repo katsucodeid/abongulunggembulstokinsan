@@ -34,6 +34,7 @@ import java.util.UUID;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.HashMap;
+import java.util.Collections;
 import java.util.zip.GZIPOutputStream;
 import java.util.zip.GZIPInputStream;
 import java.security.MessageDigest;
@@ -306,7 +307,7 @@ public class MainActivity extends Activity {
             runOnUiThread(() -> {
                 try {
                     IntentIntegrator scanner = new IntentIntegrator(MainActivity.this);
-                    scanner.setDesiredBarcodeFormats(IntentIntegrator.QR_CODE_TYPES);
+                    scanner.setDesiredBarcodeFormats(Collections.singletonList("QR_CODE"));
                     scanner.setPrompt("Arahkan kamera ke QR cadangan Abon Gulung Gembul");
                     scanner.setBeepEnabled(false); scanner.setOrientationLocked(false);
                     scanner.setCaptureActivity(CaptureActivity.class); scanner.initiateScan();
