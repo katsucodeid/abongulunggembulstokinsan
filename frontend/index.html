@@ -478,6 +478,17 @@ main{padding-top:0!important}
 .tech-ticker-screen{display:flex;align-items:center;min-height:35px;gap:9px;padding:5px 0;color:var(--text);font:600 clamp(13px,3.4vw,16px)/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.01em}
 .tech-prefix{color:var(--accent);font-size:19px;font-weight:900}.tech-caret{width:7px;height:18px;flex:0 0 7px;background:var(--accent);border-radius:1px;animation:techBlink .8s steps(2,start) infinite;box-shadow:0 0 9px color-mix(in srgb,var(--accent) 65%,transparent)}
 .tech-ticker-bottom{justify-content:space-between;gap:7px;font-size:8px;letter-spacing:.08em}.tech-ticker-bottom b{color:var(--accent)}.tech-ticker-version{white-space:nowrap;color:var(--accent)}
+.tech-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0}
+.tech-metric{min-width:0;padding:9px 10px;border:1px solid color-mix(in srgb,var(--line) 85%,var(--accent));border-radius:10px;background:color-mix(in srgb,var(--bg) 78%,transparent)}
+.tech-metric span,.tech-metric small{display:block;color:var(--muted);font:700 8px/1.45 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.07em}
+.tech-metric strong{display:block;margin:3px 0 1px;color:var(--text);font:800 clamp(15px,4vw,20px)/1.2 ui-monospace,SFMono-Regular,Consolas,monospace;font-variant-numeric:tabular-nums;overflow-wrap:anywhere}
+.tech-metric small{font-weight:500;letter-spacing:0;text-transform:none}
+.tech-stat-detail{display:grid;grid-template-columns:92px minmax(0,1fr);gap:8px;padding:6px 1px;border-top:1px dashed var(--line);font-size:10px;line-height:1.55}
+.tech-stat-detail b{color:var(--accent);font:800 8px/1.7 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.08em}
+.tech-stat-detail span{color:var(--muted);overflow-wrap:anywhere}
+.tech-copyright{margin-top:8px;padding-top:7px;border-top:1px solid var(--line);text-align:center;color:var(--muted);font-size:9px;letter-spacing:.025em}
+.tech-copyright b{color:var(--accent)}
+@media(max-width:390px){.tech-metrics{gap:5px}.tech-metric{padding:8px}.tech-stat-detail{grid-template-columns:78px minmax(0,1fr);font-size:9px}}
 .tech-signal{display:flex;align-items:flex-end;gap:2px;height:10px}.tech-signal i{display:block;width:2px;border-radius:2px;background:var(--accent);animation:techBars .9s ease-in-out infinite alternate}.tech-signal i:nth-child(1){height:4px}.tech-signal i:nth-child(2){height:8px;animation-delay:.15s}.tech-signal i:nth-child(3){height:6px;animation-delay:.3s}.tech-signal i:nth-child(4){height:10px;animation-delay:.45s}
 @keyframes techBlink{to{opacity:0}}@keyframes techPulse{50%{opacity:.45;box-shadow:0 0 0 5px rgba(54,189,131,.06)}}@keyframes techSweep{0%{left:-35%}100%{left:125%}}@keyframes techBars{to{transform:scaleY(.35);opacity:.55}}
 @media(max-width:390px){.tech-ticker{margin:7px 0 13px;padding:10px 11px}.tech-ticker-top,.tech-ticker-bottom{font-size:8px}.tech-ticker-bottom{letter-spacing:.045em}.tech-ticker-version{font-size:7px}}
@@ -489,7 +500,17 @@ main{padding-top:0!important}
 <main><div id="connection" class="muted">Memeriksa koneksi…</div><section id="updateNotice" class="panel hidden"><b id="updateTitle">Pembaruan tersedia</b><p id="updateMessage" class="muted">Versi baru tersedia.</p><button id="updateButton" onclick="applyUpdate()">Update Sekarang</button></section>
 <section id="login" class="panel"><div class="login-brand"><img src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul"><div><span class="eyebrow">SISTEM OPERASIONAL</span><h2>Selamat datang</h2><p>Masuk untuk mengelola stok dan produksi.</p></div></div><label>Username</label><input id="username" autocomplete="username"><label>Password</label><input id="password" type="password" autocomplete="current-password"><button onclick="login()">Login</button><p id="loginMsg" class="muted"></p></section>
 <section id="app" class="hidden">
-<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div></div><p id="syncErrors" class="low"></p><section class="tech-ticker" aria-label="Pesan sistem animasi"><div class="tech-ticker-top"><span class="tech-live-dot"></span><span>INSAN SYSTEM INTERFACE</span><span class="tech-ticker-line"></span><span class="tech-ticker-code">SYS.ONLINE</span></div><div class="tech-ticker-screen"><span class="tech-prefix">›</span><span id="techTickerText" aria-live="polite">Menyiapkan sistem operasional...</span><span class="tech-caret" aria-hidden="true"></span></div><div class="tech-ticker-bottom"><span class="tech-signal"><i></i><i></i><i></i><i></i></span><span>LOCAL MODE <b>·</b> SERVER SYNC <b>·</b> STOCK CONTROL</span><span class="tech-ticker-version">INSAN / KC-ID</span></div></section>
+<div class="row"><div><b id="who"></b><div class="muted">Abon Gulung Gembul · Mode lokal + sinkronisasi server <span id="pendingCount"></span></div></div></div><p id="syncErrors" class="low"></p><section class="tech-ticker" aria-label="Pesan sistem animasi"><div class="tech-ticker-top"><span class="tech-live-dot"></span><span>INSAN SYSTEM INTERFACE</span><span class="tech-ticker-line"></span><span class="tech-ticker-code">SYS.ONLINE</span></div><div class="tech-ticker-screen"><span class="tech-prefix">›</span><span id="techTickerText" aria-live="polite">Menghitung statistik operasional...</span><span class="tech-caret" aria-hidden="true"></span></div>
+<div class="tech-metrics" aria-label="Statistik operasional langsung">
+<div class="tech-metric"><span>STOK TERSEDIA</span><strong id="techStockTotal">—</strong><small>pcs seluruh item</small></div>
+<div class="tech-metric"><span>PRODUKSI KUMULATIF</span><strong id="techProductionTotal">—</strong><small id="techProductionPeriod">sejak awal pencatatan</small></div>
+<div class="tech-metric"><span>CATATAN PRODUKSI</span><strong id="techProductionEntries">—</strong><small>transaksi tercatat</small></div>
+<div class="tech-metric"><span>VARIAN TERATAS</span><strong id="techTopVariant">—</strong><small id="techTopVariantCount">belum ada produksi</small></div>
+</div>
+<div class="tech-stat-detail"><b>REKAP VARIAN</b><span id="techVariantBreakdown">Menunggu data produksi...</span></div>
+<div class="tech-stat-detail"><b>REKAP OUTLET</b><span id="techOutletBreakdown">Menunggu data outlet...</span></div>
+<div class="tech-ticker-bottom"><span class="tech-signal"><i></i><i></i><i></i><i></i></span><span>LOCAL MODE <b>·</b> SERVER SYNC <b>·</b> LIVE CALCULATION</span><span class="tech-ticker-version">INSAN / KC-ID</span></div>
+<div class="tech-copyright">© <span id="techCopyrightYear">2026</span> <b>KatsuCode ID × Insan</b> · All rights reserved.</div></section>
 <nav class="tabs" id="mainNav" aria-label="Navigasi utama">
 <div class="nav-drawer-head"><div><b>Navigasi</b><small>Abon Gulung Gembul · Stok Kertas</small></div><button class="nav-close" type="button" aria-label="Tutup navigasi" onclick="closeMenu()">×</button></div>
 <div id="navScrollArea" class="nav-scroll-area">
