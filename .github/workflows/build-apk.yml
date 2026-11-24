@@ -79,6 +79,9 @@ jobs:
         with:
           gradle-version: '8.9'
 
+      - name: Validate frontend JavaScript
+        run: node --check frontend/app.js
+
       - name: Build debug APK
         run: gradle -p android --no-daemon assembleDebug
 
