@@ -56,6 +56,26 @@ public class MusicPlaybackService extends Service {
         }
         mediaSession = new MediaSession(this, "AbonGulungMusik");
         mediaSession.setFlags(MediaSession.FLAG_HANDLES_MEDIA_BUTTONS | MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+        mediaSession.setCallback(new MediaSession.Callback() {
+            @Override public void onPlay() {
+                onStartCommand(new Intent(MusicPlaybackService.this, MusicPlaybackService.class).setAction(ACTION_RESUME), 0, 0);
+            }
+            @Override public void onPause() {
+                onStartCommand(new Intent(MusicPlaybackService.this, MusicPlaybackService.class).setAction(ACTION_PAUSE), 0, 0);
+            }
+            @Override public void onSkipToPrevious() {
+                onStartCommand(new Intent(MusicPlaybackService.this, MusicPlaybackService.class).setAction(ACTION_SKIP_PREVIOUS), 0, 0);
+            }
+            @Override public void onSkipToNext() {
+                onStartCommand(new Intent(MusicPlaybackService.this, MusicPlaybackService.class).setAction(ACTION_SKIP_NEXT), 0, 0);
+            }
+            @Override public void onSeekTo(long position) {
+                seekCurrent((int)position);
+            }
+            @Override public void onStop() {
+                onStartCommand(new Intent(MusicPlaybackService.this, MusicPlaybackService.class).setAction(ACTION_STOP), 0, 0);
+            }
+        });
         mediaSession.setActive(true);
     }
 
