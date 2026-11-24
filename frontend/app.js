@@ -608,16 +608,15 @@ function renderQrBackupGallery(){
  const images=Array.isArray(latestBackupQrImages)?latestBackupQrImages:[];
  const full=$("qrFullPreview");
  if(full){full.replaceChildren();if(images.length){const item=images[0],figure=document.createElement("figure");figure.className="qr-full-item";const image=document.createElement("img");image.alt="Satu QR cadangan lengkap";image.loading="lazy";image.decoding="async";image.src="data:image/png;base64,"+item.data;const caption=document.createElement("figcaption");caption.textContent="Satu QR · satu snapshot cadangan";figure.append(image,caption);full.appendChild(figure);}else{const empty=document.createElement("p");empty.className="muted";empty.textContent="QR belum tersedia.";full.appendChild(empty);}}
- const label=images.length?"satu QR tunggal · satu paket cadangan":"QR tunggal";
- if($("qrFullCount"))$("qrFullCount").textContent=images.length?images.length?"1 QR":"Belum tersedia":"Belum tersedia";
- if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Satu kode QR berisi snapshot cadangan lengkap yang muat dalam kapasitas QR.":"QR belum tersedia.";
+ if($("qrFullCount"))$("qrFullCount").textContent=images.length?"1 QR":"Belum tersedia";
+ if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Satu kode QR berisi snapshot cadangan lengkap jika ukuran terkompresi masih dalam batas kapasitas QR.":"QR belum tersedia.";
  if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?"QR tunggal diperbarui otomatis · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
 }
 async function generateLatestQrBackup(){
  if(!window.InsanNative?.generateBackupQr)throw new Error("Pembuatan QR lengkap hanya tersedia di aplikasi Android.");
  const payload=await buildLocalQrBackupPayload();
  const result=window.InsanNative.generateBackupQr(JSON.stringify(payload));
- if(String(result).startsWith("ERROR:"))throw new Error(String(result));
+ if(String(result).startsWith("ERROR:")){latestBackupQrImages=[];renderQrBackupGallery();throw new Error(String(result));}
  latestBackupQrImages=JSON.parse(result);
  if(!Array.isArray(latestBackupQrImages)||!latestBackupQrImages.length)throw new Error("Tidak ada gambar QR yang berhasil dibuat.");
  renderQrBackupGallery();
@@ -663,7 +662,7 @@ window.onNativeQrSegments=async(values,message)=>{try{
   if(Object.keys(stored.parts).length===total){const all=Object.keys(stored.parts).sort((a,b)=>Number(a)-Number(b)).map(k=>stored.parts[k]);const assembled=window.InsanNative?.assembleBackupQr?.(JSON.stringify(all));if(!assembled||String(assembled).startsWith("ERROR:"))throw new Error(String(assembled||"Tidak dapat menggabungkan QR."));const backup=JSON.parse(assembled);if(backup.format!=="GEMBUL-OFFLINE-QR"||backup.formatVersion!==2||!backup.state?.stock||!Array.isArray(backup.state.history))throw new Error("Isi QR bukan cadangan Gembul yang valid.");completed.push({key,backup});}
  }
  if($("qrRestoreStatus"))$("qrRestoreStatus").textContent=message||"QR diterima.";
- for(const item of completed){const backup=item.backup;if(!confirm("Cadangan lengkap ditemukan ("+new Date(backup.createdAt).toLocaleString("id-ID")+"). Pulihkan stok, target, riwayat, laporan, dan antrean lokal dari QR ini? Data lokal saat ini akan diganti."))continue;const currentUser=cachedUser||await kvGet("user");state=backup.state;if(currentUser)state.user=currentUser;cachedUser=currentUser||state.user||null;await kvSet("state",state);if(cachedUser)await kvSet("user",cachedUser);await queueReplace(Array.isArray(backup.queue)?backup.queue:[]);if(item.key)await kvDelete(item.key);await renderAll();if($("qrRestoreStatus"))$("qrRestoreStatus").textContent="Pemulihan offline berhasil. Stok, target, riwayat, dan laporan sudah dimuat ke perangkat ini. Periksa data sebelum melanjutkan.";showApp();}
+ for(const item of completed){const backup=item.backup;if(!confirm("Cadangan lengkap ditemukan ("+new Date(backup.createdAt).toLocaleString("id-ID")+"). Pulihkan stok, target, riwayat, laporan, dan antrean lokal dari QR ini? Data lokal saat ini akan diganti."))continue;const currentUser=cachedUser||await kvGet("user");state=backup.state;if(currentUser)state.user=currentUser;cachedUser=currentUser||state.user||null;await kvSet("state",state);if(cachedUser)await kvSet("user",cachedUser);await queueReplace(Array.isArray(backup.queue)?backup.queue:[]);if(backup.preferences?.theme){document.documentElement.classList.toggle("light",backup.preferences.theme==="light");localStorage.setItem("theme",backup.preferences.theme);}if(backup.music&&Array.isArray(backup.music.library)){musicLibrary=backup.music.library;musicPlaylists=Array.isArray(backup.music.playlists)?backup.music.playlists:[];musicSave();renderMusic();}if(item.key)await kvDelete(item.key);await renderAll();if($("qrRestoreStatus"))$("qrRestoreStatus").textContent="Pemulihan offline berhasil. Stok, target, riwayat, dan laporan sudah dimuat ke perangkat ini. Periksa data sebelum melanjutkan.";showApp();}
  if(!completed.length&&$("qrRestoreStatus"))$("qrRestoreStatus").textContent="Bagian QR diterima ("+received+" baru). "+(message||"Pindai bagian lainnya sampai seluruh nomor lengkap.");
 }catch(e){if($("qrRestoreStatus"))$("qrRestoreStatus").textContent="Pemulihan QR gagal: "+e.message;}};
 window.addEventListener("offline",()=>setStatus("Offline · tetap bisa mencatat stok","low"));
