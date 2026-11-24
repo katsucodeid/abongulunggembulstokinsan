@@ -238,44 +238,39 @@ public class MainActivity extends Activity {
         @JavascriptInterface
         public String generateBackupQr(String json) {
             try {
-                if (json == null || json.isEmpty() || json.length() > 50 * 1024 * 1024)
-                    return "ERROR:Data cadangan terlalu besar atau kosong.";
+                if (json == null || json.isEmpty()) return "ERROR:Data cadangan kosong.";
+                byte[] raw = json.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+                if (raw.length > 8 * 1024 * 1024)
+                    return "ERROR:Ukuran data cadangan melebihi batas 8 MB.";
                 ByteArrayOutputStream compressed = new ByteArrayOutputStream();
-                try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) {
-                    gzip.write(json.getBytes(java.nio.charset.StandardCharsets.UTF_8));
-                }
+                try (GZIPOutputStream gzip = new GZIPOutputStream(compressed)) { gzip.write(raw); }
                 byte[] bytes = compressed.toByteArray();
+                if (bytes.length > 8 * 1024 * 1024)
+                    return "ERROR:Ukuran cadangan terkompresi melebihi batas 8 MB.";
                 String checksum = toHex(MessageDigest.getInstance("SHA-256").digest(bytes));
                 String backupId = UUID.randomUUID().toString().replace("-", "").substring(0, 12);
-                String payload = "GEMBULQR3|" + checksum + "|" + Base64.encodeToString(bytes, Base64.NO_WRAP);
-                // A standard QR symbol has a finite payload capacity. Never silently split
-                // one backup into multiple symbols: either create exactly one complete QR,
-                // or report clearly that this snapshot exceeds the single-symbol limit.
-                if (payload.getBytes(java.nio.charset.StandardCharsets.UTF_8).length > 2900) {
-                    latestQrImages = new JSONArray();
-                    return "ERROR:Cadangan terkompresi masih terlalu besar untuk satu QR ("
-                        + bytes.length + " byte). Gunakan file .insanbackup atau kurangi data yang disimpan.";
-                }
-                QRCodeWriter writer = new QRCodeWriter();
-                com.google.zxing.common.BitMatrix matrix;
-                try {
-                    matrix = writer.encode(payload, BarcodeFormat.QR_CODE, 960, 960);
-                } catch (com.google.zxing.WriterException tooLarge) {
-                    latestQrImages = new JSONArray();
-                    return "ERROR:Seluruh data belum muat dalam satu QR. Gunakan file .insanbackup untuk cadangan berukuran besar.";
-                }
-                Bitmap bitmap = Bitmap.createBitmap(960, 960, Bitmap.Config.RGB_565);
-                for (int y = 0; y < 960; y++)
-                    for (int x = 0; x < 960; x++)
-                        bitmap.setPixel(x, y, matrix.get(x, y) ? Color.BLACK : Color.WHITE);
-                ByteArrayOutputStream png = new ByteArrayOutputStream();
-                bitmap.compress(Bitmap.CompressFormat.PNG, 100, png);
-                bitmap.recycle();
-                JSONObject image = new JSONObject();
-                image.put("name", "Gembul-QR-Backup-" + backupId + ".png");
-                image.put("data", Base64.encodeToString(png.toByteArray(), Base64.NO_WRAP));
+                String encoded = Base64.encodeToString(bytes, Base64.NO_WRAP);
+                final int chunkChars = 1200;
+                int total = (encoded.length() + chunkChars - 1) / chunkChars;
                 JSONArray images = new JSONArray();
-                images.put(image);
+                QRCodeWriter writer = new QRCodeWriter();
+                for (int index = 0; index < total; index++) {
+                    int from = index * chunkChars;
+                    int to = Math.min(encoded.length(), from + chunkChars);
+                    String payload = "GEMBULQR2|" + backupId + "|" + (index + 1) + "|" + total + "|" + checksum + "|" + encoded.substring(from, to);
+                    com.google.zxing.common.BitMatrix matrix = writer.encode(payload, BarcodeFormat.QR_CODE, 520, 520);
+                    Bitmap bitmap = Bitmap.createBitmap(520, 520, Bitmap.Config.RGB_565);
+                    for (int y = 0; y < 520; y++)
+                        for (int x = 0; x < 520; x++)
+                            bitmap.setPixel(x, y, matrix.get(x, y) ? Color.BLACK : Color.WHITE);
+                    ByteArrayOutputStream png = new ByteArrayOutputStream();
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, png);
+                    bitmap.recycle();
+                    JSONObject image = new JSONObject();
+                    image.put("name", String.format(java.util.Locale.US, "Gembul-QR-%s-%05d-of-%05d.png", backupId, index + 1, total));
+                    image.put("data", Base64.encodeToString(png.toByteArray(), Base64.NO_WRAP));
+                    images.put(image);
+                }
                 latestQrImages = images;
                 return images.toString();
             } catch (Exception e) {
