@@ -56,6 +56,7 @@ public class MainActivity extends Activity {
     private static final int QR_PICKER_REQUEST = 4106;
     private JSONArray latestQrImages = new JSONArray();
     private WebView webView;
+    private final GembulBridge nativeBridge = new GembulBridge();
     private ValueCallback<Uri[]> filePathCallback;
     private final BroadcastReceiver musicReceiver = new BroadcastReceiver() {
         @Override public void onReceive(Context context, Intent intent) {
@@ -393,7 +394,7 @@ public class MainActivity extends Activity {
         settings.setCacheMode(WebSettings.LOAD_DEFAULT);
         settings.setAllowFileAccess(false);
         settings.setAllowContentAccess(true);
-        webView.addJavascriptInterface(new GembulBridge(), "InsanNative");
+        webView.addJavascriptInterface(nativeBridge, "InsanNative");
         webView.setWebChromeClient(new WebChromeClient() {
             @Override public boolean onShowFileChooser(WebView view, ValueCallback<Uri[]> callback,
                     FileChooserParams params) {
@@ -504,7 +505,7 @@ public class MainActivity extends Activity {
             IntentResult scan = IntentIntegrator.parseActivityResult(requestCode, resultCode, data);
             JSONArray values = new JSONArray();
             if (scan != null && scan.getContents() != null) values.put(scan.getContents());
-            notifyQrSegments(values.toString(), values.length() > 0 ? "Satu bagian QR berhasil dipindai." : "Pemindaian QR dibatalkan.");
+            nativeBridge.notifyQrSegments(values.toString(), values.length() > 0 ? "Satu bagian QR berhasil dipindai." : "Pemindaian QR dibatalkan.");
             return;
         }
         if (requestCode == QR_PICKER_REQUEST) {
@@ -514,16 +515,16 @@ public class MainActivity extends Activity {
                     android.content.ClipData clips = data.getClipData();
                     if (clips != null && clips.getItemCount() > 0) {
                         for (int i = 0; i < clips.getItemCount(); i++) {
-                            String decoded = decodeQrImage(clips.getItemAt(i).getUri());
+                            String decoded = nativeBridge.decodeQrImage(clips.getItemAt(i).getUri());
                             if (decoded != null) values.put(decoded);
                         }
                     } else if (data.getData() != null) {
-                        String decoded = decodeQrImage(data.getData());
+                        String decoded = nativeBridge.decodeQrImage(data.getData());
                         if (decoded != null) values.put(decoded);
                     }
                 } catch (Exception e) { Toast.makeText(this, "Gambar QR tidak dapat dibaca: " + e.getMessage(), Toast.LENGTH_LONG).show(); }
             }
-            notifyQrSegments(values.toString(), values.length() > 0 ? values.length() + " QR berhasil dibaca dari galeri." : "Tidak ada QR yang terbaca. Pilih gambar QR cadangan yang jelas.");
+            nativeBridge.notifyQrSegments(values.toString(), values.length() > 0 ? values.length() + " QR berhasil dibaca dari galeri." : "Tidak ada QR yang terbaca. Pilih gambar QR cadangan yang jelas.");
             return;
         }
         if (requestCode == FILE_CHOOSER_REQUEST && filePathCallback != null) {
