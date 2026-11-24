@@ -101,9 +101,11 @@ function snapshot(user) {
     outlets[outlet] = (outlets[outlet] || 0) + Number(lines.total || 0);
   }
   const ranked = Object.entries(variants).sort((a, b) => b[1] - a[1]);
+  const firstProductionAt = production.find(tx => tx.createdAt)?.createdAt || null;
   return { stock: { ...db.stock }, itemDefs, history: db.transactions.slice(-1000).reverse(),
     stats: { totalProduced, productionEntries: production.length, variants, outlets,
       topVariant: ranked[0]?.[1] > 0 ? ranked[0][0] : null,
+      firstProductionAt, stockStartDate: db.stockStartDate || null,
       lastProductionAt: production.at(-1)?.createdAt || null },
     user: user ? { username: user.username, role: user.role } : null };
 }
