@@ -9,6 +9,7 @@ async function kvDelete(key){const d=await openDB();return new Promise((resolve,
 async function queueAll(){const d=await openDB();return new Promise((resolve,reject)=>{const r=d.transaction(QUEUE).objectStore(QUEUE).getAll();r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error);});}
 async function queueAdd(op){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite");t.objectStore(QUEUE).put(op);t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
 async function queueRemove(ids){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite"),s=t.objectStore(QUEUE);ids.forEach(id=>s.delete(id));t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
+async function queueReplace(items){const d=await openDB();return new Promise((resolve,reject)=>{const t=d.transaction(QUEUE,"readwrite"),s=t.objectStore(QUEUE);s.clear();(items||[]).forEach(item=>{if(item?.id)s.put(item);});t.oncomplete=resolve;t.onerror=()=>reject(t.error);});}
 function newId(){return (crypto.randomUUID?crypto.randomUUID():"tx-"+Date.now()+"-"+Math.random().toString(36).slice(2));}
 function setStatus(text,kind="muted"){$("connection").textContent=text;$("connection").className=kind;}
 function applyTheme(theme){const light=theme==="light";const root=document.documentElement;root.classList.toggle("light",light);root.dataset.theme=light?"light":"dark";try{localStorage.setItem("insan_theme",light?"light":"dark");}catch{}const button=$("themeToggle");if(button){button.setAttribute("aria-pressed",String(light));button.textContent=light?"☀️ Tema Terang":"🌙 Tema Gelap";}const meta=document.querySelector('meta[name="theme-color"]');if(meta)meta.setAttribute("content",light?"#fff7ec":"#000000");}
@@ -71,7 +72,7 @@ async function resetUserPassword(){
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");window.insanServerConnected=true;await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){window.insanServerConnected=false;if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
-async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderHistory();renderDailyTargets();await loadReport();await maybeAutoDailyReport();const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";checkForUpdates();}
+async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderHistory();renderDailyTargets();loadReport();maybeAutoDailyReport().catch(()=>{});const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";scheduleQrSnapshot();checkForUpdates();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();}
 function renderProductionCapacity(){
  const panel=$("productionCapacity");if(!panel||!state?.stock)return;
@@ -266,11 +267,34 @@ alert(data.duplicate?"Koreksi ini sudah pernah diproses.":"Koreksi stok berhasil
 }catch(e){alert("Koreksi gagal: "+e.message);}
 }
 async function deleteTransaction(id){if(!id||!confirm("Yakin menghapus transaksi ini? Stok akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;try{const d=await api("/transactions/"+encodeURIComponent(id),{method:"DELETE"});state=d.state;await kvSet("state",state);await renderAll();$("syncErrors").textContent="Transaksi dihapus; perubahan stok sudah dibatalkan.";showTab("history");}catch(e){alert("Gagal menghapus transaksi: "+e.message);}}
-function applyLocal(op){const p=op.payload;let changes={};if(op.type==="stock-in"){const total=(p.packs||0)*(p.perPack||0)+(p.extra||0);changes[p.item]=total;}else if(op.type==="stock-out"){changes[p.item]=-(p.quantity||0);}else{const total=(p.ori||0)+(p.beef||0)+(p.spicy||0)+(p.cheese||0);if(p.custom?.enabled){changes={box3:-(p.custom.box3||0),box5outer:-(p.custom.box5||0),box5inner:-(p.custom.box5||0),paper:-(p.custom.box5||0)};}else{const use=total*2;changes={box3:-use,box5outer:-use,box5inner:-use,paper:-use};}}
-for(const [k,d] of Object.entries(changes)){if(!Number.isSafeInteger(d)||!Number.isSafeInteger(state.stock[k]+d)||state.stock[k]+d<0)throw Error("Stok lokal "+k+" tidak mencukupi.");}
-for(const [k,d] of Object.entries(changes))state.stock[k]+=d;
-state.history.unshift({id:op.id,type:op.type,date:p.date||new Date().toISOString().slice(0,10),location:p.location||"",lines:op.type==="stock-in"?{item:p.item,packs:p.packs,perPack:p.perPack,extra:p.extra}:p,changes,createdBy:cachedUser?.username||"offline",createdAt:new Date().toISOString()});state.history=state.history.slice(0,30);}
-async function submitOperation(type,payload,msgId){const op={id:newId(),type,payload};try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:[op]})});if(d.rejected?.length){const rejected=new Error(d.rejected[0].error);rejected.status=409;throw rejected;}state=d.state;await kvSet("state",state);$(msgId).textContent="Tersimpan dan tersinkron ke server.";}catch(e){if(!(e instanceof TypeError)&&navigator.onLine&&e.status&&e.status<500)throw e;applyLocal(op);await queueAdd(op);await kvSet("state",state);$(msgId).textContent="Disimpan offline di perangkat. Akan dikirim saat tersambung.";}await renderAll();}
+function applyLocal(op){
+ const p=op.payload||{},changes={};let lines={};
+ if(op.type==="stock-in"){const total=(Number(p.packs)||0)*(Number(p.perPack)||0)+(Number(p.extra)||0);changes[p.item]=total;lines={item:p.item,packs:p.packs,perPack:p.perPack,extra:p.extra,total};}
+ else if(op.type==="stock-out"){changes[p.item]=-(Number(p.quantity)||0);lines={item:p.item,quantity:Number(p.quantity)||0,reason:p.reason||p.note||""};}
+ else if(op.type==="production"){
+  const variants=["ori","beef","spicy","cheese"];lines={ori:0,beef:0,spicy:0,cheese:0,total:0,packagingByVariant:{},requestNote:p.requestNote||""};
+  changes.box3=0;changes.box5outer=0;changes.box5inner=0;changes.paper=0;
+  for(const key of variants){
+   const qty=Number(p[key])||0,custom=p.packagingByVariant?.[key],box3=custom?.enabled?Number(custom.box3)||0:qty*2,box5=custom?.enabled?Number(custom.box5)||0:qty*2;
+   lines[key]=qty;lines.total+=qty;lines.packagingByVariant[key]={enabled:!!custom?.enabled,box3,box5};
+   changes.box3-=box3;changes.box5outer-=box5;changes.box5inner-=box5;changes.paper-=box5;
+  }
+ }
+ for(const [key,delta] of Object.entries(changes)){if(!Number.isSafeInteger(delta)||!Number.isSafeInteger(Number(state.stock[key])+delta)||Number(state.stock[key])+delta<0)throw Error("Stok lokal "+key+" tidak mencukupi.");}
+ for(const [key,delta] of Object.entries(changes))state.stock[key]+=delta;
+ state.history=Array.isArray(state.history)?state.history:[];
+ state.history.unshift({id:op.id,type:op.type,date:p.date||new Date().toISOString().slice(0,10),location:p.location||"",note:p.note||"",lines,changes,createdBy:cachedUser?.username||"offline",createdAt:new Date().toISOString()});
+ state.history=state.history.slice(0,1000);
+}
+async function submitOperation(type,payload,msgId){
+ const op={id:newId(),type,payload};
+ applyLocal(op);
+ await queueAdd(op);
+ await kvSet("state",state);
+ const message=$(msgId);if(message)message.textContent="Tersimpan di perangkat. Sinkronisasi berjalan di latar belakang.";
+ await renderAll();
+ if(navigator.onLine&&token)syncQueue().catch(()=>{});
+}
 async function stockIn(){try{await submitOperation("stock-in",{item:$("inItem").value,packs:+$("packs").value,perPack:+$("perPack").value,extra:+$("extra").value,note:$("inNote").value},"inMsg");}catch(e){$("inMsg").textContent=e.message;}}
 let editingTargetId=null;
 const pvars=["ori","beef","spicy","cheese"];
@@ -316,7 +340,7 @@ box.appendChild(card);
 }
 async function checkForUpdates(){if(!token||!navigator.onLine)return;try{const d=await api("/update/check");if(d.available){window.insanLatestCommit=d.latest;window.insanUpdateAvailable=(cachedUser?.role||state?.user?.role)==="admin";$("updateNotice").classList.remove("hidden");$("updateTitle").textContent="Pembaruan INSAN tersedia";const admin=(cachedUser?.role||state?.user?.role)==="admin";$("updateMessage").textContent=d.message+(admin?" · Tekan tombol untuk memperbarui.":" · Hubungi admin untuk memasang pembaruan.");$("updateButton").hidden=!admin;window.insanUpdateAvailable=admin;}else{$("updateNotice").classList.add("hidden");window.insanUpdateAvailable=false;window.insanLatestCommit=null;}}catch(e){/* update check is optional while offline */}}
 async function applyUpdate(commitSha=window.insanLatestCommit){if(!window.insanUpdateAvailable||!commitSha)return;if((await queueAll()).length){alert("Sinkronkan transaksi yang masih tertunda sebelum memperbarui aplikasi.");return;}if(!confirm("Terapkan commit "+commitSha.slice(0,7)+" dari GitHub? Server akan dimulai ulang otomatis. Data stok dan riwayat tetap disimpan."))return;try{$("updateButton").disabled=true;$("updateButton").textContent="Memperbarui…";const d=await api("/update/apply",{method:"POST",body:JSON.stringify({commitSha})});$("updateMessage").textContent=d.message+" Halaman akan tersambung kembali setelah server aktif.";$("updateButton").textContent="Menunggu server…";setTimeout(()=>{let attempts=0;const watcher=setInterval(async()=>{attempts++;try{const status=await api("/update/check");if(status.current===commitSha){clearInterval(watcher);location.reload();}}catch(e){}if(attempts>=120){clearInterval(watcher);$("updateButton").disabled=false;$("updateButton").textContent="Periksa dan coba lagi";$("updateMessage").textContent="Server belum mengonfirmasi commit baru. Periksa log pembaruan di Termux sebelum mencoba lagi."; }},3000);},5000);}catch(e){$("updateButton").disabled=false;$("updateButton").textContent="Update Sekarang";alert("Pembaruan gagal dimulai: "+e.message);}}
-async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove(d.accepted.map(x=>x.id));state=d.state;await kvSet("state",state);if(d.rejected.length){setStatus(d.rejected.length+" transaksi perlu diperiksa: stok server berubah","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}else{setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}await renderAll();}catch(e){setStatus("Belum dapat sinkron · data aman tersimpan lokal","low");}}
+async function syncQueue(){if(!navigator.onLine||!token)return;const queue=await queueAll();if(!queue.length)return;try{const d=await api("/sync",{method:"POST",body:JSON.stringify({operations:queue.slice(0,100)})});await queueRemove((d.accepted||[]).map(x=>x.id));if(!(d.rejected||[]).length){state=d.state;setStatus("Semua transaksi tersinkron","ok");$("syncErrors").textContent="";}else{setStatus(d.rejected.length+" transaksi tersimpan lokal tetapi perlu pemeriksaan server","low");$("syncErrors").textContent=d.rejected.map(x=>x.error).join(" · ");}await kvSet("state",state);await renderAll();}catch(e){setStatus("Sinkronisasi tertunda · data tetap tersimpan di perangkat","low");}}
 function buildDailyProductionReport(dateKey){
  if(!state||!dateKey)throw new Error("Data stok atau tanggal laporan belum tersedia.");
  const fmt=n=>Number(n||0).toLocaleString("id-ID");
@@ -454,13 +478,11 @@ function formatManualStockOutReport(rows){
  });
  return lines.join("\n");
 }
-async function loadReport(){
+function loadReport(){
  if(!state)return;
  const s=state.stock,fmt=n=>Number(n||0).toLocaleString("id-ID");
- let manualRows=(state.history||[]).filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdAt:tx.createdAt,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:(state.history||[]).filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
- if(token&&navigator.onLine&&window.insanServerConnected!==false){
-  try{const report=await api("/report");if(Array.isArray(report.manualStockOuts))manualRows=report.manualStockOuts;}catch(e){/* use cached history while offline/server is unavailable */}
- }
+ const history=state.history||[];
+ const manualRows=history.filter(tx=>tx.type==="stock-out").map(tx=>({id:tx.id,date:tx.date,createdAt:tx.createdAt,createdBy:tx.createdBy,item:tx.lines?.item,quantity:tx.lines?.quantity,reason:tx.lines?.reason||tx.note,corrections:history.filter(c=>c.type==="stock-correction"&&c.lines?.targetTransactionId===tx.id).map(c=>({date:c.date,createdBy:c.createdBy,correctedQuantity:c.lines?.correctedQuantity,returnedDelta:c.lines?.returnedDelta,reason:c.lines?.reason||c.note}))}));
  const stockText=`*INSAN*:
 Box isi 3 : ${fmt(s.box3)}pcs
 Box isi 5 luar : ${fmt(s.box5outer)}pcs
