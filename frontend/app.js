@@ -72,7 +72,7 @@ async function resetUserPassword(){
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");window.insanServerConnected=true;await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){window.insanServerConnected=false;if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
-async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderHistory();renderDailyTargets();loadReport();maybeAutoDailyReport().catch(()=>{});const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";scheduleQrSnapshot();checkForUpdates();}
+async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderHistory();renderDailyTargets();loadReport();maybeAutoDailyReport().catch(()=>{});const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";scheduleQrSnapshot();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null};return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${def.min!==null&&v<def.min?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':v<def.min?'Di bawah minimum '+def.min:'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();}
 function renderProductionCapacity(){
  const panel=$("productionCapacity");if(!panel||!state?.stock)return;
@@ -158,7 +158,7 @@ async function loadAbout(){
     });
     if(status)status.textContent="Riwayat commit yang sudah terpasang · hingga 8 commit terakhir.";
   }catch(e){
-    if(status)status.textContent="Riwayat lokal belum tersedia: "+e.message;
+    if(status)status.textContent="Riwayat pembaruan lokal belum tersedia. Versi aplikasi: 3.0.0.";if(versionEl)versionEl.textContent="Versi 3.0.0";
   }
   try{
     const remote=await api("/update/commits");
@@ -191,7 +191,7 @@ async function loadAbout(){
     }
   }catch(e){
     window.insanLatestCommit=null;window.insanUpdateAvailable=false;
-    if(remoteStatus)remoteStatus.textContent="Gagal mengambil commit dari GitHub: "+e.message;
+    if(remoteStatus)remoteStatus.textContent="Informasi commit tidak tersedia saat offline. Fitur lokal dan QR tetap siap digunakan.";
     if(applyBtn)applyBtn.hidden=true;
   }
 }
@@ -199,7 +199,7 @@ async function loadAbout(){
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeMenu();});
 function renderHistory(){
 const filter=$("historyFilter")?$("historyFilter").value:"all";
-const list=(state.history||[]).filter(x=>filter==="all"||x.type===filter);
+const list=(state.history||[]).filter(x=>filter==="all"||x.type===filter).slice(0,150);
 const admin=(cachedUser?.role||state.user?.role)==="admin";
 const username=cachedUser?.username||state.user?.username;
 const root=$("historyList");root.innerHTML="";
@@ -532,7 +532,7 @@ const MUSIC_LIBRARY_KEY="gembul_music_library_v2",MUSIC_PLAYLISTS_KEY="gembul_mu
 let musicLibrary=[],musicPlaylists=[],musicQueue=[],musicQueueIndex=-1,musicCurrentId=null,musicObjectUrl=null,musicIsPlaying=false,musicDurationMs=0,musicProgressTimer=null,musicSeekDragging=false,musicShuffle=false,musicRepeat="off",musicPlayRequest=0;
 const musicAudio=$("musicAudio");
 function musicId(){return "music-"+Date.now()+"-"+Math.random().toString(36).slice(2,9);}
-function musicSave(){try{localStorage.setItem(MUSIC_LIBRARY_KEY,JSON.stringify(musicLibrary));localStorage.setItem(MUSIC_PLAYLISTS_KEY,JSON.stringify(musicPlaylists));}catch(e){musicStatus("Perpustakaan penuh. Hapus beberapa entri lama lalu coba lagi.");}}
+function musicSave(){try{localStorage.setItem(MUSIC_LIBRARY_KEY,JSON.stringify(musicLibrary));localStorage.setItem(MUSIC_PLAYLISTS_KEY,JSON.stringify(musicPlaylists));if(typeof scheduleQrSnapshot==="function")scheduleQrSnapshot();}catch(e){musicStatus("Perpustakaan penuh. Hapus beberapa entri lama lalu coba lagi.");}}
 function musicFormatTime(seconds){if(!Number.isFinite(seconds)||seconds<0)return "00:00";const n=Math.floor(seconds);return String(Math.floor(n/60)).padStart(2,"0")+":"+String(n%60).padStart(2,"0");}
 function musicCurrent(){return musicLibrary.find(item=>item.id===musicCurrentId)||null;}
 function musicSelectedPlaylist(){return musicPlaylists.find(item=>item.id===$("musicPlaylistSelect")?.value)||null;}
