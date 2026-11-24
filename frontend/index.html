@@ -716,4 +716,21 @@ main{padding-top:0!important}
 <p id="changeLogStatus" class="muted">Memuat riwayat perubahan…</p><div id="changeLogList"></div>
 <button class="secondary" onclick="loadAbout()">↻ Muat ulang informasi versi</button>
 </div>
-</section></main><footer class="app-footer"><img class="footer-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">© <span id="copyrightYear">2026</span> <strong>KatsuCode ID</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script src="config.js"></script><script src="app.js"></script></body></html>
+</section></main><footer class="app-footer"><img class="footer-logo" src="/img/BackgroundEraser_20261016_074306739.png" alt="Logo Abon Gulung Gembul"><div class="footer-brand">ABON GULUNG GEMBUL</div><div class="footer-credit">© <span id="copyrightYear">2026</span> <strong>KatsuCode ID</strong> <span class="footer-x">×</span> <strong>Insan</strong></div><div class="footer-note">STOK KERTAS & PRODUKSI · Sistem operasional offline-first</div></footer><script>
+/* Native API bridge: bundled frontend calls the local INSAN backend without browser CORS. */
+(function(){
+  if(!window.InsanNative||typeof window.InsanNative.apiRequest!=="function")return;
+  const nativeFetch=window.fetch.bind(window);
+  window.fetch=async function(input,init){
+    const url=typeof input==="string"?input:(input&&input.url)||"";
+    const parsed=new URL(url,window.location.href);
+    if(parsed.origin!==window.location.origin||!parsed.pathname.startsWith("/api/"))return nativeFetch(input,init);
+    const options=init||{},headers=new Headers(options.headers||(input instanceof Request?input.headers:undefined));
+    const method=options.method||(input instanceof Request?input.method:"GET");
+    const body=options.body||(input instanceof Request?await input.clone().text():null);
+    const packet=JSON.parse(window.InsanNative.apiRequest(method,parsed.pathname+parsed.search,body,headers.get("Authorization")||""));
+    return new Response(packet.body||"{}",{status:packet.status||503,headers:{"Content-Type":"application/json; charset=utf-8"}});
+  };
+})();
+</script>
+<script src="config.js"></script><script src="app.js"></script></body></html>
