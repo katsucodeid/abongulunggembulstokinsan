@@ -227,7 +227,7 @@ const addBack=document.createElement("button");addBack.className="secondary";add
 const reverse=document.createElement("button");reverse.className="danger";reverse.textContent="Batalkan pengurangan";reverse.onclick=()=>correctManualStockOut(x.id,"reverse");actions.appendChild(reverse);
 card.appendChild(actions);
 }
-if(admin){const btn=document.createElement("button");btn.className="danger";btn.textContent="Hapus transaksi";btn.onclick=()=>deleteTransaction(x.id);card.appendChild(btn);}
+if(admin){const btn=document.createElement("button");btn.className="danger";btn.textContent=x.type==="production"?"Hapus target ini":"Hapus transaksi";btn.onclick=()=>deleteTransaction(String(x.id),x.type);card.appendChild(btn);}
 root.appendChild(card);
 });
 if(!list.length)root.textContent="Belum ada riwayat pada filter ini.";
@@ -266,7 +266,30 @@ state=data.state;await kvSet("state",state);await renderAll();
 alert(data.duplicate?"Koreksi ini sudah pernah diproses.":"Koreksi stok berhasil disimpan.");
 }catch(e){alert("Koreksi gagal: "+e.message);}
 }
-async function deleteTransaction(id){if(!id||!confirm("Yakin menghapus transaksi ini? Stok akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;try{const d=await api("/transactions/"+encodeURIComponent(id),{method:"DELETE"});state=d.state;await kvSet("state",state);await renderAll();$("syncErrors").textContent="Transaksi dihapus; perubahan stok sudah dibatalkan.";showTab("history");}catch(e){alert("Gagal menghapus transaksi: "+e.message);}}
+async function deleteTransaction(id,expectedType){
+ if(!id||!expectedType)return alert("Identitas transaksi tidak valid. Muat ulang riwayat.");
+ if(!navigator.onLine||!token)return alert("Penghapusan riwayat memerlukan koneksi server agar transaksi yang tepat dapat diverifikasi.");
+ try{
+  // Always resolve the selected ID against the latest server snapshot, never by list position.
+  const latest=await api("/state");
+  const selected=(latest.history||[]).find(tx=>String(tx.id)===String(id));
+  if(!selected){state=latest;await kvSet("state",state);await renderAll();return alert("Transaksi yang dipilih sudah tidak ada atau riwayat sudah berubah. Daftar diperbarui; silakan pilih ulang.");}
+  if(selected.type!==expectedType){state=latest;await kvSet("state",state);await renderAll();return alert("Jenis transaksi tidak cocok dengan pilihan. Tidak ada data yang dihapus.");}
+  if(expectedType==="production"&&(!selected.location||!selected.date||!selected.lines))return alert("Data target tidak lengkap. Penghapusan dibatalkan demi keamanan.");
+  const l=selected.lines||{};
+  const description=expectedType==="production"
+   ? "target "+selected.location+" · "+selected.date+" · "+(l.total||0)+" loyang"
+   : expectedType==="stock-in"?"barang masuk · "+(state.itemDefs?.[l.item]?.label||l.item)+" · "+(l.total||0)+" pcs"
+   : expectedType==="stock-out"?"pengurangan stok · "+(state.itemDefs?.[l.item]?.label||l.item)+" · "+(l.quantity||0)+" pcs"
+   : "transaksi "+expectedType;
+  if(!confirm("Hapus "+description+" dari riwayat?\n\nID: "+selected.id+"\n\nStok terkait akan dikembalikan otomatis. Tindakan ini tidak dapat dibatalkan."))return;
+  const expected={type:selected.type,date:selected.date||null,location:selected.location||null,createdAt:selected.createdAt||null,createdBy:selected.createdBy||null};
+  const d=await api("/transactions/"+encodeURIComponent(selected.id),{method:"DELETE",body:JSON.stringify(expected)});
+  state=d.state;await kvSet("state",state);await renderAll();
+  const msg=$("syncErrors");if(msg)msg.textContent="Berhasil menghapus "+description+". Stok telah disesuaikan.";
+  showTab("history");
+ }catch(e){alert("Gagal menghapus transaksi: "+e.message);}
+}
 function applyLocal(op){
  const p=op.payload||{},changes={};let lines={};
  if(op.type==="stock-in"){const packs=Number(p.packs),perPack=Number(p.perPack),extra=Number(p.extra),total=packs*perPack+extra;if(![packs,perPack,extra,total].every(Number.isSafeInteger)||packs<0||perPack<0||extra<0||total<=0)throw Error("Jumlah barang masuk harus bilangan bulat dan totalnya lebih dari nol.");changes[p.item]=total;lines={item:p.item,packs,perPack,extra,total};}
