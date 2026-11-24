@@ -91,12 +91,12 @@ jobs:
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
           cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
-          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
+          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
           name: Abon-Gulung-Gembul-Laporan-3.0.0-APK
-          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-Semi-Final-2.4.2.apk
+          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Laporan-3.0.0.apk
           if-no-files-found: error
           retention-days: 30
