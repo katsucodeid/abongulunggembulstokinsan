@@ -97,7 +97,7 @@ function toggleMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("me
 function closeMenu(){const nav=$("mainNav"),backdrop=$("navBackdrop"),btn=$("menuToggle");if(!nav||!backdrop||!btn)return;nav.classList.remove("open");backdrop.classList.remove("visible");btn.setAttribute("aria-expanded","false");btn.setAttribute("aria-label","Buka navigasi");document.body.classList.remove("nav-open");}
 function toggleNavGroup(id){const panel=$(id),toggle=document.querySelector('.nav-group-toggle[aria-controls="'+id+'"]');if(!panel||!toggle)return;const expanded=toggle.getAttribute("aria-expanded")==="true";toggle.setAttribute("aria-expanded",String(!expanded));panel.classList.toggle("expanded",!expanded);}
 function syncActiveNav(){const current=document.querySelector(".tab:not(.hidden)");if(!current)return;document.querySelectorAll("#mainNav button[onclick^='showTab']").forEach(btn=>{const active=btn.getAttribute("onclick").includes("'"+current.id+"'");btn.classList.toggle("nav-active",active);if(active){btn.setAttribute("aria-current","page");const group=btn.closest(".nav-group-items");if(group){group.classList.add("expanded");const toggle=document.querySelector('.nav-group-toggle[aria-controls="'+group.id+'"]');if(toggle)toggle.setAttribute("aria-expanded","true");}}else btn.removeAttribute("aria-current");});}
-function showTab(id){const target=$(id);if(!target)return;if(id==="accounts"&&!isAdmin()){showTab("dashboard");return;}document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();if(id==="accounts")loadUsers();if(id==="music")renderMusic();}
+function showTab(id){const target=$(id);if(!target)return;if(id==="accounts"&&!isAdmin()){showTab("dashboard");return;}document.querySelectorAll(".tab").forEach(x=>x.classList.add("hidden"));target.classList.remove("hidden");syncActiveNav();closeMenu();if(id==="report")loadReport();if(id==="history")renderHistory();if(id==="about")loadAbout();if(id==="accounts")loadUsers();if(id==="music")renderMusic();if(id==="backupqr"){if(latestBackupQrImages?.length)renderQrBackupGallery();else{if($("qrFullStatus"))$("qrFullStatus").textContent="Menyiapkan QR dari snapshot data terbaru…";scheduleQrSnapshot();}}}
 async function blobToBase64(blob){return new Promise((resolve,reject)=>{const r=new FileReader();r.onload=()=>resolve(String(r.result).split(",")[1]||"");r.onerror=reject;r.readAsDataURL(blob);});}
 async function downloadBackup(){
   const status=$("backupStatus"),button=$("createBackupButton");
@@ -595,8 +595,63 @@ $("musicFileInput")?.addEventListener("change",importMusicFiles);
 (async()=>{try{musicLibrary=JSON.parse(localStorage.getItem(MUSIC_LIBRARY_KEY)||localStorage.getItem("gembul_music_library_v1")||"[]");musicPlaylists=JSON.parse(localStorage.getItem(MUSIC_PLAYLISTS_KEY)||localStorage.getItem("gembul_music_playlists_v1")||"[]");if(!Array.isArray(musicLibrary))musicLibrary=[];if(!Array.isArray(musicPlaylists))musicPlaylists=[];musicPlaylists.forEach(p=>{if(!Array.isArray(p.tracks))p.tracks=[];});musicSave();renderMusic();}catch(e){musicLibrary=[];musicPlaylists=[];musicStatus("Perpustakaan musik tidak dapat dibaca: "+e.message);}})();
 
 // Cadangan QR offline otomatis mengikuti snapshot data terakhir.
-function scheduleQrSnapshot(){if(!state||!window.InsanNative?.generateBackupQr)return;if(qrRefreshTimer)clearTimeout(qrRefreshTimer);qrRefreshTimer=setTimeout(async()=>{try{const pending=await queueAll();const payload={format:"GEMBUL-OFFLINE-QR",formatVersion:2,createdAt:new Date().toISOString(),state,queue:pending,preferences:{theme:document.documentElement.classList.contains("light")?"light":"dark"},music:{playlists:musicPlaylists.map(p=>({id:p.id,name:p.name,tracks:p.tracks}))}};const result=window.InsanNative.generateBackupQr(JSON.stringify(payload));if(String(result).startsWith("ERROR:"))throw new Error(String(result));latestBackupQrImages=JSON.parse(result);const preview=$("qrPreview");if(preview){preview.replaceChildren();latestBackupQrImages.slice(0,4).forEach((item,index)=>{const figure=document.createElement("figure");figure.className="qr-preview-item";const image=document.createElement("img");image.alt="QR cadangan bagian "+(index+1);image.src="data:image/png;base64,"+item.data;const caption=document.createElement("figcaption");caption.textContent="Bagian "+(index+1)+" dari "+latestBackupQrImages.length;figure.append(image,caption);preview.appendChild(figure);});if(latestBackupQrImages.length>4){const more=document.createElement("p");more.className="muted";more.textContent="+"+(latestBackupQrImages.length-4)+" QR lainnya akan ikut disimpan.";preview.appendChild(more);}}if($("qrBackupStatus"))$("qrBackupStatus").textContent="QR otomatis diperbarui · "+latestBackupQrImages.length+" bagian · "+new Date().toLocaleTimeString("id-ID");}catch(e){if($("qrBackupStatus"))$("qrBackupStatus").textContent="Pembuatan QR tertunda: "+e.message;}},900);}
-async function saveQrBackupImages(){try{if(!state)throw new Error("Data aplikasi belum dimuat.");if(!window.InsanNative?.generateBackupQr||!window.InsanNative?.saveBackupQrImages)throw new Error("Simpan QR ke Galeri hanya tersedia di aplikasi Android.");if($("qrBackupStatus"))$("qrBackupStatus").textContent="Menyegarkan QR dari data paling baru…";const pending=await queueAll();const payload={format:"GEMBUL-OFFLINE-QR",formatVersion:2,createdAt:new Date().toISOString(),state,queue:pending,preferences:{theme:document.documentElement.classList.contains("light")?"light":"dark"},music:{playlists:musicPlaylists.map(p=>({id:p.id,name:p.name,tracks:p.tracks}))}};const generated=window.InsanNative.generateBackupQr(JSON.stringify(payload));if(String(generated).startsWith("ERROR:"))throw new Error(String(generated));latestBackupQrImages=JSON.parse(generated);const saved=window.InsanNative.saveBackupQrImages();if(!saved||String(saved).startsWith("ERROR:"))throw new Error(String(saved||"Penyimpanan QR gagal."));if($("qrBackupStatus"))$("qrBackupStatus").textContent=String(saved).replace(/^OK:/,"")+" Snapshot berisi data terbaru.";}catch(e){if($("qrBackupStatus"))$("qrBackupStatus").textContent="Gagal menyimpan QR: "+e.message;}}
+async function buildLocalQrBackupPayload(){
+ if(!state)throw new Error("Data aplikasi belum dimuat.");
+ const pending=await queueAll();
+ return {format:"GEMBUL-OFFLINE-QR",formatVersion:2,createdAt:new Date().toISOString(),
+  state,queue:pending,
+  preferences:{theme:document.documentElement.classList.contains("light")?"light":"dark"},
+  music:{library:Array.isArray(musicLibrary)?musicLibrary.map(item=>({name:item.name,mime:item.mime,size:item.size})):[],
+   playlists:Array.isArray(musicPlaylists)?musicPlaylists.map(p=>({id:p.id,name:p.name,tracks:Array.isArray(p.tracks)?p.tracks:[]})):[]}};
+}
+function renderQrBackupGallery(){
+ const images=Array.isArray(latestBackupQrImages)?latestBackupQrImages:[];
+ const preview=$("qrPreview"),full=$("qrFullPreview");
+ const render=(container,items,limit)=>{if(!container)return;container.replaceChildren();const shown=limit?items.slice(0,limit):items;
+  shown.forEach((item,index)=>{const figure=document.createElement("figure");figure.className=container.id==="qrFullPreview"?"qr-full-item":"qr-preview-item";
+   const image=document.createElement("img");image.alt="QR cadangan bagian "+(index+1)+" dari "+items.length;image.loading="lazy";image.decoding="async";image.src="data:image/png;base64,"+item.data;
+   const caption=document.createElement("figcaption");caption.textContent="Bagian "+(index+1)+" dari "+items.length;figure.append(image,caption);container.appendChild(figure);});
+  if(limit&&items.length>limit){const more=document.createElement("p");more.className="muted";more.textContent="+"+(items.length-limit)+" QR lainnya. Buka halaman QR Cadangan untuk melihat seluruh bagian.";container.appendChild(more);}
+  if(!items.length){const empty=document.createElement("p");empty.className="muted";empty.textContent="QR belum tersedia.";container.appendChild(empty);}
+ };
+ render(preview,images,4);render(full,images,0);
+ const label=images.length+" bagian QR · satu paket cadangan";
+ if($("qrFullCount"))$("qrFullCount").textContent=images.length?images.length+" QR":"Belum tersedia";
+ if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Seluruh "+label+" sudah ditampilkan. Simpan semua bagian untuk memastikan pemulihan lengkap.":"QR belum tersedia.";
+ if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?"QR otomatis diperbarui · "+label+" · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
+}
+async function generateLatestQrBackup(){
+ if(!window.InsanNative?.generateBackupQr)throw new Error("Pembuatan QR lengkap hanya tersedia di aplikasi Android.");
+ const payload=await buildLocalQrBackupPayload();
+ const result=window.InsanNative.generateBackupQr(JSON.stringify(payload));
+ if(String(result).startsWith("ERROR:"))throw new Error(String(result));
+ latestBackupQrImages=JSON.parse(result);
+ if(!Array.isArray(latestBackupQrImages)||!latestBackupQrImages.length)throw new Error("Tidak ada gambar QR yang berhasil dibuat.");
+ renderQrBackupGallery();
+ return latestBackupQrImages;
+}
+function scheduleQrSnapshot(){
+ if(!state||!window.InsanNative?.generateBackupQr)return;
+ if(qrRefreshTimer)clearTimeout(qrRefreshTimer);
+ qrRefreshTimer=setTimeout(async()=>{try{await generateLatestQrBackup();}
+ catch(e){const message="Pembuatan QR tertunda: "+e.message;if($("qrBackupStatus"))$("qrBackupStatus").textContent=message;if($("qrFullStatus"))$("qrFullStatus").textContent=message;}},900);
+}
+async function refreshQrBackupNow(){
+ try{if($("qrFullStatus"))$("qrFullStatus").textContent="Menyusun ulang semua QR dari data paling baru…";await generateLatestQrBackup();}
+ catch(e){if($("qrFullStatus"))$("qrFullStatus").textContent="Gagal memperbarui QR: "+e.message;if($("qrBackupStatus"))$("qrBackupStatus").textContent="Gagal memperbarui QR: "+e.message;}
+}
+async function saveQrBackupImages(){
+ try{
+  if($("qrBackupStatus"))$("qrBackupStatus").textContent="Menyegarkan seluruh QR dari data paling baru…";
+  await generateLatestQrBackup();
+  if(!window.InsanNative?.saveBackupQrImages)throw new Error("Simpan QR ke Galeri hanya tersedia di aplikasi Android.");
+  const saved=window.InsanNative.saveBackupQrImages();
+  if(!saved||String(saved).startsWith("ERROR:"))throw new Error(String(saved||"Penyimpanan QR gagal."));
+  const message=String(saved).replace(/^OK:/,"")+" Semua bagian berasal dari satu snapshot lengkap.";
+  if($("qrBackupStatus"))$("qrBackupStatus").textContent=message;
+  if($("qrFullStatus"))$("qrFullStatus").textContent=message;
+ }catch(e){const message="Gagal menyimpan QR: "+e.message;if($("qrBackupStatus"))$("qrBackupStatus").textContent=message;if($("qrFullStatus"))$("qrFullStatus").textContent=message;}
+}
 function scanBackupQr(){if(window.InsanNative?.scanQrCamera){window.InsanNative.scanQrCamera();return;}$("qrBackupStatus").textContent="Pemindai kamera hanya tersedia di aplikasi Android.";}
 function pickBackupQrImages(){if(window.InsanNative?.pickQrImages){window.InsanNative.pickQrImages();return;}const input=$("qrImageInput");input?.click();}
 window.onNativeQrSegments=async(values,message)=>{try{const parts=Array.isArray(values)?values:[];if(!parts.length){if($("qrRestoreStatus"))$("qrRestoreStatus").textContent=message||"Tidak ada QR terbaca.";return;}let received=0,completed=[];for(const raw of parts){const fields=String(raw).split("|");if(fields.length!==6||fields[0]!=="GEMBULQR2")continue;const id=fields[1],index=Number(fields[2]),total=Number(fields[3]);if(!id||!Number.isInteger(index)||!Number.isInteger(total)||index<1||index>total)continue;const key="gembul_qr_parts_"+id,stored=await kvGet(key)||{total,parts:{}};if(stored.total!==total)throw new Error("Jumlah bagian QR tidak konsisten.");stored.parts[index]=raw;await kvSet(key,stored);received++;if(Object.keys(stored.parts).length===total){const all=Object.keys(stored.parts).sort((a,b)=>Number(a)-Number(b)).map(k=>stored.parts[k]);const assembled=window.InsanNative?.assembleBackupQr?.(JSON.stringify(all));if(!assembled||String(assembled).startsWith("ERROR:"))throw new Error(String(assembled||"Tidak dapat menggabungkan QR."));const backup=JSON.parse(assembled);if(backup.format!=="GEMBUL-OFFLINE-QR"||backup.formatVersion!==2||!backup.state?.stock||!Array.isArray(backup.state.history))throw new Error("Isi QR bukan cadangan Gembul yang valid.");completed.push({key,backup});}}
