@@ -1,4 +1,4 @@
-name: Build APK Gembul StockMate v1.0.0
+name: Build APK Gembul StockMate v1.0.1
 
 on:
   pull_request:
@@ -99,13 +99,13 @@ jobs:
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          cp "$APK" android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.0.apk
-          ls -lh android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.0.apk
+          cp "$APK" android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.1.apk
+          ls -lh android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.1.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Gembul-StockMate-1.0.0-APK
-          path: android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.0.apk
+          name: Gembul-StockMate-1.0.1-APK
+          path: android/app/build/outputs/apk/debug/Gembul-StockMate-1.0.1.apk
           if-no-files-found: error
           retention-days: 30
