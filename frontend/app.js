@@ -608,10 +608,10 @@ function renderQrBackupGallery(){
  const images=Array.isArray(latestBackupQrImages)?latestBackupQrImages:[];
  const full=$("qrFullPreview");
  if(full){full.replaceChildren();if(images.length){const item=images[0],figure=document.createElement("figure");figure.className="qr-full-item";const image=document.createElement("img");image.alt="Satu QR cadangan lengkap";image.loading="lazy";image.decoding="async";image.src="data:image/png;base64,"+item.data;const caption=document.createElement("figcaption");caption.textContent="Satu QR · satu snapshot cadangan";figure.append(image,caption);full.appendChild(figure);}else{const empty=document.createElement("p");empty.className="muted";empty.textContent="QR belum tersedia.";full.appendChild(empty);}}
- const label=images.length+" bagian QR · satu paket cadangan";
- if($("qrFullCount"))$("qrFullCount").textContent=images.length?images.length+" QR":"Belum tersedia";
- if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Seluruh "+label+" sudah ditampilkan. Simpan semua bagian untuk memastikan pemulihan lengkap.":"QR belum tersedia.";
- if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?"QR otomatis diperbarui · "+label+" · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
+ const label=images.length?"satu QR tunggal · satu paket cadangan":"QR tunggal";
+ if($("qrFullCount"))$("qrFullCount").textContent=images.length?images.length?"1 QR":"Belum tersedia":"Belum tersedia";
+ if($("qrFullStatus"))$("qrFullStatus").textContent=images.length?"Satu kode QR berisi snapshot cadangan lengkap yang muat dalam kapasitas QR.":"QR belum tersedia.";
+ if($("qrBackupStatus"))$("qrBackupStatus").textContent=images.length?"QR tunggal diperbarui otomatis · "+new Date().toLocaleTimeString("id-ID"):"QR belum dibuat.";
 }
 async function generateLatestQrBackup(){
  if(!window.InsanNative?.generateBackupQr)throw new Error("Pembuatan QR lengkap hanya tersedia di aplikasi Android.");
