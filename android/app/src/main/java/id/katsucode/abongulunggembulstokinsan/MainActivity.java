@@ -25,6 +25,12 @@ import android.webkit.WebSettings;
 import android.webkit.WebView;
 import android.webkit.WebViewClient;
 import android.webkit.WebResourceRequest;
+import androidx.webkit.WebViewAssetLoader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.io.InputStreamReader;
+import java.io.BufferedReader;
+import java.io.OutputStreamWriter;
 import android.widget.Toast;
 import java.io.OutputStream;
 import java.io.ByteArrayOutputStream;
@@ -51,7 +57,8 @@ import com.google.zxing.integration.android.IntentResult;
 import com.journeyapps.barcodescanner.CaptureActivity;
 
 public class MainActivity extends Activity {
-    private static final String APP_URL = "http://127.0.0.1:8787";
+    private static final String APP_URL = "https://appassets.androidplatform.net/assets/www/index.html";
+    private WebViewAssetLoader assetLoader;
     private static final int FILE_CHOOSER_REQUEST = 4102;
     private static final int MUSIC_PICKER_REQUEST = 4105;
     private static final int QR_PICKER_REQUEST = 4106;
@@ -76,6 +83,49 @@ public class MainActivity extends Activity {
     };
 
     private class GembulBridge {
+        @JavascriptInterface
+        public String apiRequest(String method, String path, String body, String authorization) {
+            HttpURLConnection connection = null;
+            try {
+                if (path == null || !path.startsWith("/api/") || path.contains("..")) throw new IllegalArgumentException("Rute API tidak valid.");
+                String verb = method == null ? "GET" : method.toUpperCase(java.util.Locale.ROOT);
+                if (!java.util.Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE").contains(verb)) throw new IllegalArgumentException("Metode API tidak diizinkan.");
+                connection = (HttpURLConnection) new URL("http://127.0.0.1:8787" + path).openConnection();
+                connection.setRequestMethod(verb);
+                connection.setConnectTimeout(5000);
+                connection.setReadTimeout(12000);
+                connection.setRequestProperty("Accept", "application/json");
+                if (authorization != null && !authorization.isEmpty()) connection.setRequestProperty("Authorization", authorization);
+                if (body != null && !body.isEmpty() && !verb.equals("GET")) {
+                    connection.setDoOutput(true);
+                    connection.setRequestProperty("Content-Type", "application/json; charset=utf-8");
+                    try (OutputStreamWriter writer = new OutputStreamWriter(connection.getOutputStream(), java.nio.charset.StandardCharsets.UTF_8)) { writer.write(body); }
+                }
+                int status = connection.getResponseCode();
+                InputStream stream = status >= 400 ? connection.getErrorStream() : connection.getInputStream();
+                StringBuilder response = new StringBuilder();
+                if (stream != null) try (BufferedReader reader = new BufferedReader(new InputStreamReader(stream, java.nio.charset.StandardCharsets.UTF_8))) {
+                    String line; while ((line = reader.readLine()) != null) response.append(line);
+                }
+                JSONObject packet = new JSONObject();
+                packet.put("status", status);
+                packet.put("body", response.length() == 0 ? "{}" : response.toString());
+                return packet.toString();
+            } catch (Exception error) {
+                try {
+                    JSONObject errorBody = new JSONObject();
+                    errorBody.put("error", "Backend lokal tidak dapat dihubungi. Pastikan server INSAN berjalan di port 8787. " + (error.getMessage() == null ? "" : error.getMessage()));
+                    JSONObject packet = new JSONObject();
+                    packet.put("status", 503);
+                    packet.put("body", errorBody.toString());
+                    return packet.toString();
+                } catch (Exception ignored) { return "{}"; }
+            } finally {
+                if (connection != null) connection.disconnect();
+            }
+        }
+
+
         @JavascriptInterface
         public String saveBackup(String base64, String filename) {
             if (Build.VERSION.SDK_INT < 29) return "ERROR:Android 10+ diperlukan untuk folder Download/Abon Gulung Gembul.";
@@ -424,6 +474,10 @@ public class MainActivity extends Activity {
         if (Build.VERSION.SDK_INT >= 33) registerReceiver(musicReceiver, musicFilter, Context.RECEIVER_NOT_EXPORTED);
         else registerReceiver(musicReceiver, musicFilter);
         webView = new WebView(this);
+        assetLoader = new WebViewAssetLoader.Builder()
+            .addPathHandler("/assets/", new WebViewAssetLoader.AssetsPathHandler(this))
+            .addPathHandler("/img/", new WebViewAssetLoader.AssetsPathHandler(this))
+            .build();
         WebSettings settings = webView.getSettings();
         settings.setJavaScriptEnabled(true);
         settings.setDomStorageEnabled(true);
@@ -457,6 +511,9 @@ public class MainActivity extends Activity {
             }
         });
         webView.setWebViewClient(new WebViewClient() {
+            @Override public android.webkit.WebResourceResponse shouldInterceptRequest(WebView view, WebResourceRequest request) {
+                return assetLoader.shouldInterceptRequest(request.getUrl());
+            }
             @Override public void onReceivedError(WebView view, WebResourceRequest request,
                     android.webkit.WebResourceError error) {
                 super.onReceivedError(view, request, error);
