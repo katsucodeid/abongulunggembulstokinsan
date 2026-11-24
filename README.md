@@ -1,6 +1,6 @@
 # Abon Gulung Gembul - Stok Kertas
 
-**INSAN Stock Manager · Versi 2.4.0**
+**Abon Gulung Gembul Stok · Versi 3.1.0**
 
 Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjalan secara lokal di Android melalui Termux dengan Node.js/Express, database JSON persisten, dan frontend PWA.
 
@@ -18,6 +18,11 @@ Aplikasi manajemen persediaan kemasan dan bahan untuk Abon Gulung Gembul. Berjal
 - Aplikasi Android WebView, penyimpanan laporan ke folder Download, dan pemutar musik lokal dengan daftar putar dan kontrol pemutaran.
 - Multi-perangkat melalui satu server pusat di Termux.
 - Pemeriksaan dan penerapan pembaruan branch main langsung dari aplikasi oleh admin.
+
+## Catatan versi 3.1.0
+
+- Mengubah identitas APK menjadi Abon Gulung Gembul Stok dengan application ID khusus agar dapat dipasang berdampingan dengan aplikasi lama.
+- Menyempurnakan notifikasi media Android dengan identitas Abon Gulung Musik, judul lagu, progres/durasi, dan kontrol sebelumnya, putar/jeda, berikutnya, serta hentikan.
 
 ## Catatan versi 2.4.0
 
