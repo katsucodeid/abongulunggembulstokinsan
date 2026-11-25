@@ -72,10 +72,11 @@ async function resetUserPassword(){
 async function login(){try{const d=await api("/auth/login",{method:"POST",body:JSON.stringify({username:$("username").value,password:$("password").value})});token=d.token;cachedUser=d.user;localStorage.setItem("insan_token",token);await kvSet("user",cachedUser);await refresh();}catch(e){$("loginMsg").textContent=e.message;}}
 async function logout(){closeMenu();token=null;cachedUser=null;localStorage.removeItem("insan_token");await kvDelete("user");showLogin();}
 async function refresh(){try{state=await api("/state");window.insanServerConnected=true;const pendingLocal=await queueAll();for(const op of pendingLocal){if(!(state.history||[]).some(tx=>tx.id===op.id)){try{applyLocal(op);}catch(e){/* keep conflicting operation in the queue for review */}}}await kvSet("state",state);showApp();cachedUser=state.user;await renderAll();setStatus("Terhubung · data server terbaru","ok");await syncQueue();}catch(e){window.insanServerConnected=false;if(e instanceof TypeError || !navigator.onLine){state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Offline · perubahan disimpan di perangkat","low");}else{showLogin();$("loginMsg").textContent="Login pertama membutuhkan koneksi ke server.";}}else if(e.status===401){showLogin();$("loginMsg").textContent=e.message;}else{state=await kvGet("state");cachedUser=await kvGet("user");if(state&&cachedUser){showApp();await renderAll();setStatus("Server tidak tersedia · mode offline","low");}else showLogin();}}}
-async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderAnalyticsHeader();renderHistory();renderDailyTargets();loadReport();maybeAutoDailyReport().catch(()=>{});const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";scheduleQrSnapshot();}
+async function renderAll(){if(!state)return;const admin=isAdmin();const backupPanel=$("backupPanel");if(backupPanel)backupPanel.hidden=!admin;const accountsLink=$("accountsNavLink");if(accountsLink)accountsLink.hidden=!admin;syncActiveNav();$("who").textContent=(cachedUser?.username||state.user?.username||"Pengguna")+" · "+roleLabel(currentRole());renderStock();renderAnalyticsHeader();renderTechStatistics();renderHistory();renderDailyTargets();loadReport();maybeAutoDailyReport().catch(()=>{});const q=await queueAll();$("pendingCount").textContent=q.length?(" · "+q.length+" transaksi menunggu sinkronisasi"):"";scheduleQrSnapshot();}
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null},low=def.min!==null&&Number(v)<=def.min;return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${low?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':low?'⚠ Stok minimum tercapai · '+def.min+' pcs':'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();updateStockProductionEstimate();}
 function renderAnalyticsHeader(){
- const el=$("headerAnalytics");if(!el||!state)return;
+ const el=$("headerAnalytics");if(!state)return;
+ if(!el){renderTechStatistics();return;}
  const stats=collectOperationalStats(),variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
  const stockTotal=Object.values(state.stock||{}).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
  const produced=Number(stats.totalProduced)||0,top=stats.topVariant?names[stats.topVariant]||stats.topVariant:"Belum ada";
@@ -815,17 +816,17 @@ function startTechTicker(){
  let messages=[],messageIndex=0,charIndex=0,deleting=false,timer=null,refreshAt=0;
  const tick=()=>{
   if(!state){timer=window.setTimeout(tick,1000);return;}
-  if(Date.now()-refreshAt>5000){messages=buildTechMessages();refreshAt=Date.now();messageIndex%=messages.length;}
+  if(Date.now()-refreshAt>5000){messages=buildTechMessages();refreshAt=Date.now();messageIndex%=Math.max(1,messages.length);}
   const message=messages[messageIndex]||"INSAN SYSTEM INTERFACE · KatsuCode ID × Insan";
-  charIndex+=deleting?-1:1;
-  target.textContent=message.slice(0,Math.max(0,charIndex));
+  charIndex=Math.max(0,Math.min(message.length,charIndex+(deleting?-1:1)));
+  target.textContent=message.slice(0,charIndex);
   let delay=deleting?22:34;
   if(!deleting&&charIndex>=message.length){deleting=true;delay=2100;}
-  else if(deleting&&charIndex<=0){deleting=false;messageIndex=(messageIndex+1)%messages.length;delay=450;}
+  else if(deleting&&charIndex<=0){deleting=false;messageIndex=(messageIndex+1)%Math.max(1,messages.length);delay=450;}
   timer=window.setTimeout(tick,delay);
  };
  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){target.textContent="INSAN SYSTEM INTERFACE · KatsuCode ID × Insan";return;}
  timer=window.setTimeout(tick,500);
- document.addEventListener("visibilitychange",()=>{if(document.hidden){window.clearTimeout(timer);}else{window.clearTimeout(timer);timer=window.setTimeout(tick,250);}});
+ document.addEventListener("visibilitychange",()=>{window.clearTimeout(timer);if(!document.hidden)timer=window.setTimeout(tick,250);});
 }
 startTechTicker();
