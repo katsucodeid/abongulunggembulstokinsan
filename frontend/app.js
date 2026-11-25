@@ -76,7 +76,7 @@ async function renderAll(){if(!state)return;const admin=isAdmin();const backupPa
 function renderStock(){const defs=state.itemDefs||{};$("stockGrid").innerHTML=Object.entries(state.stock||{}).map(([k,v])=>{const def=defs[k]||{label:k,min:null},low=def.min!==null&&Number(v)<=def.min;return `<div class="panel"><div class="muted">${def.label}</div><div class="qty">${Number(v).toLocaleString("id-ID")} pcs</div><div class="${low?'low':'ok'} muted">${def.min===null?'Batas minimum belum ditetapkan':low?'⚠ Stok minimum tercapai · '+def.min+' pcs':'Aman · minimum '+def.min}</div></div>`;}).join("");renderProductionCapacity();updateStockProductionEstimate();}
 function renderAnalyticsHeader(){
  const el=$("headerAnalytics");if(!el||!state)return;
- const stats=state.stats||{},variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+ const stats=collectOperationalStats(),variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
  const stockTotal=Object.values(state.stock||{}).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
  const produced=Number(stats.totalProduced)||0,top=stats.topVariant?names[stats.topVariant]||stats.topVariant:"Belum ada";
  const breakdown=Object.entries(names).map(([key,label])=>label+" "+(Number(variants[key])||0).toLocaleString("id-ID")).join(" · ");
