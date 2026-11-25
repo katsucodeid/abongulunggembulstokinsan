@@ -1,4 +1,4 @@
-name: Build APK Abon Gulung Gembul Wasmida V.0.0.0.2
+name: Build APK Abon Gulung Gembul Wasmida V.0.0.0.3
 
 on:
   pull_request:
@@ -7,7 +7,6 @@ on:
       - 'android/**'
       - 'frontend/**'
       - 'backend/**'
-      - 'backend/**'
       - 'img/**'
       - '.github/workflows/build-apk.yml'
   push:
@@ -15,6 +14,7 @@ on:
     paths:
       - 'android/**'
       - 'frontend/**'
+      - 'backend/**'
       - '.github/workflows/build-apk.yml'
   workflow_dispatch:
 
@@ -101,13 +101,13 @@ jobs:
           APK=android/app/build/outputs/apk/debug/app-debug.apk
           test -s "$APK"
           "$ANDROID_HOME/build-tools/35.0.0/apksigner" verify --verbose "$APK"
-          cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.2.apk
-          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.2.apk
+          cp "$APK" android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.3.apk
+          ls -lh android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.3.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: Abon-Gulung-Gembul-Wasmida-V.0.0.0.2-APK
-          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.2.apk
+          name: Abon-Gulung-Gembul-Wasmida-V.0.0.0.3-APK
+          path: android/app/build/outputs/apk/debug/Abon-Gulung-Gembul-Wasmida-V.0.0.0.3.apk
           if-no-files-found: error
           retention-days: 30
