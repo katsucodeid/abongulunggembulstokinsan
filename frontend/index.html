@@ -475,8 +475,8 @@ main{padding-top:0!important}
 .tech-ticker-top,.tech-ticker-bottom{display:flex;align-items:center;gap:8px;color:var(--muted);font:700 9px/1.4 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.13em}
 .tech-live-dot{width:7px;height:7px;flex:0 0 7px;border-radius:50%;background:#36bd83;box-shadow:0 0 0 3px rgba(54,189,131,.13),0 0 10px rgba(54,189,131,.6);animation:techPulse 1.8s ease-in-out infinite}
 .tech-ticker-line{height:1px;flex:1;background:linear-gradient(90deg,var(--line),transparent)}.tech-ticker-code{color:#36a878}
-.tech-ticker-screen{display:flex;align-items:center;min-height:35px;gap:9px;padding:5px 0;color:var(--text);font:600 clamp(13px,3.4vw,16px)/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.01em}
-.tech-prefix{color:var(--accent);font-size:19px;font-weight:900}.tech-caret{width:7px;height:18px;flex:0 0 7px;background:var(--accent);border-radius:1px;animation:techBlink .8s steps(2,start) infinite;box-shadow:0 0 9px color-mix(in srgb,var(--accent) 65%,transparent)}
+.tech-ticker-screen{display:block;box-sizing:border-box;height:4.8em;min-height:4.8em;max-height:4.8em;overflow:hidden;padding:5px 0;color:var(--text);font:600 clamp(13px,3.4vw,16px)/1.5 ui-monospace,SFMono-Regular,Consolas,monospace;letter-spacing:.01em;overflow-wrap:anywhere;word-break:normal}
+.tech-prefix{display:inline-block;color:var(--accent);font-size:19px;font-weight:900;margin-right:9px}.tech-caret{display:inline-block;vertical-align:-3px;width:7px;height:18px;background:var(--accent);border-radius:1px;animation:techBlink .8s steps(2,start) infinite;box-shadow:0 0 9px color-mix(in srgb,var(--accent) 65%,transparent)}
 .tech-ticker-bottom{justify-content:space-between;gap:7px;font-size:8px;letter-spacing:.08em}.tech-ticker-bottom b{color:var(--accent)}.tech-ticker-version{white-space:nowrap;color:var(--accent)}
 .tech-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:7px;margin:8px 0}
 .tech-metric{min-width:0;padding:9px 10px;border:1px solid color-mix(in srgb,var(--line) 85%,var(--accent));border-radius:10px;background:color-mix(in srgb,var(--bg) 78%,transparent)}
