@@ -743,47 +743,69 @@ setInterval(checkForUpdates,300000);
 
 
 // Live operational statistics and typing/deleting system interface.
+function collectOperationalStats(){
+ const history=Array.isArray(state?.history)?state.history:[];
+ const production=history.filter(tx=>tx?.type==="production");
+ const variants={ori:0,beef:0,spicy:0,cheese:0},outlets={};
+ let totalProduced=0;
+ for(const tx of production){
+  const lines=tx.lines||{};
+  for(const key of Object.keys(variants)){
+   const quantity=Number(lines[key])||0;
+   if(Number.isFinite(quantity)&&quantity>0){variants[key]+=quantity;totalProduced+=quantity;}
+  }
+  const outlet=tx.location||"Outlet tidak diketahui";
+  outlets[outlet]=(outlets[outlet]||0)+(Number(lines.total)||Object.keys(variants).reduce((sum,key)=>sum+(Number(lines[key])||0),0));
+ }
+ const server=state?.stats||{};
+ const hasServerProduction=Number(server.productionEntries)>0||Number(server.totalProduced)>0;
+ return {
+  totalProduced:hasServerProduction?Number(server.totalProduced)||0:totalProduced,
+  productionEntries:hasServerProduction?Number(server.productionEntries)||0:production.length,
+  variants:hasServerProduction?server.variants||variants:variants,
+  outlets:hasServerProduction&&Object.keys(server.outlets||{}).length?server.outlets:outlets,
+  topVariant:server.topVariant||null,
+  firstProductionAt:server.firstProductionAt||production.slice().sort((a,b)=>String(a.createdAt||a.date||"").localeCompare(String(b.createdAt||b.date||"")))[0]?.createdAt||production.slice().sort((a,b)=>String(a.date||"").localeCompare(String(b.date||"")))[0]?.date||null,
+  lastProductionAt:server.lastProductionAt||production.slice().sort((a,b)=>String(b.createdAt||b.date||"").localeCompare(String(a.createdAt||a.date||"")))[0]?.createdAt||null
+ };
+}
 function renderTechStatistics(){
  if(!state)return;
- const stats=state.stats||{},variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+ const stats=collectOperationalStats(),variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
  const fmt=value=>(Number(value)||0).toLocaleString("id-ID");
  const stock=state.stock||{},stockTotal=Object.values(stock).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
- const produced=Number(stats.totalProduced)||0;
  const ranked=Object.entries(names).map(([key,label])=>({key,label,count:Number(variants[key])||0})).sort((a,b)=>b.count-a.count);
  const top=ranked[0]&&ranked[0].count>0?ranked[0]:null;
  const put=(id,value)=>{const node=$(id);if(node)node.textContent=value;};
  put("techStockTotal",fmt(stockTotal)+" pcs");
- put("techProductionTotal",fmt(produced)+" loyang");
+ put("techProductionTotal",fmt(stats.totalProduced)+" loyang");
  put("techProductionEntries",fmt(stats.productionEntries));
  put("techTopVariant",top?top.label:"Belum ada");
  put("techTopVariantCount",top?fmt(top.count)+" loyang dibuat":"belum ada produksi");
- const first=stats.firstProductionAt||stats.stockStartDate;
- const last=stats.lastProductionAt;
- const period=first?new Date(first).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"awal pencatatan";
- put("techProductionPeriod",period+(last?" – "+new Date(last).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):""));
+ const first=stats.firstProductionAt,last=stats.lastProductionAt;
+ const dateFmt=value=>value?new Date(value).toLocaleDateString("id-ID",{day:"2-digit",month:"short",year:"numeric"}):"";
+ put("techProductionPeriod",(dateFmt(first)||"awal pencatatan")+(dateFmt(last)?" – "+dateFmt(last):""));
  put("techVariantBreakdown",ranked.map(x=>x.label+" "+fmt(x.count)).join(" · "));
  const outlets=Object.entries(stats.outlets||{}).sort((a,b)=>Number(b[1])-Number(a[1]));
  put("techOutletBreakdown",outlets.length?outlets.map(([name,value])=>name+" "+fmt(value)).join(" · "):"Belum ada data outlet");
  put("techCopyrightYear",String(new Date().getFullYear()));
 }
 function buildTechMessages(){
- const stats=state?.stats||{},variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
+ const stats=collectOperationalStats(),variants=stats.variants||{},names={ori:"Ori",beef:"Beef",spicy:"Spicy",cheese:"Cheese"};
  const fmt=value=>(Number(value)||0).toLocaleString("id-ID");
  const stock=state?.stock||{},stockTotal=Object.values(stock).reduce((sum,value)=>sum+Math.max(0,Number(value)||0),0);
- const produced=Number(stats.totalProduced)||0;
  const ranked=Object.entries(names).map(([key,label])=>({label,count:Number(variants[key])||0})).sort((a,b)=>b.count-a.count);
  const top=ranked[0]?.count?ranked[0]:null;
- const first=stats.firstProductionAt||stats.stockStartDate;
- const from=first?new Date(first).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):"awal pencatatan";
+ const from=stats.firstProductionAt?new Date(stats.firstProductionAt).toLocaleDateString("id-ID",{day:"numeric",month:"long",year:"numeric"}):"awal pencatatan";
  const outlets=Object.entries(stats.outlets||{}).sort((a,b)=>Number(b[1])-Number(a[1]));
  return [
   "KALKULASI STOK: "+fmt(stockTotal)+" pcs tersedia dari seluruh item.",
-  "REKAP PRODUKSI SEJAK "+from+": "+fmt(produced)+" loyang tercatat.",
+  "REKAP PRODUKSI SEJAK "+from+": "+fmt(stats.totalProduced)+" loyang tercatat.",
   "ANALISIS VARIAN: "+ranked.map(x=>x.label+" "+fmt(x.count)).join(" · ")+".",
   "VARIAN TERBANYAK: "+(top?top.label+" dengan "+fmt(top.count)+" loyang.":"Belum ada data produksi."),
   "TOTAL CATATAN PRODUKSI: "+fmt(stats.productionEntries)+" transaksi.",
   "REKAP OUTLET: "+(outlets.length?outlets.map(([name,value])=>name+" "+fmt(value)).join(" · "):"belum tersedia")+".",
-  "ESTIMASI OPERASIONAL: angka dihitung langsung dari data tersimpan.",
+  "ESTIMASI OPERASIONAL: angka dihitung dari data server dan riwayat produksi.",
   "KatsuCode ID × Insan · sistem informasi operasional Abon Gulung Gembul."
  ];
 }
